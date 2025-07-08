@@ -94,7 +94,7 @@ export function getClientIP(request: NextRequest): string {
     return real
   }
   
-  return request.ip || 'unknown'
+  return 'unknown'
 }
 
 /**

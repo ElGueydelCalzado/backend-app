@@ -19,6 +19,7 @@ export interface Product {
   
   // Auto-calculated prices (generated columns)
   precio_shein: number | null
+  precio_shopify: number | null
   precio_egdc: number | null
   precio_meli: number | null
   
@@ -39,7 +40,7 @@ export interface Product {
   tiktok: boolean | null
   upseller: boolean | null
   go_trendier: boolean | null
-  google_drive: boolean | null
+  google_drive: string | null
   
   // Timestamps
   created_at: string | null
