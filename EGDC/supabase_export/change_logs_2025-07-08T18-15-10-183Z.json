@@ -1,0 +1,2081 @@
+[
+  {
+    "id": 1,
+    "product_id": 10,
+    "field_name": "costo",
+    "old_value": "110",
+    "new_value": "11000",
+    "change_type": "update",
+    "created_at": "2025-07-03T18:07:54.251494+00:00"
+  },
+  {
+    "id": 2,
+    "product_id": 1,
+    "field_name": "categoria",
+    "old_value": "Tacones",
+    "new_value": "Test Category",
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 3,
+    "product_id": 1,
+    "field_name": "marca",
+    "old_value": "Nike",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 4,
+    "product_id": 1,
+    "field_name": "modelo",
+    "old_value": "Air Max 90",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 5,
+    "product_id": 1,
+    "field_name": "color",
+    "old_value": "Blanco",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 6,
+    "product_id": 1,
+    "field_name": "talla",
+    "old_value": "9",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 7,
+    "product_id": 1,
+    "field_name": "sku",
+    "old_value": "NIK-AM90-00",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 8,
+    "product_id": 1,
+    "field_name": "ean",
+    "old_value": "1234567890123",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 9,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": "89.99",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 10,
+    "product_id": 1,
+    "field_name": "shein_modifier",
+    "old_value": "1.1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 11,
+    "product_id": 1,
+    "field_name": "shopify_modifier",
+    "old_value": "1.05",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 12,
+    "product_id": 1,
+    "field_name": "meli_modifier",
+    "old_value": "1.15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 13,
+    "product_id": 1,
+    "field_name": "inv_egdc",
+    "old_value": "15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 14,
+    "product_id": 1,
+    "field_name": "inv_fami",
+    "old_value": "8",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 15,
+    "product_id": 1,
+    "field_name": "inv_bodega_principal",
+    "old_value": "12",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 16,
+    "product_id": 1,
+    "field_name": "inv_tienda_centro",
+    "old_value": "5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 17,
+    "product_id": 1,
+    "field_name": "inv_tienda_norte",
+    "old_value": "3",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 18,
+    "product_id": 1,
+    "field_name": "inv_tienda_sur",
+    "old_value": "2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 19,
+    "product_id": 1,
+    "field_name": "inv_online",
+    "old_value": "4",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T15:47:44.934544+00:00"
+  },
+  {
+    "id": 20,
+    "product_id": 1,
+    "field_name": "categoria",
+    "old_value": "Test Category",
+    "new_value": "Test Optimized Category",
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 21,
+    "product_id": 1,
+    "field_name": "marca",
+    "old_value": "Nike",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 22,
+    "product_id": 1,
+    "field_name": "modelo",
+    "old_value": "Air Max 90",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 23,
+    "product_id": 1,
+    "field_name": "color",
+    "old_value": "Blanco",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 24,
+    "product_id": 1,
+    "field_name": "talla",
+    "old_value": "9",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 25,
+    "product_id": 1,
+    "field_name": "sku",
+    "old_value": "NIK-AM90-00",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 26,
+    "product_id": 1,
+    "field_name": "ean",
+    "old_value": "1234567890123",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 27,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": "89.99",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 28,
+    "product_id": 1,
+    "field_name": "shein_modifier",
+    "old_value": "1.1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 29,
+    "product_id": 1,
+    "field_name": "shopify_modifier",
+    "old_value": "1.05",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 30,
+    "product_id": 1,
+    "field_name": "meli_modifier",
+    "old_value": "1.15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 31,
+    "product_id": 1,
+    "field_name": "inv_egdc",
+    "old_value": "15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 32,
+    "product_id": 1,
+    "field_name": "inv_fami",
+    "old_value": "8",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 33,
+    "product_id": 1,
+    "field_name": "inv_bodega_principal",
+    "old_value": "12",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 34,
+    "product_id": 1,
+    "field_name": "inv_tienda_centro",
+    "old_value": "5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 35,
+    "product_id": 1,
+    "field_name": "inv_tienda_norte",
+    "old_value": "3",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 36,
+    "product_id": 1,
+    "field_name": "inv_tienda_sur",
+    "old_value": "2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 37,
+    "product_id": 1,
+    "field_name": "inv_online",
+    "old_value": "4",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:51:18.358902+00:00"
+  },
+  {
+    "id": 38,
+    "product_id": 1,
+    "field_name": "categoria",
+    "old_value": "Test Optimized Category",
+    "new_value": "Batch Test 1",
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 39,
+    "product_id": 1,
+    "field_name": "marca",
+    "old_value": "Nike",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 40,
+    "product_id": 1,
+    "field_name": "modelo",
+    "old_value": "Air Max 90",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 41,
+    "product_id": 1,
+    "field_name": "color",
+    "old_value": "Blanco",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 42,
+    "product_id": 1,
+    "field_name": "talla",
+    "old_value": "9",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 43,
+    "product_id": 1,
+    "field_name": "sku",
+    "old_value": "NIK-AM90-00",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 44,
+    "product_id": 1,
+    "field_name": "ean",
+    "old_value": "1234567890123",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 45,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": "89.99",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 46,
+    "product_id": 1,
+    "field_name": "shein_modifier",
+    "old_value": "1.1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 47,
+    "product_id": 1,
+    "field_name": "shopify_modifier",
+    "old_value": "1.05",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 48,
+    "product_id": 1,
+    "field_name": "meli_modifier",
+    "old_value": "1.15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 49,
+    "product_id": 1,
+    "field_name": "inv_egdc",
+    "old_value": "15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 50,
+    "product_id": 1,
+    "field_name": "inv_fami",
+    "old_value": "8",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 51,
+    "product_id": 1,
+    "field_name": "inv_bodega_principal",
+    "old_value": "12",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 52,
+    "product_id": 1,
+    "field_name": "inv_tienda_centro",
+    "old_value": "5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 53,
+    "product_id": 1,
+    "field_name": "inv_tienda_norte",
+    "old_value": "3",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 54,
+    "product_id": 1,
+    "field_name": "inv_tienda_sur",
+    "old_value": "2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 55,
+    "product_id": 1,
+    "field_name": "inv_online",
+    "old_value": "4",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 56,
+    "product_id": 2,
+    "field_name": "categoria",
+    "old_value": "Alpargatas y Plataformas",
+    "new_value": "Batch Test 2",
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 57,
+    "product_id": 2,
+    "field_name": "marca",
+    "old_value": "Adidas",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 58,
+    "product_id": 2,
+    "field_name": "modelo",
+    "old_value": "Stan Smith",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 59,
+    "product_id": 2,
+    "field_name": "color",
+    "old_value": "Verde",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 60,
+    "product_id": 2,
+    "field_name": "talla",
+    "old_value": "8.5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 61,
+    "product_id": 2,
+    "field_name": "sku",
+    "old_value": "ADI-SS-002",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 62,
+    "product_id": 2,
+    "field_name": "ean",
+    "old_value": "2345678901234",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 63,
+    "product_id": 2,
+    "field_name": "costo",
+    "old_value": "75.5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 64,
+    "product_id": 2,
+    "field_name": "shein_modifier",
+    "old_value": "1.2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 65,
+    "product_id": 2,
+    "field_name": "shopify_modifier",
+    "old_value": "1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 66,
+    "product_id": 2,
+    "field_name": "meli_modifier",
+    "old_value": "1.1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 67,
+    "product_id": 2,
+    "field_name": "inv_egdc",
+    "old_value": "22",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 68,
+    "product_id": 2,
+    "field_name": "inv_fami",
+    "old_value": "12",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 69,
+    "product_id": 2,
+    "field_name": "inv_bodega_principal",
+    "old_value": "18",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 70,
+    "product_id": 2,
+    "field_name": "inv_tienda_centro",
+    "old_value": "8",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 71,
+    "product_id": 2,
+    "field_name": "inv_tienda_norte",
+    "old_value": "6",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 72,
+    "product_id": 2,
+    "field_name": "inv_tienda_sur",
+    "old_value": "4",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 73,
+    "product_id": 2,
+    "field_name": "inv_online",
+    "old_value": "7",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 74,
+    "product_id": 3,
+    "field_name": "categoria",
+    "old_value": "Botas y Botines",
+    "new_value": "Batch Test 3",
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 75,
+    "product_id": 3,
+    "field_name": "marca",
+    "old_value": "Timberland",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 76,
+    "product_id": 3,
+    "field_name": "modelo",
+    "old_value": "6-Inch Premium",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 77,
+    "product_id": 3,
+    "field_name": "color",
+    "old_value": "Amarillo",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 78,
+    "product_id": 3,
+    "field_name": "talla",
+    "old_value": "10",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 79,
+    "product_id": 3,
+    "field_name": "sku",
+    "old_value": "TIM-6IP-003",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 80,
+    "product_id": 3,
+    "field_name": "ean",
+    "old_value": "3456789012345",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 81,
+    "product_id": 3,
+    "field_name": "costo",
+    "old_value": "120",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 82,
+    "product_id": 3,
+    "field_name": "shein_modifier",
+    "old_value": "1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 83,
+    "product_id": 3,
+    "field_name": "shopify_modifier",
+    "old_value": "1.15",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 84,
+    "product_id": 3,
+    "field_name": "meli_modifier",
+    "old_value": "1.05",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 85,
+    "product_id": 3,
+    "field_name": "inv_egdc",
+    "old_value": "8",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 86,
+    "product_id": 3,
+    "field_name": "inv_fami",
+    "old_value": "5",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 87,
+    "product_id": 3,
+    "field_name": "inv_bodega_principal",
+    "old_value": "6",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 88,
+    "product_id": 3,
+    "field_name": "inv_tienda_centro",
+    "old_value": "2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 89,
+    "product_id": 3,
+    "field_name": "inv_tienda_norte",
+    "old_value": "1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 90,
+    "product_id": 3,
+    "field_name": "inv_tienda_sur",
+    "old_value": "1",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 91,
+    "product_id": 3,
+    "field_name": "inv_online",
+    "old_value": "2",
+    "new_value": null,
+    "change_type": "update",
+    "created_at": "2025-07-04T19:59:21.564621+00:00"
+  },
+  {
+    "id": 92,
+    "product_id": 2,
+    "field_name": "talla",
+    "old_value": "8.5",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 93,
+    "product_id": 2,
+    "field_name": "sku",
+    "old_value": "ADI-SS-002",
+    "new_value": "PUM-RSX-009",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 94,
+    "product_id": 2,
+    "field_name": "ean",
+    "old_value": "2345678901234",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 95,
+    "product_id": 2,
+    "field_name": "costo",
+    "old_value": "75.5",
+    "new_value": "1000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 96,
+    "product_id": 8,
+    "field_name": "talla",
+    "old_value": "8",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 97,
+    "product_id": 8,
+    "field_name": "sku",
+    "old_value": "VAN-OS-008",
+    "new_value": "PUM-RSX-009",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 98,
+    "product_id": 8,
+    "field_name": "ean",
+    "old_value": "8901234567890",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 99,
+    "product_id": 8,
+    "field_name": "costo",
+    "old_value": "60",
+    "new_value": "1000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 100,
+    "product_id": 3,
+    "field_name": "talla",
+    "old_value": "10",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 101,
+    "product_id": 3,
+    "field_name": "sku",
+    "old_value": "TIM-6IP-003",
+    "new_value": "PUM-RSX-009",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 102,
+    "product_id": 3,
+    "field_name": "ean",
+    "old_value": "3456789012345",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 103,
+    "product_id": 3,
+    "field_name": "costo",
+    "old_value": "120",
+    "new_value": "1000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 104,
+    "product_id": 9,
+    "field_name": "talla",
+    "old_value": "10.5",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 105,
+    "product_id": 9,
+    "field_name": "ean",
+    "old_value": "9012345678901",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 106,
+    "product_id": 9,
+    "field_name": "costo",
+    "old_value": "85",
+    "new_value": "1000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 107,
+    "product_id": 7,
+    "field_name": "talla",
+    "old_value": "9",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 108,
+    "product_id": 7,
+    "field_name": "sku",
+    "old_value": "BIR-AZ-007",
+    "new_value": "PUM-RSX-009",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 109,
+    "product_id": 7,
+    "field_name": "ean",
+    "old_value": "7890123456789",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 110,
+    "product_id": 7,
+    "field_name": "costo",
+    "old_value": "95",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 111,
+    "product_id": 10,
+    "field_name": "talla",
+    "old_value": "11",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 112,
+    "product_id": 10,
+    "field_name": "ean",
+    "old_value": "0123456789012",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 113,
+    "product_id": 10,
+    "field_name": "costo",
+    "old_value": "11000",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 114,
+    "product_id": 4,
+    "field_name": "talla",
+    "old_value": "7",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 115,
+    "product_id": 4,
+    "field_name": "ean",
+    "old_value": "4567890123456",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 116,
+    "product_id": 4,
+    "field_name": "costo",
+    "old_value": "25.99",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 117,
+    "product_id": 1,
+    "field_name": "talla",
+    "old_value": "9",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 118,
+    "product_id": 1,
+    "field_name": "ean",
+    "old_value": "1234567890123",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 119,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": "89.99",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 120,
+    "product_id": 5,
+    "field_name": "talla",
+    "old_value": "9.5",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 121,
+    "product_id": 5,
+    "field_name": "ean",
+    "old_value": "5678901234567",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 122,
+    "product_id": 5,
+    "field_name": "costo",
+    "old_value": "55",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 123,
+    "product_id": 6,
+    "field_name": "talla",
+    "old_value": "8",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 124,
+    "product_id": 6,
+    "field_name": "ean",
+    "old_value": "6789012345678",
+    "new_value": "0000111122233",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 125,
+    "product_id": 6,
+    "field_name": "costo",
+    "old_value": "150",
+    "new_value": "95000",
+    "change_type": "update",
+    "created_at": "2025-07-04T22:58:30.12407+00:00"
+  },
+  {
+    "id": 126,
+    "product_id": 8,
+    "field_name": "costo",
+    "old_value": "1000",
+    "new_value": "100",
+    "change_type": "update",
+    "created_at": "2025-07-05T19:33:51.791266+00:00"
+  },
+  {
+    "id": 127,
+    "product_id": 2,
+    "field_name": "costo",
+    "old_value": "100",
+    "new_value": "9",
+    "change_type": "update",
+    "created_at": "2025-07-07T12:51:30.499274+00:00"
+  },
+  {
+    "id": 128,
+    "product_id": 3,
+    "field_name": "costo",
+    "old_value": "100",
+    "new_value": "109",
+    "change_type": "update",
+    "created_at": "2025-07-07T12:52:42.264673+00:00"
+  },
+  {
+    "id": 129,
+    "product_id": 3,
+    "field_name": "shein_modifier",
+    "old_value": "2",
+    "new_value": "3",
+    "change_type": "update",
+    "created_at": "2025-07-07T13:47:06.624315+00:00"
+  },
+  {
+    "id": 130,
+    "product_id": 3,
+    "field_name": "shein_modifier",
+    "old_value": "3",
+    "new_value": "2.5",
+    "change_type": "update",
+    "created_at": "2025-07-07T13:50:27.875914+00:00"
+  },
+  {
+    "id": 131,
+    "product_id": 3,
+    "field_name": "product",
+    "old_value": "CHIQUILINA 317B (CHIQ317_BUK_NEGRO12)",
+    "new_value": null,
+    "change_type": "delete",
+    "created_at": "2025-07-07T14:32:45.521091+00:00"
+  },
+  {
+    "id": 132,
+    "product_id": 2,
+    "field_name": "product",
+    "old_value": "VAMOS 10000 (31VAMO10000_BLANCO22)",
+    "new_value": null,
+    "change_type": "delete",
+    "created_at": "2025-07-07T14:33:34.883003+00:00"
+  },
+  {
+    "id": 133,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:12.896613+00:00"
+  },
+  {
+    "id": 134,
+    "product_id": 4,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:12.896613+00:00"
+  },
+  {
+    "id": 135,
+    "product_id": 5,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:12.896613+00:00"
+  },
+  {
+    "id": 136,
+    "product_id": 6,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 137,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 138,
+    "product_id": 4,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 139,
+    "product_id": 5,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 140,
+    "product_id": 10,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 141,
+    "product_id": 7,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 142,
+    "product_id": 8,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 143,
+    "product_id": 9,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 144,
+    "product_id": 14,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 145,
+    "product_id": 11,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 146,
+    "product_id": 12,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 147,
+    "product_id": 13,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 148,
+    "product_id": 18,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 149,
+    "product_id": 15,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 150,
+    "product_id": 16,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 151,
+    "product_id": 17,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "50",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T18:28:25.987375+00:00"
+  },
+  {
+    "id": 152,
+    "product_id": 1,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 153,
+    "product_id": 4,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 154,
+    "product_id": 5,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 155,
+    "product_id": 6,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 156,
+    "product_id": 7,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 157,
+    "product_id": 8,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 158,
+    "product_id": 9,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 159,
+    "product_id": 10,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 160,
+    "product_id": 11,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 161,
+    "product_id": 12,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 162,
+    "product_id": 13,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 163,
+    "product_id": 14,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 164,
+    "product_id": 15,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 165,
+    "product_id": 16,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 166,
+    "product_id": 17,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 167,
+    "product_id": 18,
+    "field_name": "costo",
+    "old_value": null,
+    "new_value": "190",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:03:39.844456+00:00"
+  },
+  {
+    "id": 168,
+    "product_id": 1,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 169,
+    "product_id": 1,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 170,
+    "product_id": 1,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 171,
+    "product_id": 4,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 172,
+    "product_id": 4,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 173,
+    "product_id": 4,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 174,
+    "product_id": 5,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 175,
+    "product_id": 5,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 176,
+    "product_id": 5,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 177,
+    "product_id": 6,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 178,
+    "product_id": 6,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 179,
+    "product_id": 6,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 180,
+    "product_id": 7,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 181,
+    "product_id": 7,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 182,
+    "product_id": 7,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 183,
+    "product_id": 8,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 184,
+    "product_id": 8,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 185,
+    "product_id": 8,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 186,
+    "product_id": 9,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 187,
+    "product_id": 9,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 188,
+    "product_id": 9,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 189,
+    "product_id": 10,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 190,
+    "product_id": 10,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 191,
+    "product_id": 10,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 192,
+    "product_id": 11,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 193,
+    "product_id": 11,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 194,
+    "product_id": 11,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 195,
+    "product_id": 12,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 196,
+    "product_id": 12,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 197,
+    "product_id": 12,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 198,
+    "product_id": 13,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 199,
+    "product_id": 13,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 200,
+    "product_id": 13,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 201,
+    "product_id": 14,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 202,
+    "product_id": 14,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 203,
+    "product_id": 14,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 204,
+    "product_id": 15,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 205,
+    "product_id": 15,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 206,
+    "product_id": 15,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 207,
+    "product_id": 16,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 208,
+    "product_id": 16,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 209,
+    "product_id": 16,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 210,
+    "product_id": 17,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 211,
+    "product_id": 17,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 212,
+    "product_id": 17,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 213,
+    "product_id": 18,
+    "field_name": "shein_modifier",
+    "old_value": null,
+    "new_value": "1.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 214,
+    "product_id": 18,
+    "field_name": "shopify_modifier",
+    "old_value": null,
+    "new_value": "2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 215,
+    "product_id": 18,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.5",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:04:42.7129+00:00"
+  },
+  {
+    "id": 216,
+    "product_id": 1,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 217,
+    "product_id": 4,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 218,
+    "product_id": 5,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 219,
+    "product_id": 6,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 220,
+    "product_id": 7,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 221,
+    "product_id": 8,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 222,
+    "product_id": 9,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 223,
+    "product_id": 10,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 224,
+    "product_id": 11,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 225,
+    "product_id": 12,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 226,
+    "product_id": 13,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 227,
+    "product_id": 14,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 228,
+    "product_id": 15,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 229,
+    "product_id": 16,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 230,
+    "product_id": 17,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  },
+  {
+    "id": 231,
+    "product_id": 18,
+    "field_name": "meli_modifier",
+    "old_value": null,
+    "new_value": "2.2",
+    "change_type": "bulk_update",
+    "created_at": "2025-07-07T23:05:00.943441+00:00"
+  }
+]

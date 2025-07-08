@@ -1,0 +1,234 @@
+{
+  "name": "EGDC Inventory Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 9,
+              "minute": 0
+            },
+            {
+              "hour": 13,
+              "minute": 0
+            },
+            {
+              "hour": 17,
+              "minute": 0
+            }
+          ]
+        },
+        "timezone": "America/Bogota"
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/inventory",
+        "options": {}
+      },
+      "name": "Get Inventory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check for low stock items\nconst products = items[0].json.data || [];\nconst lowStockItems = [];\nconst outOfStockItems = [];\n\nfor (const product of products) {\n  const totalStock = product.inventory_total || 0;\n  \n  if (totalStock === 0) {\n    outOfStockItems.push({\n      id: product.id,\n      name: `${product.categoria} - ${product.marca} ${product.modelo}`,\n      sku: product.sku,\n      stock: totalStock,\n      locations: {\n        egdc: product.inv_egdc || 0,\n        fami: product.inv_fami || 0,\n        bodega: product.inv_bodega_principal || 0,\n        centro: product.inv_tienda_centro || 0,\n        norte: product.inv_tienda_norte || 0,\n        sur: product.inv_tienda_sur || 0,\n        online: product.inv_online || 0\n      }\n    });\n  } else if (totalStock <= 5) {\n    lowStockItems.push({\n      id: product.id,\n      name: `${product.categoria} - ${product.marca} ${product.modelo}`,\n      sku: product.sku,\n      stock: totalStock,\n      locations: {\n        egdc: product.inv_egdc || 0,\n        fami: product.inv_fami || 0,\n        bodega: product.inv_bodega_principal || 0,\n        centro: product.inv_tienda_centro || 0,\n        norte: product.inv_tienda_norte || 0,\n        sur: product.inv_tienda_sur || 0,\n        online: product.inv_online || 0\n      }\n    });\n  }\n}\n\nreturn {\n  lowStock: lowStockItems,\n  outOfStock: outOfStockItems,\n  totalProducts: products.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Analyze Stock",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.lowStock.length + $json.outOfStock.length}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Has Alerts",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate inventory report\nconst data = items[0].json;\n\nlet report = `📊 REPORTE DE INVENTARIO EGDC\\n`;\nreport += `🕒 Fecha: ${new Date().toLocaleDateString('es-ES')}\\n`;\nreport += `📦 Total productos: ${data.totalProducts}\\n\\n`;\n\nif (data.outOfStock.length > 0) {\n  report += `🚨 PRODUCTOS SIN STOCK (${data.outOfStock.length}):\\n`;\n  for (const item of data.outOfStock) {\n    report += `• ${item.name} (SKU: ${item.sku})\\n`;\n  }\n  report += `\\n`;\n}\n\nif (data.lowStock.length > 0) {\n  report += `⚠️ PRODUCTOS CON STOCK BAJO (${data.lowStock.length}):\\n`;\n  for (const item of data.lowStock) {\n    report += `• ${item.name} (SKU: ${item.sku}) - Stock: ${item.stock}\\n`;\n  }\n  report += `\\n`;\n}\n\nreport += `\\n💡 Este reporte fue generado automáticamente por el sistema EGDC.`;\n\nreturn {\n  report: report,\n  hasOutOfStock: data.outOfStock.length > 0,\n  hasLowStock: data.lowStock.length > 0,\n  alertCount: data.lowStock.length + data.outOfStock.length\n};"
+      },
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log the inventory check\nconst data = items[0].json;\n\nconsole.log(`[${new Date().toISOString()}] Inventory Check Completed`);\nconsole.log(`Total Products: ${data.totalProducts}`);\nconsole.log(`Low Stock Items: ${data.lowStock?.length || 0}`);\nconsole.log(`Out of Stock Items: ${data.outOfStock?.length || 0}`);\n\nif (data.lowStock?.length > 0) {\n  console.log('Low Stock Items:');\n  data.lowStock.forEach(item => {\n    console.log(`  - ${item.name} (${item.sku}): ${item.stock} units`);\n  });\n}\n\nif (data.outOfStock?.length > 0) {\n  console.log('Out of Stock Items:');\n  data.outOfStock.forEach(item => {\n    console.log(`  - ${item.name} (${item.sku})`);\n  });\n}\n\nreturn items;"
+      },
+      "name": "Log Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Error handling for failed API call\nconst error = items[0].json;\n\nconsole.error(`[${new Date().toISOString()}] Inventory API Error:`, error);\n\nreturn {\n  error: 'Failed to fetch inventory data',\n  timestamp: new Date().toISOString(),\n  details: error\n};"
+      },
+      "name": "Handle Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        900,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// No alerts - just log success\nconsole.log(`[${new Date().toISOString()}] Inventory check completed - No alerts`);\n\nreturn {\n  message: 'Inventory check completed successfully',\n  timestamp: new Date().toISOString(),\n  totalProducts: items[0].json.totalProducts\n};"
+      },
+      "name": "No Alerts",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inventory": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Analyze Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Stock": {
+      "main": [
+        [
+          {
+            "node": "Has Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Alerts": {
+      "main": [
+        [
+          {
+            "node": "Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report": {
+      "main": [
+        [
+          {
+            "node": "Log Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "egdc-inventory-sync",
+  "meta": {
+    "version": "1.0.0",
+    "description": "Automated inventory monitoring for EGDC - checks stock levels 3 times daily and generates alerts for low/out-of-stock items"
+  }
+}
