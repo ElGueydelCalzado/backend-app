@@ -1,6 +1,6 @@
-// Google OAuth configuration for EGDC (NextAuth v4)
-import { NextAuthOptions } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
+// Google OAuth configuration for EGDC (NextAuth v5)
+import Google from 'next-auth/providers/google'
+import type { NextAuthConfig } from 'next-auth'
 
 // Authorized Google accounts - only these emails can access the system
 const AUTHORIZED_EMAILS = [
@@ -21,9 +21,9 @@ const getUserRole = (email: string): 'admin' | 'manager' | 'employee' => {
   return 'employee'
 }
 
-export const authOptions: NextAuthOptions = {
+export const authConfig: NextAuthConfig = {
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user?.email) {
         // Add role to session
         session.user.role = getUserRole(session.user.email)
-        session.user.id = token.sub
+        session.user.id = token.sub as string
       }
       return session
     },
@@ -66,8 +66,6 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60, // 24 hours
   },
-  
-  secret: process.env.NEXTAUTH_SECRET,
 }
 
 // Helper function to check if email is authorized
