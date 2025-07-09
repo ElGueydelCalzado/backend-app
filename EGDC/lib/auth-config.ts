@@ -1,6 +1,6 @@
-// Google OAuth configuration for EGDC (NextAuth v5)
-import Google from 'next-auth/providers/google'
-import type { NextAuthConfig } from 'next-auth'
+// Google OAuth configuration for EGDC (NextAuth v4)
+import { NextAuthOptions } from 'next-auth'
+import GoogleProvider from 'next-auth/providers/google'
 
 // Authorized Google accounts - only these emails can access the system
 const AUTHORIZED_EMAILS = [
@@ -21,9 +21,9 @@ const getUserRole = (email: string): 'admin' | 'manager' | 'employee' => {
   return 'employee'
 }
 
-export const authConfig: NextAuthConfig = {
+export const authOptions: NextAuthOptions = {
   providers: [
-    Google({
+    GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -44,7 +44,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user?.email) {
         // Add role to session
         session.user.role = getUserRole(session.user.email)
-        session.user.id = token.sub as string
+        session.user.id = token.sub
       }
       return session
     },
