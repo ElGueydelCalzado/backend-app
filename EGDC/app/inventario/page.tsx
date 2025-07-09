@@ -15,6 +15,9 @@ import ProductCollectionWizard from '@/components/ProductCollectionWizard'
 import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import { ColumnConfig } from '@/components/ColumnControls'
+import MobileInventoryView from '@/components/MobileInventoryView'
+import MobileFilters from '@/components/MobileFilters'
+import MobileProductEditor from '@/components/MobileProductEditor'
 
 interface Filters {
   categories: Set<string>
@@ -84,6 +87,12 @@ export default function InventarioPage() {
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set())
   const [showExportMenu, setShowExportMenu] = useState(false)
+  
+  // Mobile-specific state
+  const [mobileSearchTerm, setMobileSearchTerm] = useState('')
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [showMobileEditor, setShowMobileEditor] = useState(false)
 
   const [filters, setFilters] = useState<Filters>({
     categories: new Set(),
@@ -296,16 +305,23 @@ export default function InventarioPage() {
             meli_modifier: editedItem.meli_modifier,
             precio_shein: editedItem.precio_shein,
             precio_shopify: editedItem.precio_shopify,
+            precio_egdc: editedItem.precio_egdc,
             precio_meli: editedItem.precio_meli,
             inv_egdc: editedItem.inv_egdc,
             inv_fami: editedItem.inv_fami,
+            inv_bodega_principal: editedItem.inv_bodega_principal,
+            inv_tienda_centro: editedItem.inv_tienda_centro,
+            inv_tienda_norte: editedItem.inv_tienda_norte,
+            inv_tienda_sur: editedItem.inv_tienda_sur,
+            inv_online: editedItem.inv_online,
             inventory_total: editedItem.inventory_total,
             shein: editedItem.shein,
             meli: editedItem.meli,
             shopify: editedItem.shopify,
             tiktok: editedItem.tiktok,
             upseller: editedItem.upseller,
-            go_trendier: editedItem.go_trendier
+            go_trendier: editedItem.go_trendier,
+            fecha: editedItem.fecha
           })
         } else if (
           // Check for changes in existing products
@@ -484,9 +500,15 @@ export default function InventarioPage() {
       meli_modifier: 2.5,
       precio_shein: null,
       precio_shopify: null,
+      precio_egdc: null,
       precio_meli: null,
       inv_egdc: 0,
       inv_fami: 0,
+      inv_bodega_principal: 0,
+      inv_tienda_centro: 0,
+      inv_tienda_norte: 0,
+      inv_tienda_sur: 0,
+      inv_online: 0,
       inventory_total: 0,
       shein: false,
       meli: false,
@@ -494,6 +516,7 @@ export default function InventarioPage() {
       tiktok: false,
       upseller: false,
       go_trendier: false,
+      fecha: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -705,6 +728,96 @@ export default function InventarioPage() {
         visible: preset === 'complete' || presets[preset as keyof typeof presets]?.includes(col.key) || false
       }))
     )
+  }
+
+  // Mobile handlers
+  const handleMobileSearch = (term: string) => {
+    setMobileSearchTerm(term)
+    if (term.trim()) {
+      const filtered = allData.filter(item => 
+        item.marca?.toLowerCase().includes(term.toLowerCase()) ||
+        item.modelo?.toLowerCase().includes(term.toLowerCase()) ||
+        item.categoria?.toLowerCase().includes(term.toLowerCase()) ||
+        item.sku?.toLowerCase().includes(term.toLowerCase()) ||
+        item.color?.toLowerCase().includes(term.toLowerCase()) ||
+        item.talla?.toLowerCase().includes(term.toLowerCase())
+      )
+      setOriginalView(filtered)
+      setEditedView(filtered)
+    } else {
+      applyFilters()
+    }
+  }
+
+  const handleMobileEdit = (product: Product) => {
+    setEditingProduct(product)
+    setShowMobileEditor(true)
+  }
+
+  const handleMobileDelete = async (id: number) => {
+    if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+      try {
+        const response = await fetch(`/api/inventory/${id}`, {
+          method: 'DELETE'
+        })
+        
+        if (!response.ok) {
+          throw new Error('Error al eliminar producto')
+        }
+        
+        await loadInventoryData()
+        showMessage('Producto eliminado exitosamente', 'success')
+      } catch (error) {
+        showMessage('Error al eliminar producto', 'error')
+      }
+    }
+  }
+
+  const handleMobileAdd = () => {
+    setEditingProduct(null)
+    setShowMobileEditor(true)
+  }
+
+  const handleMobileEditorSave = async (product: Product) => {
+    try {
+      const response = await fetch('/api/inventory/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          products: [product]
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error al guardar producto')
+      }
+      
+      await loadInventoryData()
+      setShowMobileEditor(false)
+      setEditingProduct(null)
+      showMessage('Producto guardado exitosamente', 'success')
+    } catch (error) {
+      showMessage('Error al guardar producto', 'error')
+    }
+  }
+
+  const getFilteredProducts = () => {
+    let filtered = editedView
+    
+    if (mobileSearchTerm.trim()) {
+      filtered = filtered.filter(item => 
+        item.marca?.toLowerCase().includes(mobileSearchTerm.toLowerCase()) ||
+        item.modelo?.toLowerCase().includes(mobileSearchTerm.toLowerCase()) ||
+        item.categoria?.toLowerCase().includes(mobileSearchTerm.toLowerCase()) ||
+        item.sku?.toLowerCase().includes(mobileSearchTerm.toLowerCase()) ||
+        item.color?.toLowerCase().includes(mobileSearchTerm.toLowerCase()) ||
+        item.talla?.toLowerCase().includes(mobileSearchTerm.toLowerCase())
+      )
+    }
+    
+    return filtered
   }
 
   // Check if there are any changes to cancel
@@ -958,96 +1071,46 @@ export default function InventarioPage() {
             </div>
           </div>
         ) : (
-          /* Mobile Layout - Traditional */
-          <main className="container mx-auto px-4 py-8 max-w-7xl">
-            {/* Search Bar and Actions */}
-            <div className="mb-6 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <SearchBar
-                  allData={allData}
-                  onSearchResults={handleSearchResults}
-                  onClearSearch={handleClearSearch}
-                  className="flex-1"
-                />
-                <button
-                  onClick={() => setShowNewProductModal(true)}
-                  className="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
-                >
-                  <span>➕</span>
-                  Nuevo Producto
-                </button>
-                <button
-                  onClick={() => setShowBulkImportModal(true)}
-                  className="px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
-                >
-                  <span>📤</span>
-                  Importar CSV
-                </button>
-              </div>
-            </div>
-            
+          /* Mobile Layout - Optimized */
+          <div className="h-[calc(100vh-120px)] flex flex-col">
             {/* Message Area */}
             <MessageArea message={message} />
 
-            {/* Filters Section */}
-            <ErrorBoundary
-              level="section"
-              onError={(error, errorInfo) => {
-                console.error('Filter section error:', error, errorInfo)
-              }}
-              resetKeys={[allData.length]}
-            >
-              <FilterSection
-                filters={filters}
-                uniqueValues={uniqueValues}
-                allData={allData}
-                onFilterChange={handleFilterChange}
-              />
-            </ErrorBoundary>
+            {/* Mobile Inventory View */}
+            <MobileInventoryView
+              products={getFilteredProducts()}
+              onEdit={handleMobileEdit}
+              onDelete={handleMobileDelete}
+              onAdd={handleMobileAdd}
+              searchTerm={mobileSearchTerm}
+              onSearch={handleMobileSearch}
+              showFilters={showMobileFilters}
+              onToggleFilters={() => setShowMobileFilters(!showMobileFilters)}
+            />
 
-            {/* Table Section */}
-            <ErrorBoundary
-              level="section"
-              onError={(error, errorInfo) => {
-                console.error('Inventory table error:', error, errorInfo)
-              }}
-              resetKeys={[editedView.length]}
-              fallback={
-                <div className="bg-white rounded-xl shadow-lg border border-red-200 p-8 text-center">
-                  <div className="text-4xl mb-4">📊</div>
-                  <h3 className="text-xl font-semibold text-red-800 mb-4">
-                    Error en la tabla de inventario
-                  </h3>
-                  <p className="text-red-700 mb-6">
-                    La tabla de inventario encontró un error. Los datos están seguros, 
-                    pero la tabla no puede mostrarse correctamente en este momento.
-                  </p>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      🔄 Recargar Página
-                    </button>
-                  </div>
-                </div>
-              }
-            >
-              <InventoryTable
-                editedView={editedView}
-                onCellEdit={handleCellEdit}
-                onSave={saveChanges}
-                onCancel={cancelChanges}
-                saving={saving}
-                columnConfig={columnConfig}
-                onAddRow={handleAddRow}
-                onRemoveRow={handleRemoveRow}
-                selectedProducts={selectedProducts}
-                onProductSelect={handleProductSelect}
-                onSelectAll={handleSelectAll}
+            {/* Mobile Filters Modal */}
+            {showMobileFilters && (
+              <MobileFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                uniqueValues={uniqueValues}
+                onClose={() => setShowMobileFilters(false)}
               />
-            </ErrorBoundary>
-          </main>
+            )}
+
+            {/* Mobile Product Editor */}
+            {showMobileEditor && (
+              <MobileProductEditor
+                product={editingProduct}
+                onSave={handleMobileEditorSave}
+                onClose={() => {
+                  setShowMobileEditor(false)
+                  setEditingProduct(null)
+                }}
+                isNew={!editingProduct}
+              />
+            )}
+          </div>
         )}
         
         {/* New Product Collection Wizard */}

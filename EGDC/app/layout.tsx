@@ -7,6 +7,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: 'EGDC - Gestión de Inventario',
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="bg-gray-100 min-h-screen" suppressHydrationWarning={true}>
-        <ErrorBoundary level="app">
-          {children}
-        </ErrorBoundary>
+        <Providers>
+          <ErrorBoundary level="app">
+            {children}
+          </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   )
