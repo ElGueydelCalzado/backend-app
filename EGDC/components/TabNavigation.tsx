@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 interface TabNavigationProps {
   currentTab?: string
@@ -9,6 +10,7 @@ interface TabNavigationProps {
 
 export default function TabNavigation({ currentTab }: TabNavigationProps) {
   const pathname = usePathname()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   
   const tabs = [
     {
@@ -45,9 +47,31 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
     }
   ]
 
+  // Auto-scroll active tab into view
+  useEffect(() => {
+    const activeTabIndex = tabs.findIndex(tab => tab.active)
+    if (activeTabIndex !== -1 && scrollContainerRef.current) {
+      const container = scrollContainerRef.current
+      const activeTab = container.children[activeTabIndex] as HTMLElement
+      if (activeTab) {
+        const containerRect = container.getBoundingClientRect()
+        const tabRect = activeTab.getBoundingClientRect()
+        
+        if (tabRect.left < containerRect.left || tabRect.right > containerRect.right) {
+          activeTab.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          })
+        }
+      }
+    }
+  }, [pathname])
+
   return (
     <nav className="mt-3" role="tablist" aria-label="Navegación principal">
-      <div className="flex flex-wrap gap-2">
+      {/* Desktop: Original layout */}
+      <div className="hidden md:flex flex-wrap gap-2">
         {tabs.map((tab) => {
           if (tab.disabled) {
             return (
@@ -84,18 +108,74 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
           )
         })}
       </div>
-      
-      {/* Tab indicators for mobile */}
-      <div className="mt-4 flex justify-center sm:hidden">
-        <div className="flex space-x-2">
-          {tabs.filter(tab => !tab.disabled).map((tab) => (
-            <div
-              key={`indicator-${tab.id}`}
-              className={`h-2 w-8 rounded-full transition-colors duration-200 ${
-                tab.active ? 'bg-orange-600' : 'bg-gray-300'
-              }`}
-            />
-          ))}
+
+      {/* Mobile: Horizontal slider */}
+      <div className="md:hidden relative">
+        {/* Gradient overlays for scroll indicators */}
+        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none" />
+        
+        {/* Scrollable tab container */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-6 -mx-6 py-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {tabs.map((tab) => {
+            if (tab.disabled) {
+              return (
+                <div
+                  key={tab.id}
+                  className="flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
+                  aria-disabled="true"
+                  title="Próximamente disponible"
+                >
+                  <span className="text-lg mb-1 opacity-50">{tab.icon}</span>
+                  <span className="text-xs font-medium text-gray-400 text-center leading-none">{tab.label}</span>
+                </div>
+              )
+            }
+
+            return (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                role="tab"
+                aria-selected={tab.active}
+                aria-controls={`${tab.id}-panel`}
+                className={`
+                  flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl transition-all duration-300 transform active:scale-95
+                  ${tab.active 
+                    ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 scale-105' 
+                    : 'bg-white text-gray-600 border border-gray-200 shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600'
+                  }
+                `}
+              >
+                <span className={`text-lg mb-1 ${tab.active ? 'animate-pulse' : ''}`}>
+                  {tab.icon}
+                </span>
+                <span className="text-xs font-semibold text-center leading-none">
+                  {tab.label}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+        
+        {/* Active tab indicator dots */}
+        <div className="flex justify-center mt-3">
+          <div className="flex space-x-1.5">
+            {tabs.filter(tab => !tab.disabled).map((tab) => (
+              <div
+                key={`indicator-${tab.id}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  tab.active 
+                    ? 'w-6 bg-orange-500 shadow-sm' 
+                    : 'w-1.5 bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </nav>

@@ -164,4 +164,14 @@ input[type="text"]:hover, input[type="number"]:hover {
 .section-header {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border-left: 4px solid #3b82f6;
+}
+
+/* Hide scrollbar utility class */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
 } 
