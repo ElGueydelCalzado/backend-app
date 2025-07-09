@@ -18,6 +18,7 @@ import { ColumnConfig } from '@/components/ColumnControls'
 import MobileInventoryView from '@/components/MobileInventoryView'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
+import BarcodeScannerButton from '@/components/BarcodeScannerButton'
 
 interface Filters {
   categories: Set<string>
@@ -778,6 +779,23 @@ export default function InventarioPage() {
     setShowMobileEditor(true)
   }
 
+  // Barcode scanner handlers
+  const handleBarcodeProductFound = (product: Product) => {
+    // Focus on the found product by filtering
+    setMobileSearchTerm(`${product.marca} ${product.modelo}`)
+    showMessage(
+      `Producto encontrado: ${product.marca} ${product.modelo}`,
+      'success'
+    )
+  }
+
+  const handleBarcodeProductNotFound = (barcode: string) => {
+    showMessage(
+      `No se encontró producto con código: ${barcode}`,
+      'error'
+    )
+  }
+
   const handleMobileEditorSave = async (product: Product) => {
     try {
       const response = await fetch('/api/inventory/update', {
@@ -957,6 +975,14 @@ export default function InventarioPage() {
                     onClearSearch={handleClearSearch}
                     className="flex-1 max-w-lg"
                   />
+                  
+                  <BarcodeScannerButton
+                    onProductFound={handleBarcodeProductFound}
+                    onProductNotFound={handleBarcodeProductNotFound}
+                    size="md"
+                    variant="outline"
+                  />
+                  
                   <button
                     onClick={() => setShowNewProductModal(true)}
                     className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
