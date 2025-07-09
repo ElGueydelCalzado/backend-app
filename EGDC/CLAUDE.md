@@ -36,6 +36,60 @@ npx tsx scripts/final-update.ts         # Final database configuration
 npx tsx scripts/db-direct.ts            # Direct database operations
 ```
 
+## **🔥 CRITICAL: Git Workflow Requirements**
+
+**⚠️ ALWAYS FOLLOW PROPER GITHUB WORKFLOW - NO EXCEPTIONS ⚠️**
+
+### **Required Git Workflow for All Development:**
+
+```bash
+# 1. ALWAYS create feature branches for new work
+git checkout main
+git pull origin main
+git checkout -b feature/descriptive-name
+git checkout -b hotfix/urgent-fix
+git checkout -b improvement/optimization-name
+
+# 2. Develop and commit on feature branch
+git add .
+git commit -m "feat: descriptive commit message"
+
+# 3. Push feature branch to remote
+git push -u origin feature/descriptive-name
+
+# 4. Create Pull Request for code review
+# 5. After approval, merge to main
+git checkout main
+git pull origin main
+git merge feature/descriptive-name
+git push origin main
+
+# 6. Clean up feature branch
+git branch -d feature/descriptive-name
+git push origin --delete feature/descriptive-name
+```
+
+### **Git Workflow Rules:**
+- 🚫 **NEVER commit directly to main branch**
+- ✅ **ALWAYS create feature branches for new work**
+- ✅ **ALWAYS test builds before committing** (`npm run build` && `npm run type-check`)
+- ✅ **ALWAYS use descriptive branch names** (feature/oauth-auth, hotfix/login-bug)
+- ✅ **ALWAYS use conventional commits** (feat:, fix:, docs:, style:, refactor:, test:)
+- ✅ **ALWAYS create Pull Requests for code review**
+- ✅ **ALWAYS merge to main only after testing and approval**
+
+### **Branch Naming Convention:**
+- `feature/` - New features (feature/barcode-scanning)
+- `hotfix/` - Urgent production fixes (hotfix/auth-login-bug)
+- `improvement/` - Enhancements (improvement/mobile-optimization)
+- `docs/` - Documentation updates (docs/update-readme)
+
+### **Protection Rules:**
+- Main branch should be protected in production
+- Require Pull Request reviews before merging
+- Require status checks to pass before merging
+- Require branches to be up to date before merging
+
 ## Architecture
 
 ### Tech Stack
