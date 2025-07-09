@@ -59,9 +59,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/',
-    '/inventario/:path*',
-    '/nuevo-producto/:path*',
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|login|public).*)',
+    // Temporarily disable all middleware to test NextAuth routes
+    '/disabled-for-testing',
   ],
 }
