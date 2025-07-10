@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Product } from '@/lib/supabase'
-import { ChevronDown, ChevronUp, MoreHorizontal, Package, MapPin, DollarSign } from 'lucide-react'
+import { ChevronDown, ChevronUp, Package, MapPin, DollarSign } from 'lucide-react'
 
 interface MobileProductCardProps {
   product: Product
@@ -58,19 +58,8 @@ export default function MobileProductCard({
     >
       {/* Card Header */}
       <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          {/* Three Dots Menu */}
-          <button 
-            className="action-button p-1 text-gray-400 hover:text-gray-600 rounded"
-            onClick={(e) => {
-              e.stopPropagation()
-              // Handle menu actions
-            }}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
-
-          {/* Stock Status Badge */}
+        {/* Stock Status Badge - Top Right */}
+        <div className="flex justify-end mb-3">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color}`}>
             {stockStatus.status}
           </span>
