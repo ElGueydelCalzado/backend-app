@@ -10,25 +10,48 @@ export async function GET(
     // Google Drive API v3 - List files in folder
     const apiKey = process.env.GOOGLE_DRIVE_API_KEY
     
+    console.log('Environment check:', {
+      hasApiKey: !!apiKey,
+      nodeEnv: process.env.NODE_ENV,
+      folderId
+    })
+    
     if (!apiKey) {
+      console.error('Google Drive API key not found in environment variables')
       return NextResponse.json(
-        { error: 'Google Drive API key not configured' },
+        { 
+          success: false,
+          error: 'Google Drive API key not configured',
+          debug: {
+            hasApiKey: false,
+            nodeEnv: process.env.NODE_ENV
+          }
+        },
         { status: 500 }
       )
     }
 
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)`,
-      {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        }
+    const driveUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)`
+    
+    console.log('Calling Google Drive API:', driveUrl.replace(apiKey, 'API_KEY_HIDDEN'))
+    
+    const response = await fetch(driveUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
       }
-    )
+    })
+
+    console.log('Google Drive API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    })
 
     if (!response.ok) {
-      throw new Error(`Google Drive API error: ${response.status}`)
+      const errorText = await response.text()
+      console.error('Google Drive API error response:', errorText)
+      throw new Error(`Google Drive API error: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
