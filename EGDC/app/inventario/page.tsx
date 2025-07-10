@@ -16,6 +16,7 @@ import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import { ColumnConfig } from '@/components/ColumnControls'
 import MobileInventoryView from '@/components/MobileInventoryView'
+import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
 import BarcodeScannerButton from '@/components/BarcodeScannerButton'
@@ -1102,16 +1103,39 @@ export default function InventarioPage() {
             {/* Message Area */}
             <MessageArea message={message} />
 
-            {/* Mobile Inventory View */}
-            <MobileInventoryView
+            {/* Mobile Search Bar */}
+            <div className="p-4 bg-white border-b border-gray-200">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={mobileSearchTerm}
+                  onChange={(e) => handleMobileSearch(e.target.value)}
+                  className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <button
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Product Card View */}
+            <MobileProductCardList
               products={getFilteredProducts()}
               onEdit={handleMobileEdit}
-              onDelete={handleMobileDelete}
-              onAdd={handleMobileAdd}
-              searchTerm={mobileSearchTerm}
-              onSearch={handleMobileSearch}
-              showFilters={showMobileFilters}
-              onToggleFilters={() => setShowMobileFilters(!showMobileFilters)}
+              onSelect={handleProductSelect}
+              selectedProducts={selectedProducts}
+              loading={loading}
             />
 
             {/* Mobile Filters Modal */}
