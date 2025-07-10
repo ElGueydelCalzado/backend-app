@@ -42,95 +42,23 @@ export default function ImagePreviewModal({
         throw new Error('Invalid Google Drive URL')
       }
 
-      // Try different Google Drive image access methods
-      const possibleImages = await tryDifferentImageMethods(folderId)
-      console.log('Found images:', possibleImages)
+      // Since CORS blocks direct access, we'll use iframe embedding
+      // This works for public Google Drive folders
+      const embedUrl = `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`
+      console.log('Using embed URL:', embedUrl)
       
-      if (possibleImages.length > 0) {
-        setImages(possibleImages)
-        setCurrentImageIndex(0)
-      } else {
-        // No images found, show Drive link option
-        console.log('No images found, showing Drive link fallback')
-        setError(true)
-      }
+      // Set a single "image" which is actually an embedded folder view
+      setImages([embedUrl])
+      setCurrentImageIndex(0)
       
     } catch (err) {
-      console.error('Error loading images:', err)
+      console.error('Error loading folder:', err)
       setError(true)
     } finally {
       setLoading(false)
     }
   }
 
-  const tryDifferentImageMethods = async (folderId: string): Promise<string[]> => {
-    const timeout = (ms: number) => new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), ms)
-    )
-
-    // Method 1: Try Google Drive thumbnail API (works for some public folders)
-    try {
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${folderId}&sz=w1000`
-      console.log('Trying thumbnail URL:', thumbnailUrl)
-      
-      const response = await Promise.race([
-        fetch(thumbnailUrl, { method: 'HEAD' }),
-        timeout(3000)
-      ]) as Response
-      
-      console.log('Thumbnail response:', response.status, response.headers.get('content-type'))
-      
-      if (response.ok) {
-        console.log('✅ Thumbnail method succeeded!')
-        return [thumbnailUrl]
-      }
-    } catch (err) {
-      console.log('❌ Thumbnail method failed:', err)
-    }
-
-    // Method 2: Try direct file access (if it's actually a file, not folder)
-    try {
-      const directUrl = `https://drive.google.com/uc?id=${folderId}&export=view`
-      console.log('Trying direct URL:', directUrl)
-      
-      const response = await Promise.race([
-        fetch(directUrl, { method: 'HEAD' }),
-        timeout(3000)
-      ]) as Response
-      
-      console.log('Direct response:', response.status, response.headers.get('content-type'))
-      
-      if (response.ok && response.headers.get('content-type')?.startsWith('image/')) {
-        console.log('✅ Direct method succeeded!')
-        return [directUrl]
-      }
-    } catch (err) {
-      console.log('❌ Direct access method failed:', err)
-    }
-
-    // Method 3: Try alternative formats that work with Google Cloud
-    try {
-      const alternativeUrl = `https://drive.google.com/uc?id=${folderId}`
-      console.log('Trying alternative URL:', alternativeUrl)
-      
-      const response = await Promise.race([
-        fetch(alternativeUrl, { method: 'HEAD' }),
-        timeout(3000)
-      ]) as Response
-      
-      console.log('Alternative response:', response.status, response.headers.get('content-type'))
-      
-      if (response.ok) {
-        console.log('✅ Alternative method succeeded!')
-        return [alternativeUrl]
-      }
-    } catch (err) {
-      console.log('❌ Alternative method failed:', err)
-    }
-
-    console.log('❌ All methods failed')
-    return []
-  }
 
   const extractFolderIdFromUrl = (url: string): string | null => {
     // Extract folder ID from various Google Drive URL formats
@@ -229,43 +157,19 @@ export default function ImagePreviewModal({
 
           {!loading && !error && images.length > 0 && (
             <div className="relative">
-              {/* Main Image */}
+              {/* Google Drive Folder Embed */}
               <div className="flex items-center justify-center bg-gray-100">
-                <img
+                <iframe
                   src={images[currentImageIndex]}
-                  alt={`${productName} - Imagen ${currentImageIndex + 1}`}
-                  className="max-w-full max-h-[70vh] object-contain"
-                  onError={() => {
-                    // If image fails to load, remove it from the list
-                    setImages(prev => prev.filter((_, index) => index !== currentImageIndex))
-                    if (currentImageIndex >= images.length - 1) {
-                      setCurrentImageIndex(0)
-                    }
-                  }}
+                  className="w-full h-[70vh] border-0"
+                  title={`${productName} - Imágenes del producto`}
+                  allow="autoplay"
                 />
               </div>
 
-              {/* Navigation */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
-
-              {/* Image Counter */}
+              {/* Info Footer */}
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                {currentImageIndex + 1} / {images.length}
+                Vista de carpeta Google Drive
               </div>
             </div>
           )}
