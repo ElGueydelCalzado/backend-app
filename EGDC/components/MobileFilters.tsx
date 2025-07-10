@@ -34,6 +34,34 @@ export default function MobileFilters({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['categories', 'brands'])
   )
+  const [startY, setStartY] = useState(0)
+  const [currentY, setCurrentY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartY(e.touches[0].clientY)
+    setCurrentY(e.touches[0].clientY)
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return
+    setCurrentY(e.touches[0].clientY)
+  }
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return
+    const deltaY = currentY - startY
+    
+    // If swiped down more than 100px, close the modal
+    if (deltaY > 100) {
+      onClose()
+    }
+    
+    setIsDragging(false)
+    setStartY(0)
+    setCurrentY(0)
+  }
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections)
@@ -129,7 +157,21 @@ export default function MobileFilters({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-      <div className="bg-white w-full max-h-[80vh] rounded-t-xl overflow-hidden">
+      <div 
+        className="bg-white w-full max-h-[80vh] rounded-t-xl overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: isDragging && currentY > startY ? `translateY(${Math.min(currentY - startY, 200)}px)` : 'translateY(0)',
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+        }}
+      >
+        {/* Swipe Indicator */}
+        <div className="flex justify-center pt-2 pb-1">
+          <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">

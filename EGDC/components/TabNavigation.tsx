@@ -30,6 +30,14 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       disabled: false
     },
     {
+      id: 'buscar',
+      label: 'Buscar',
+      icon: '🔍',
+      href: '/escanear',
+      active: pathname === '/escanear',
+      disabled: false
+    },
+    {
       id: 'ventas',
       label: 'Ventas',
       icon: '💰',
@@ -44,14 +52,6 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       href: '/analiticas',
       active: pathname === '/analiticas',
       disabled: true
-    },
-    {
-      id: 'escanear',
-      label: 'Escanear',
-      icon: '👁️',
-      href: '/escanear',
-      active: pathname === '/escanear',
-      disabled: false
     },
     {
       id: 'tbd2',

@@ -33,7 +33,7 @@ interface Filters {
 interface SortConfig {
   field: 'alphabetical' | 'price' | 'stock' | 'date'
   direction: 'asc' | 'desc'
-  priceField?: 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo'
+  priceFields?: ('precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo')[]
 }
 
 interface UniqueValues {
@@ -115,7 +115,7 @@ export default function InventarioPage() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: 'alphabetical',
     direction: 'asc',
-    priceField: 'precio_shopify'
+    priceFields: ['precio_shopify']
   })
   
   const [showMobileSort, setShowMobileSort] = useState(false)
@@ -890,9 +890,15 @@ export default function InventarioPage() {
       
       case 'price':
         sorted.sort((a, b) => {
-          const priceField = sortConfig.priceField || 'precio_shopify'
-          const aPrice = (a as any)[priceField] || a.costo || 0
-          const bPrice = (b as any)[priceField] || b.costo || 0
+          const priceFields = sortConfig.priceFields || ['precio_shopify']
+          // Calculate average price from selected fields
+          const getAveragePrice = (product: any) => {
+            const prices = priceFields.map(field => product[field] || product.costo || 0)
+            return prices.reduce((sum, price) => sum + price, 0) / prices.length
+          }
+          
+          const aPrice = getAveragePrice(a)
+          const bPrice = getAveragePrice(b)
           return sortConfig.direction === 'asc' 
             ? aPrice - bPrice
             : bPrice - aPrice

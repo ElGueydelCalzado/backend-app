@@ -7,7 +7,7 @@ import ColumnControls, { ColumnConfig } from './ColumnControls'
 interface SortConfig {
   field: 'alphabetical' | 'price' | 'stock' | 'date'
   direction: 'asc' | 'desc'
-  priceField?: 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo'
+  priceFields?: ('precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo')[]
 }
 
 interface SidebarTabsProps {
@@ -148,89 +148,100 @@ export default function SidebarTabs({
                         option => option.field === sortConfig.field && option.direction === sortConfig.direction
                       )
                       let label = current?.label || 'Alfabético A-Z'
-                      if (sortConfig.field === 'price' && sortConfig.priceField) {
+                      if (sortConfig.field === 'price' && sortConfig.priceFields && sortConfig.priceFields.length > 0) {
                         const priceLabels = {
                           precio_shein: 'SHEIN',
                           precio_shopify: 'Shopify',
                           precio_meli: 'MeLi',
                           costo: 'Costo'
                         }
-                        label += ` (${priceLabels[sortConfig.priceField]})`
+                        const selectedLabels = sortConfig.priceFields.map(field => priceLabels[field]).join(', ')
+                        label += ` (${selectedLabels})`
                       }
                       return label
                     })()}
                   </p>
                 </div>
                 
-                {[
-                  { field: 'alphabetical', direction: 'asc', label: 'A-Z (Alfabético)', icon: '🔤' },
-                  { field: 'alphabetical', direction: 'desc', label: 'Z-A (Alfabético)', icon: '🔤' },
-                  { field: 'price', direction: 'asc', label: 'Precio: Menor a Mayor', icon: '💰' },
-                  { field: 'price', direction: 'desc', label: 'Precio: Mayor a Menor', icon: '💰' },
-                  { field: 'stock', direction: 'desc', label: 'Stock: Mayor a Menor', icon: '📦' },
-                  { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor', icon: '📦' },
-                  { field: 'date', direction: 'desc', label: 'Más Recientes', icon: '📅' },
-                  { field: 'date', direction: 'asc', label: 'Más Antiguos', icon: '📅' },
-                ].map((option, index) => {
-                  const isSelected = sortConfig.field === option.field && sortConfig.direction === option.direction
-                  
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => onSortChange({ 
-                        field: option.field as any, 
-                        direction: option.direction as any,
-                        priceField: option.field === 'price' ? (sortConfig.priceField || 'precio_shopify') : undefined
-                      })}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                        isSelected
-                          ? 'border-orange-500 bg-orange-50 text-orange-800'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg">{option.icon}</span>
-                        <span className="font-medium text-left">{option.label}</span>
-                      </div>
-                      {isSelected && (
-                        <span className="text-orange-600">✓</span>
-                      )}
-                    </button>
-                  )
-                })}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { field: 'alphabetical', direction: 'asc', label: 'A-Z (Alfabético)', icon: '🔤' },
+                    { field: 'alphabetical', direction: 'desc', label: 'Z-A (Alfabético)', icon: '🔤' },
+                    { field: 'price', direction: 'asc', label: 'Precio: Menor a Mayor', icon: '💰' },
+                    { field: 'price', direction: 'desc', label: 'Precio: Mayor a Menor', icon: '💰' },
+                    { field: 'stock', direction: 'desc', label: 'Stock: Mayor a Menor', icon: '📦' },
+                    { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor', icon: '📦' },
+                    { field: 'date', direction: 'desc', label: 'Más Recientes', icon: '📅' },
+                    { field: 'date', direction: 'asc', label: 'Más Antiguos', icon: '📅' },
+                  ].map((option, index) => {
+                    const isSelected = sortConfig.field === option.field && sortConfig.direction === option.direction
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => onSortChange({ 
+                          field: option.field as any, 
+                          direction: option.direction as any,
+                          priceFields: option.field === 'price' ? (sortConfig.priceFields || ['precio_shopify']) : undefined
+                        })}
+                        className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all ${
+                          isSelected
+                            ? 'border-orange-500 bg-orange-50 text-orange-800'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-lg mb-1">{option.icon}</span>
+                        <span className="font-medium text-xs text-center leading-tight">{option.label}</span>
+                        {isSelected && (
+                          <span className="text-orange-600 text-xs mt-1">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
                 
                 {/* Price Field Selection */}
                 {sortConfig.field === 'price' && (
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="text-sm font-semibold text-blue-800 mb-3">Seleccionar Campo de Precio:</h4>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {[
                         { field: 'precio_shein', label: 'SHEIN', icon: '🟠' },
                         { field: 'precio_shopify', label: 'Shopify', icon: '🟢' },
                         { field: 'precio_meli', label: 'MercadoLibre', icon: '🟡' },
                         { field: 'costo', label: 'Costo', icon: '💰' },
-                      ].map((priceOption) => (
-                        <button
-                          key={priceOption.field}
-                          onClick={() => onSortChange({ 
-                            ...sortConfig, 
-                            priceField: priceOption.field as any
-                          })}
-                          className={`w-full flex items-center justify-between p-2 rounded border transition-all ${
-                            sortConfig.priceField === priceOption.field
-                              ? 'border-blue-500 bg-blue-100 text-blue-800'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2">
+                      ].map((priceOption) => {
+                        const isSelected = (sortConfig.priceFields || ['precio_shopify']).includes(priceOption.field as any)
+                        return (
+                          <button
+                            key={priceOption.field}
+                            onClick={() => {
+                              const currentFields = sortConfig.priceFields || ['precio_shopify']
+                              const newFields = currentFields.includes(priceOption.field as any)
+                                ? currentFields.filter(f => f !== priceOption.field)
+                                : [...currentFields, priceOption.field as any]
+                              
+                              // Ensure at least one field is selected
+                              if (newFields.length === 0) return
+                              
+                              onSortChange({ 
+                                ...sortConfig, 
+                                priceFields: newFields
+                              })
+                            }}
+                            className={`flex items-center justify-center space-x-2 p-2 rounded border transition-all ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-100 text-blue-800'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
                             <span>{priceOption.icon}</span>
-                            <span className="text-sm font-medium">{priceOption.label}</span>
-                          </div>
-                          {sortConfig.priceField === priceOption.field && (
-                            <span className="text-blue-600 text-sm">✓</span>
-                          )}
-                        </button>
-                      ))}
+                            <span className="text-xs font-medium">{priceOption.label}</span>
+                            {isSelected && (
+                              <span className="text-blue-600 text-xs">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
