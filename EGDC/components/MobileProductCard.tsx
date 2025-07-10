@@ -56,26 +56,19 @@ export default function MobileProductCard({
       `}
       onClick={handleCardClick}
     >
-      {/* Card Header */}
-      <div className="p-4">
-        {/* Stock Status Badge - Top Right */}
-        <div className="flex justify-end mb-3">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color}`}>
-            {stockStatus.status}
-          </span>
-        </div>
-
+      {/* Compact Card Content */}
+      <div className="p-3">
         {/* Basic Product Info */}
         <div className="space-y-2">
           {/* Marca, Modelo */}
           <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
+            <h3 className="font-semibold text-gray-900 text-lg leading-tight">
               {product.marca} {product.modelo}
             </h3>
           </div>
 
-          {/* Categoría, Color, Talla */}
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+          {/* Categoría, Color, Talla + Stock Status */}
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
             <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
               {product.categoria}
             </span>
@@ -84,6 +77,9 @@ export default function MobileProductCard({
             </span>
             <span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
               Talla {product.talla}
+            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color} ml-auto`}>
+              {stockStatus.status}
             </span>
           </div>
 
@@ -96,7 +92,7 @@ export default function MobileProductCard({
         </div>
 
         {/* Expand/Collapse Indicator */}
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-2">
           {isExpanded ? (
             <ChevronUp className="w-5 h-5 text-gray-400" />
           ) : (
