@@ -213,15 +213,11 @@ export default function MobileProductCard({
             </button>
           </div>
 
-          {/* Marca, Modelo + Image Button */}
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-base leading-tight">
-              {product.marca}
-              <span className="ml-2">{product.modelo}</span>
-            </h3>
-            {product.google_drive && (
+          {/* Photo Button - Top Left Corner */}
+          {product.google_drive && (
+            <div className="absolute -top-0.5 -left-0.5 z-10">
               <button
-                className="action-button flex-shrink-0 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                className="action-button w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors shadow-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   window.open(product.google_drive!, '_blank')
@@ -230,7 +226,15 @@ export default function MobileProductCard({
               >
                 📷
               </button>
-            )}
+            </div>
+          )}
+
+          {/* Marca, Modelo */}
+          <div className="flex items-center">
+            <h3 className="font-semibold text-gray-900 text-base leading-tight">
+              {product.marca}
+              <span className="ml-2">{product.modelo}</span>
+            </h3>
           </div>
 
           {/* Categoría, Color, Talla + Stock Status */}

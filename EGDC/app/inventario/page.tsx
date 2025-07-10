@@ -1323,6 +1323,7 @@ export default function InventarioPage() {
                   setEditingProduct(null)
                 }}
                 isNew={!editingProduct}
+                availableCategories={Array.from(uniqueValues.categories).sort()}
               />
             )}
 
