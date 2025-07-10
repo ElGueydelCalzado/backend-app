@@ -24,8 +24,8 @@ export default function ToastNotification({ message, onClose }: ToastNotificatio
       setIsVisible(true)
       setIsLeaving(false)
 
-      // Auto-hide after duration (default 5 seconds)
-      const duration = message.duration || 5000
+      // Auto-hide after duration (default 4 seconds)
+      const duration = message.duration || 4000
       const timer = setTimeout(() => {
         handleClose()
       }, duration)
@@ -42,7 +42,7 @@ export default function ToastNotification({ message, onClose }: ToastNotificatio
       if (message) {
         onClose(message.id)
       }
-    }, 300) // Match the animation duration
+    }, 250) // Faster animation
   }
 
   if (!message || !isVisible) {
@@ -50,9 +50,9 @@ export default function ToastNotification({ message, onClose }: ToastNotificatio
   }
 
   const styles = {
-    success: 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400',
-    error: 'bg-gradient-to-r from-red-500 to-pink-500 border-red-400',
-    info: 'bg-gradient-to-r from-blue-500 to-indigo-500 border-blue-400'
+    success: 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400 shadow-green-500/25',
+    error: 'bg-gradient-to-r from-red-500 to-pink-500 border-red-400 shadow-red-500/25',
+    info: 'bg-gradient-to-r from-blue-500 to-indigo-500 border-blue-400 shadow-blue-500/25'
   }
 
   const icons = {
@@ -62,51 +62,33 @@ export default function ToastNotification({ message, onClose }: ToastNotificatio
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-sm w-full">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
       <div 
         className={`
           ${styles[message.type]} 
-          text-white shadow-2xl rounded-xl border-2 p-4 
-          transform transition-all duration-300 ease-out
+          text-white shadow-2xl rounded-lg border-2 px-4 py-3 
+          transform transition-all duration-250 ease-out max-w-xs
           ${isLeaving 
-            ? 'translate-x-full opacity-0 scale-95' 
-            : 'translate-x-0 opacity-100 scale-100'
+            ? 'scale-90 opacity-0' 
+            : 'scale-100 opacity-100'
           }
           backdrop-blur-sm
         `}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3 flex-1">
-            <span className="text-xl flex-shrink-0">{icons[message.type]}</span>
-            <p className="font-medium text-sm leading-relaxed">{message.text}</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
+            <span className="text-lg flex-shrink-0">{icons[message.type]}</span>
+            <p className="font-medium text-sm leading-tight truncate">{message.text}</p>
           </div>
           <button
             onClick={handleClose}
-            className="flex-shrink-0 ml-3 p-1 hover:bg-white/20 rounded-full transition-colors"
-            aria-label="Cerrar notificación"
+            className="flex-shrink-0 p-1 hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Cerrar"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </button>
         </div>
-        
-        {/* Progress bar for auto-hide */}
-        <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-white/40 rounded-full transition-all ease-linear"
-            style={{
-              width: '100%',
-              animation: `toast-progress ${message.duration || 5000}ms linear forwards`
-            }}
-          />
-        </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes toast-progress {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-      `}</style>
     </div>
   )
 }
