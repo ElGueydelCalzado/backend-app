@@ -60,10 +60,10 @@ export default function MobileProductCard({
       <div className="p-3">
         {/* Basic Product Info */}
         <div className="space-y-2">
-          {/* Edit Button - Top Left */}
-          <div className="absolute top-3 left-3 z-10">
+          {/* Edit Button - Top Right Corner */}
+          <div className="absolute -top-1 -right-1 z-10">
             <button
-              className="action-button w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center text-sm transition-colors shadow-lg"
+              className="action-button w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors shadow-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit?.(product)
