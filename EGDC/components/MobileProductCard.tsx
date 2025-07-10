@@ -73,6 +73,9 @@ export default function MobileProductCard({
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
 
+    // Always prevent default to stop screen scrolling
+    e.preventDefault()
+
     // Allow both left and right swipes
     if (deltaX < 0) {
       // Left swipe - show delete panel
@@ -80,14 +83,12 @@ export default function MobileProductCard({
       setSwipeOffset(clampedOffset)
       setShowDeletePanel(true)
       setShowCreatePanel(false)
-      e.preventDefault()
     } else if (deltaX > 0) {
       // Right swipe - show create new panel
       const clampedOffset = Math.min(deltaX, 100) // Limit to 100px
       setSwipeOffset(clampedOffset)
       setShowCreatePanel(true)
       setShowDeletePanel(false)
-      e.preventDefault()
     } else {
       setSwipeOffset(0)
       setShowDeletePanel(false)
@@ -152,10 +153,9 @@ export default function MobileProductCard({
       >
         <button
           onClick={handleDeleteClick}
-          className="flex items-center space-x-2 text-white font-medium"
+          className="flex items-center text-white font-medium"
         >
-          <Trash2 className="w-5 h-5" />
-          <span>Eliminar</span>
+          <Trash2 className="w-6 h-6" />
         </button>
       </div>
 
@@ -169,9 +169,11 @@ export default function MobileProductCard({
       >
         <button
           onClick={handleCreateNewClick}
-          className="flex items-center space-x-2 text-white font-medium"
+          className="flex items-center text-white font-medium"
         >
-          <span>+ Nuevo</span>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
         </button>
       </div>
 

@@ -70,7 +70,7 @@ export default function MobileProductCardList({
     <div className="space-y-4 p-4">
       {/* Products Header */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-base font-semibold text-gray-900">
+        <h2 className="text-sm font-semibold text-gray-900">
           Productos ({products.length})
         </h2>
         {selectedProducts.size > 0 && (
@@ -81,17 +81,18 @@ export default function MobileProductCardList({
       </div>
 
       {/* Product Cards */}
-      <div className="space-y-3">
+      <div className="space-y-3 flex flex-col items-center">
         {products.map((product) => (
-          <MobileProductCard
-            key={product.id}
-            product={product}
-            onEdit={onEdit}
-            onSelect={onSelect}
-            onDelete={onDelete}
-            onCreateNew={onCreateNew}
-            isSelected={selectedProducts.has(product.id)}
-          />
+          <div key={product.id} className="w-2/3 max-w-sm">
+            <MobileProductCard
+              product={product}
+              onEdit={onEdit}
+              onSelect={onSelect}
+              onDelete={onDelete}
+              onCreateNew={onCreateNew}
+              isSelected={selectedProducts.has(product.id)}
+            />
+          </div>
         ))}
       </div>
 
