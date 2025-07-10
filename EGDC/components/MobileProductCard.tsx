@@ -78,16 +78,10 @@ export default function MobileProductCard({
             <span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
               Talla {product.talla}
             </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color} ml-auto`}>
-              {stockStatus.status}
-            </span>
-          </div>
-
-          {/* Quick Stock Summary */}
-          <div className="flex items-center gap-2 text-sm">
-            <Package className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-600">Stock Total: </span>
-            <span className="font-semibold text-gray-900">{totalInventory}</span>
+            <div className={`flex flex-col items-center px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color} ml-auto`}>
+              <span>{stockStatus.status}</span>
+              <span className="font-bold text-gray-900">{totalInventory}</span>
+            </div>
           </div>
         </div>
 

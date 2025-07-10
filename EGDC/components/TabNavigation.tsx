@@ -142,12 +142,11 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
               return (
                 <div
                   key={tab.id}
-                  className="flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
+                  className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
                   aria-disabled="true"
-                  title="Próximamente disponible"
+                  title={`${tab.label} - Próximamente disponible`}
                 >
-                  <span className="text-lg mb-1 opacity-50">{tab.icon}</span>
-                  <span className="text-xs font-medium text-gray-400 text-center leading-none">{tab.label}</span>
+                  <span className="text-xl opacity-50">{tab.icon}</span>
                 </div>
               )
             }
@@ -159,19 +158,17 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
                 role="tab"
                 aria-selected={tab.active}
                 aria-controls={`${tab.id}-panel`}
+                title={tab.label}
                 className={`
-                  flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl transition-all duration-300 transform active:scale-95
+                  flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 transform active:scale-95
                   ${tab.active 
                     ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 scale-105' 
                     : 'bg-white text-gray-600 border border-gray-200 shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600'
                   }
                 `}
               >
-                <span className={`text-lg mb-1 ${tab.active ? 'animate-pulse' : ''}`}>
+                <span className={`text-xl ${tab.active ? 'animate-pulse' : ''}`}>
                   {tab.icon}
-                </span>
-                <span className="text-xs font-semibold text-center leading-none">
-                  {tab.label}
                 </span>
               </Link>
             )
