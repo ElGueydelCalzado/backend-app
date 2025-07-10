@@ -158,7 +158,7 @@ export default function MobileProductCard({
               </div>
               <div className="flex justify-between p-2 bg-green-50 rounded">
                 <span>Shopify:</span>
-                <span className="font-medium">${product.precio_shopify || 0}</span>
+                <span className="font-medium">${product.precio_egdc || 0}</span>
               </div>
               <div className="flex justify-between p-2 bg-yellow-50 rounded col-span-2">
                 <span>MercadoLibre:</span>

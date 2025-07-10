@@ -54,7 +54,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'costo', label: 'Costo', visible: true, category: 'pricing' },
   { key: 'google_drive', label: 'Google Drive', visible: false, category: 'basic' },
   { key: 'precio_shein', label: 'Precio SHEIN', visible: true, category: 'pricing' },
-  { key: 'precio_shopify', label: 'Precio Shopify', visible: true, category: 'pricing' },
+  { key: 'precio_egdc', label: 'Precio Shopify', visible: true, category: 'pricing' },
   { key: 'precio_meli', label: 'Precio MercadoLibre', visible: true, category: 'pricing' },
   { key: 'shein_modifier', label: 'Mod. SHEIN', visible: false, category: 'pricing' },
   { key: 'shopify_modifier', label: 'Mod. Shopify', visible: false, category: 'pricing' },
@@ -306,7 +306,6 @@ export default function InventarioPage() {
             shopify_modifier: editedItem.shopify_modifier,
             meli_modifier: editedItem.meli_modifier,
             precio_shein: editedItem.precio_shein,
-            precio_shopify: editedItem.precio_shopify,
             precio_egdc: editedItem.precio_egdc,
             precio_meli: editedItem.precio_meli,
             inv_egdc: editedItem.inv_egdc,
@@ -501,7 +500,6 @@ export default function InventarioPage() {
       shopify_modifier: 2,
       meli_modifier: 2.5,
       precio_shein: null,
-      precio_shopify: null,
       precio_egdc: null,
       precio_meli: null,
       inv_egdc: 0,
@@ -719,7 +717,7 @@ export default function InventarioPage() {
   const handlePresetSelect = (preset: string) => {
     const presets = {
       basic: ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku'],
-      financial: ['categoria', 'marca', 'modelo', 'costo', 'precio_shein', 'precio_shopify', 'precio_meli'],
+      financial: ['categoria', 'marca', 'modelo', 'costo', 'precio_shein', 'precio_egdc', 'precio_meli'],
       stock: ['categoria', 'marca', 'modelo', 'inv_egdc', 'inv_fami', 'inventory_total'],
       complete: 'all'
     }
