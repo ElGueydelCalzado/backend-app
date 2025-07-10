@@ -53,7 +53,7 @@ export default function SidebarTabs({
     {
       id: 'columnas' as const,
       label: 'Columnas',
-      icon: '👁',
+      icon: '📊',
       count: columnConfig.filter(col => col.visible).length
     },
     ...(sortConfig && onSortChange ? [{
@@ -72,20 +72,20 @@ export default function SidebarTabs({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            title={tab.label}
             className={`
-              flex-1 px-4 py-3 text-sm font-medium transition-colors relative
+              flex-1 px-2 py-4 text-sm font-medium transition-colors relative
               ${activeTab === tab.id
                 ? 'bg-white text-orange-700 border-b-2 border-orange-500'
                 : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }
             `}
           >
-            <div className="flex items-center justify-center gap-2">
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
+            <div className="flex flex-col items-center justify-center gap-1">
+              <span className="text-xl">{tab.icon}</span>
               {tab.count > 0 && (
                 <span className={`
-                  text-xs px-2 py-1 rounded-full
+                  text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center
                   ${activeTab === tab.id
                     ? 'bg-orange-100 text-orange-700'
                     : 'bg-gray-200 text-gray-600'
