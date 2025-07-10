@@ -60,11 +60,24 @@ export default function MobileProductCard({
       <div className="p-3">
         {/* Basic Product Info */}
         <div className="space-y-2">
-          {/* Marca, Modelo */}
-          <div>
+          {/* Marca, Modelo + Image Button */}
+          <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 text-lg leading-tight">
-              {product.marca} {product.modelo}
+              {product.marca}
+              <span className="ml-2">{product.modelo}</span>
             </h3>
+            {product.google_drive && (
+              <button
+                className="action-button flex-shrink-0 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-sm transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.open(product.google_drive!, '_blank')
+                }}
+                title="Ver imágenes del producto"
+              >
+                📷
+              </button>
+            )}
           </div>
 
           {/* Categoría, Color, Talla + Stock Status */}
@@ -151,18 +164,18 @@ export default function MobileProductCard({
               <DollarSign className="w-4 h-4" />
               Precios
             </h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex justify-between p-2 bg-orange-50 rounded">
-                <span>SHEIN:</span>
-                <span className="font-medium">${product.precio_shein || 0}</span>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="flex flex-col items-center p-2 bg-orange-50 rounded">
+                <span className="text-gray-600">SHEIN</span>
+                <span className="font-medium text-sm">${product.precio_shein || 0}</span>
               </div>
-              <div className="flex justify-between p-2 bg-green-50 rounded">
-                <span>Shopify:</span>
-                <span className="font-medium">${product.precio_egdc || 0}</span>
+              <div className="flex flex-col items-center p-2 bg-green-50 rounded">
+                <span className="text-gray-600">Shopify</span>
+                <span className="font-medium text-sm">${product.precio_egdc || 0}</span>
               </div>
-              <div className="flex justify-between p-2 bg-yellow-50 rounded col-span-2">
-                <span>MercadoLibre:</span>
-                <span className="font-medium">${product.precio_meli || 0}</span>
+              <div className="flex flex-col items-center p-2 bg-yellow-50 rounded">
+                <span className="text-gray-600">MeLi</span>
+                <span className="font-medium text-sm">${product.precio_meli || 0}</span>
               </div>
             </div>
           </div>
