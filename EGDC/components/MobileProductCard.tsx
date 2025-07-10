@@ -142,22 +142,6 @@ export default function MobileProductCard({
                 <span>FAMI:</span>
                 <span className="font-medium">{product.inv_fami || 0}</span>
               </div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
-                <span>Bodega:</span>
-                <span className="font-medium">{product.inv_bodega_principal || 0}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
-                <span>Centro:</span>
-                <span className="font-medium">{product.inv_tienda_centro || 0}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
-                <span>Norte:</span>
-                <span className="font-medium">{product.inv_tienda_norte || 0}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
-                <span>Sur:</span>
-                <span className="font-medium">{product.inv_tienda_sur || 0}</span>
-              </div>
               <div className="flex justify-between p-2 bg-blue-50 rounded col-span-2">
                 <span className="font-medium">Online:</span>
                 <span className="font-medium">{product.inv_online || 0}</span>
