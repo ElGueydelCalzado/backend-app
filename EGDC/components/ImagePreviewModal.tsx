@@ -28,15 +28,97 @@ export default function ImagePreviewModal({
   }, [isOpen, googleDriveUrl])
 
   const loadImagesFromDrive = async () => {
-    setLoading(false) // Skip loading since we're going straight to Drive link
+    setLoading(true)
     setError(false)
     
-    // Due to browser security restrictions (CORS + CSP), we cannot embed
-    // Google Drive content directly. Instead, we'll show a nice interface
-    // that explains this and provides easy access to the Drive folder.
+    try {
+      console.log('Original Google Drive URL:', googleDriveUrl)
+      
+      // Extract folder ID from Google Drive URL
+      const folderId = extractFolderIdFromUrl(googleDriveUrl)
+      console.log('Extracted folder ID:', folderId)
+      
+      if (!folderId) {
+        throw new Error('Invalid Google Drive URL')
+      }
+
+      // Try to get images using Google Drive API through our server
+      const response = await fetch(`/api/drive-images/${folderId}`)
+      
+      if (response.ok) {
+        const imageData = await response.json()
+        console.log('Images from API:', imageData)
+        
+        if (imageData.images && imageData.images.length > 0) {
+          setImages(imageData.images)
+          setCurrentImageIndex(0)
+          return
+        }
+      }
+      
+      // Fallback: Try direct Google Drive patterns
+      const directImages = await tryDirectGoogleDriveUrls(folderId)
+      
+      if (directImages.length > 0) {
+        setImages(directImages)
+        setCurrentImageIndex(0)
+      } else {
+        setError(true)
+      }
+      
+    } catch (err) {
+      console.error('Error loading images:', err)
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const tryDirectGoogleDriveUrls = async (folderId: string): Promise<string[]> => {
+    // Try different Google Drive direct image URL patterns
+    const possibleUrls = [
+      // Pattern 1: Googleusercontent (often works for public files)
+      `https://lh3.googleusercontent.com/d/${folderId}=w1000`,
+      // Pattern 2: Drive thumbnail API (sometimes works)  
+      `https://drive.google.com/thumbnail?id=${folderId}&sz=w1000`,
+      // Pattern 3: Direct download (for single files)
+      `https://drive.google.com/uc?export=view&id=${folderId}`,
+      // Pattern 4: Alternative googleapis pattern
+      `https://www.googleapis.com/drive/v3/files/${folderId}?alt=media`
+    ]
     
-    console.log('Redirecting to Google Drive due to browser security restrictions')
-    console.log('Drive URL:', googleDriveUrl)
+    console.log('Trying direct Google Drive URLs...')
+    
+    for (const url of possibleUrls) {
+      try {
+        console.log('Testing URL:', url)
+        
+        // Try to load the image
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        
+        const imageLoaded = await new Promise((resolve) => {
+          img.onload = () => {
+            console.log('✅ Image loaded successfully:', url)
+            resolve(true)
+          }
+          img.onerror = () => {
+            console.log('❌ Image failed to load:', url)
+            resolve(false)
+          }
+          img.src = url
+        })
+        
+        if (imageLoaded) {
+          return [url]
+        }
+      } catch (err) {
+        console.log('Error testing URL:', url, err)
+      }
+    }
+    
+    console.log('❌ No direct URLs worked')
+    return []
   }
 
 
@@ -108,49 +190,73 @@ export default function ImagePreviewModal({
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
-          {/* Beautiful Google Drive Interface */}
-          <div className="flex flex-col items-center justify-center h-96 p-8 text-center">
-            {/* Google Drive Icon */}
-            <div className="w-24 h-24 mb-6 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12.01 2C6.5 2 2.01 6.49 2.01 12s4.49 10 9.99 10c5.51 0 10-4.49 10-10S17.52 2 12.01 2zM18 14h-5v5h-2v-5H6v-2h5V7h2v5h5v2z"/>
-              </svg>
+          {loading && (
+            <div className="flex items-center justify-center h-96">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <span className="ml-3 text-gray-600">Cargando imágenes...</span>
             </div>
+          )}
 
-            {/* Title */}
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">
-              Imágenes de {productName}
-            </h3>
-
-            {/* Description */}
-            <p className="text-gray-600 mb-8 max-w-md leading-relaxed">
-              Las imágenes del producto están almacenadas en Google Drive. 
-              Haz clic en el botón de abajo para ver todas las imágenes en alta calidad.
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+          {error && (
+            <div className="flex flex-col items-center justify-center h-96 p-8 text-center">
+              <div className="text-6xl mb-4">📁</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Vista previa no disponible
+              </h3>
+              <p className="text-gray-600 mb-6">
+                No se pueden cargar las imágenes en este momento. 
+                Usa el botón de abajo para ver las imágenes en Google Drive.
+              </p>
               <button
                 onClick={openInDrive}
-                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg transform hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
-                <ExternalLink className="w-5 h-5" />
-                <span className="font-semibold">Ver Imágenes en Drive</span>
-              </button>
-              
-              <button
-                onClick={onClose}
-                className="flex items-center gap-3 px-8 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
-              >
-                <span>Cerrar</span>
+                <ExternalLink className="w-4 h-4" />
+                Abrir carpeta en Google Drive
               </button>
             </div>
+          )}
 
-            {/* Subtle hint */}
-            <p className="text-xs text-gray-400 mt-6">
-              Se abrirá en una nueva pestaña
-            </p>
-          </div>
+          {!loading && !error && images.length > 0 && (
+            <div className="relative">
+              {/* Main Image */}
+              <div className="flex items-center justify-center bg-gray-100">
+                <img
+                  src={images[currentImageIndex]}
+                  alt={`${productName} - Imagen ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-[70vh] object-contain"
+                  onError={() => {
+                    console.log('Image failed to load, trying fallback...')
+                    // If image fails to load, try opening Drive as fallback
+                    openInDrive()
+                  }}
+                />
+              </div>
+
+              {/* Navigation */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Image Counter */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {currentImageIndex + 1} / {images.length}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
