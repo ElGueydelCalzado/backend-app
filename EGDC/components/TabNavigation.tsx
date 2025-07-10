@@ -44,6 +44,22 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       href: '/analiticas',
       active: pathname === '/analiticas',
       disabled: true
+    },
+    {
+      id: 'tbd1',
+      label: 'TBD 1',
+      icon: '🔧',
+      href: '/tbd1',
+      active: pathname === '/tbd1',
+      disabled: true
+    },
+    {
+      id: 'tbd2',
+      label: 'TBD 2',
+      icon: '⚙️',
+      href: '/tbd2',
+      active: pathname === '/tbd2',
+      disabled: true
     }
   ]
 
