@@ -230,7 +230,7 @@ export default function MobileProductCard({
           )}
 
           {/* Marca, Modelo */}
-          <div className="flex items-center">
+          <div className="flex items-center" style={{ marginLeft: product.google_drive ? '32px' : '0' }}>
             <h3 className="font-semibold text-gray-900 text-base leading-tight">
               {product.marca}
               <span className="ml-2">{product.modelo}</span>
