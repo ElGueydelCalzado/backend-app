@@ -32,27 +32,27 @@ export default function ImagePreviewModal({
     setError(false)
     
     try {
+      console.log('Original Google Drive URL:', googleDriveUrl)
+      
       // Extract folder ID from Google Drive URL
       const folderId = extractFolderIdFromUrl(googleDriveUrl)
+      console.log('Extracted folder ID:', folderId)
       
       if (!folderId) {
         throw new Error('Invalid Google Drive URL')
       }
 
-      // For now, we'll use a placeholder approach since Google Drive API requires authentication
-      // This is a simplified version - in production you might want to use Google Drive API
+      // Try different Google Drive image access methods
+      const possibleImages = await tryDifferentImageMethods(folderId)
+      console.log('Found images:', possibleImages)
       
-      // Attempt to create direct image URLs from common Google Drive patterns
-      const possibleImages = generatePossibleImageUrls(folderId)
-      
-      // Test which images actually load
-      const validImages = await testImageUrls(possibleImages)
-      
-      if (validImages.length > 0) {
-        setImages(validImages)
+      if (possibleImages.length > 0) {
+        setImages(possibleImages)
         setCurrentImageIndex(0)
       } else {
-        throw new Error('No accessible images found')
+        // No images found, show Drive link option
+        console.log('No images found, showing Drive link fallback')
+        setError(true)
       }
       
     } catch (err) {
@@ -61,6 +61,75 @@ export default function ImagePreviewModal({
     } finally {
       setLoading(false)
     }
+  }
+
+  const tryDifferentImageMethods = async (folderId: string): Promise<string[]> => {
+    const timeout = (ms: number) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), ms)
+    )
+
+    // Method 1: Try Google Drive thumbnail API (works for some public folders)
+    try {
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${folderId}&sz=w1000`
+      console.log('Trying thumbnail URL:', thumbnailUrl)
+      
+      const response = await Promise.race([
+        fetch(thumbnailUrl, { method: 'HEAD' }),
+        timeout(3000)
+      ]) as Response
+      
+      console.log('Thumbnail response:', response.status, response.headers.get('content-type'))
+      
+      if (response.ok) {
+        console.log('✅ Thumbnail method succeeded!')
+        return [thumbnailUrl]
+      }
+    } catch (err) {
+      console.log('❌ Thumbnail method failed:', err)
+    }
+
+    // Method 2: Try direct file access (if it's actually a file, not folder)
+    try {
+      const directUrl = `https://drive.google.com/uc?id=${folderId}&export=view`
+      console.log('Trying direct URL:', directUrl)
+      
+      const response = await Promise.race([
+        fetch(directUrl, { method: 'HEAD' }),
+        timeout(3000)
+      ]) as Response
+      
+      console.log('Direct response:', response.status, response.headers.get('content-type'))
+      
+      if (response.ok && response.headers.get('content-type')?.startsWith('image/')) {
+        console.log('✅ Direct method succeeded!')
+        return [directUrl]
+      }
+    } catch (err) {
+      console.log('❌ Direct access method failed:', err)
+    }
+
+    // Method 3: Try alternative formats that work with Google Cloud
+    try {
+      const alternativeUrl = `https://drive.google.com/uc?id=${folderId}`
+      console.log('Trying alternative URL:', alternativeUrl)
+      
+      const response = await Promise.race([
+        fetch(alternativeUrl, { method: 'HEAD' }),
+        timeout(3000)
+      ]) as Response
+      
+      console.log('Alternative response:', response.status, response.headers.get('content-type'))
+      
+      if (response.ok) {
+        console.log('✅ Alternative method succeeded!')
+        return [alternativeUrl]
+      }
+    } catch (err) {
+      console.log('❌ Alternative method failed:', err)
+    }
+
+    console.log('❌ All methods failed')
+    return []
   }
 
   const extractFolderIdFromUrl = (url: string): string | null => {
@@ -79,51 +148,6 @@ export default function ImagePreviewModal({
     return null
   }
 
-  const generatePossibleImageUrls = (folderId: string): string[] => {
-    // This is a simplified approach - in production you'd use Google Drive API
-    // For now, we'll try common image file patterns
-    const commonNames = [
-      'image1', 'image2', 'image3', 'image4', 'image5',
-      'photo1', 'photo2', 'photo3', 'photo4', 'photo5',
-      'img1', 'img2', 'img3', 'img4', 'img5',
-      '1', '2', '3', '4', '5'
-    ]
-    
-    const extensions = ['jpg', 'jpeg', 'png', 'webp']
-    const urls: string[] = []
-    
-    // Generate possible direct image URLs
-    for (const name of commonNames) {
-      for (const ext of extensions) {
-        // Try Google Drive direct download format
-        urls.push(`https://drive.google.com/uc?id=${folderId}&export=download&filename=${name}.${ext}`)
-      }
-    }
-    
-    return urls
-  }
-
-  const testImageUrls = async (urls: string[]): Promise<string[]> => {
-    const validUrls: string[] = []
-    
-    // Test a limited number of URLs to avoid too many requests
-    const urlsToTest = urls.slice(0, 10)
-    
-    const testPromises = urlsToTest.map(async (url) => {
-      try {
-        const response = await fetch(url, { method: 'HEAD' })
-        if (response.ok && response.headers.get('content-type')?.startsWith('image/')) {
-          return url
-        }
-      } catch (err) {
-        // URL not accessible
-      }
-      return null
-    })
-    
-    const results = await Promise.all(testPromises)
-    return results.filter(Boolean) as string[]
-  }
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -187,17 +211,18 @@ export default function ImagePreviewModal({
             <div className="flex flex-col items-center justify-center h-96 p-8 text-center">
               <div className="text-6xl mb-4">📁</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                No se pudieron cargar las imágenes
+                Vista previa no disponible
               </h3>
               <p className="text-gray-600 mb-6">
-                Las imágenes no están disponibles para vista previa.
+                Las imágenes de Google Drive requieren permisos especiales para mostrar una vista previa. 
+                Usa el botón de abajo para ver todas las imágenes del producto.
               </p>
               <button
                 onClick={openInDrive}
                 className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Ver en Google Drive
+                Abrir carpeta en Google Drive
               </button>
             </div>
           )}
