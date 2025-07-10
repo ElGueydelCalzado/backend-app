@@ -46,15 +46,22 @@ export default function MobileFilters({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return
-    setCurrentY(e.touches[0].clientY)
+    const newY = e.touches[0].clientY
+    setCurrentY(newY)
+    
+    // Only allow downward swipes to prevent interference
+    const deltaY = newY - startY
+    if (deltaY > 0) {
+      e.preventDefault()
+    }
   }
 
   const handleTouchEnd = () => {
     if (!isDragging) return
     const deltaY = currentY - startY
     
-    // If swiped down more than 100px, close the modal
-    if (deltaY > 100) {
+    // If swiped down more than 80px, close the modal
+    if (deltaY > 80) {
       onClose()
     }
     
@@ -156,38 +163,51 @@ export default function MobileFilters({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
+      onClick={(e) => {
+        // Close if clicking the backdrop (outside the modal)
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div 
         className="bg-white w-full max-h-[80vh] rounded-t-xl overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
           transform: isDragging && currentY > startY ? `translateY(${Math.min(currentY - startY, 200)}px)` : 'translateY(0)',
           transition: isDragging ? 'none' : 'transform 0.3s ease-out'
         }}
       >
-        {/* Swipe Indicator */}
-        <div className="flex justify-center pt-2 pb-1">
-          <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
-            {getActiveFiltersCount() > 0 && (
-              <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-                {getActiveFiltersCount()} activos
-              </span>
-            )}
+        {/* Swipe Indicator + Header - Draggable Area */}
+        <div 
+          className="cursor-grab active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Swipe Indicator */}
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-10 h-1 bg-gray-400 rounded-full"></div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pb-4 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+              {getActiveFiltersCount() > 0 && (
+                <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
+                  {getActiveFiltersCount()} activos
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
         </div>
 
         {/* Filter Sections */}
