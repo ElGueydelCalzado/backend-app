@@ -1130,13 +1130,15 @@ export default function InventarioPage() {
             </div>
 
             {/* Mobile Product Card View */}
-            <MobileProductCardList
-              products={getFilteredProducts()}
-              onEdit={handleMobileEdit}
-              onSelect={handleProductSelect}
-              selectedProducts={selectedProducts}
-              loading={loading}
-            />
+            <div className="flex-1 overflow-y-auto">
+              <MobileProductCardList
+                products={getFilteredProducts()}
+                onEdit={handleMobileEdit}
+                onSelect={handleProductSelect}
+                selectedProducts={selectedProducts}
+                loading={loading}
+              />
+            </div>
 
             {/* Mobile Filters Modal */}
             {showMobileFilters && (
