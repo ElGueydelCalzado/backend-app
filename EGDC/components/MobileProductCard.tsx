@@ -50,7 +50,7 @@ export default function MobileProductCard({
   return (
     <div 
       className={`
-        bg-white rounded-xl border-2 transition-all duration-300 cursor-pointer
+        relative bg-white rounded-xl border-2 transition-all duration-300 cursor-pointer
         ${isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 shadow-sm hover:shadow-md'}
         ${isSelected ? 'ring-2 ring-orange-400' : ''}
       `}
