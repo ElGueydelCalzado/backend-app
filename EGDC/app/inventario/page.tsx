@@ -792,8 +792,31 @@ export default function InventarioPage() {
   }
 
   const handleMobileCreateNew = (afterProduct: Product) => {
-    // Use the same desktop modal for consistency
-    setShowNewProductModal(true)
+    // Create a duplicate product with modified fields for single product line insertion
+    const tempId = -Date.now() // Use negative ID for new products
+    const duplicatedProduct: Product = {
+      ...afterProduct,
+      id: tempId,
+      sku: '', // Clear SKU to be set by user
+      ean: '', // Clear EAN to be set by user
+      inventory_total: 0, // Start with 0 inventory
+      inv_egdc: 0,
+      inv_fami: 0,
+      inv_bodega_principal: 0,
+      inv_tienda_centro: 0,
+      inv_tienda_norte: 0,
+      inv_tienda_sur: 0,
+      inv_online: 0,
+      // Keep pricing and modifiers from original
+      // Keep categoria, marca, modelo, color from original
+      // User can modify these in the editor
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    // Open mobile editor with the duplicated product
+    setEditingProduct(duplicatedProduct)
+    setShowMobileEditor(true)
   }
 
   const handleMobileAdd = () => {
@@ -802,27 +825,51 @@ export default function InventarioPage() {
   }
 
   const handleMobileEditorSave = async (product: Product) => {
+    const isNewProduct = product.id < 0 // Negative IDs indicate new products
+    
     try {
-      const response = await fetch('/api/inventory/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          changes: [product]
+      if (isNewProduct) {
+        // Create new product
+        const { id, ...productData } = product // Remove the temporary negative ID
+        const response = await fetch('/api/inventory', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            product: productData
+          })
         })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Error al guardar producto')
+        
+        if (!response.ok) {
+          throw new Error('Error al crear producto')
+        }
+        
+        showMessage('Producto creado exitosamente', 'success')
+      } else {
+        // Update existing product
+        const response = await fetch('/api/inventory/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            changes: [product]
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error('Error al actualizar producto')
+        }
+        
+        showMessage('Producto actualizado exitosamente', 'success')
       }
       
       await loadInventoryData()
       setShowMobileEditor(false)
       setEditingProduct(null)
-      showMessage('Producto guardado exitosamente', 'success')
     } catch (error) {
-      showMessage('Error al guardar producto', 'error')
+      showMessage(isNewProduct ? 'Error al crear producto' : 'Error al actualizar producto', 'error')
     }
   }
 
