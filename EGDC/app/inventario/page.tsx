@@ -769,8 +769,14 @@ export default function InventarioPage() {
   const handleMobileDelete = async (product: Product) => {
     if (confirm(`¿Está seguro de que desea eliminar ${product.marca} ${product.modelo}?`)) {
       try {
-        const response = await fetch(`/api/inventory/${product.id}`, {
-          method: 'DELETE'
+        const response = await fetch('/api/inventory/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ids: [product.id]
+          })
         })
         
         if (!response.ok) {
@@ -778,37 +784,21 @@ export default function InventarioPage() {
         }
         
         await loadInventoryData()
-        showMessage('Producto eliminado exitosamente', 'success')
+        showToast('Producto eliminado exitosamente', 'success')
       } catch (error) {
-        showMessage('Error al eliminar producto', 'error')
+        showToast('Error al eliminar producto', 'error')
       }
     }
   }
 
   const handleMobileCreateNew = (afterProduct: Product) => {
-    // Create a new product based on the current one (copying some fields)
-    const newProduct = {
-      ...afterProduct,
-      id: -Date.now(), // Temporary negative ID
-      marca: afterProduct.marca,
-      categoria: afterProduct.categoria,
-      modelo: '', // Clear model for user to fill
-      color: '',
-      talla: '',
-      sku: '',
-      ean: '',
-      costo: 0,
-      inv_egdc: 0,
-      inv_fami: 0
-    }
-    
-    setEditingProduct(newProduct as Product)
-    setShowMobileEditor(true)
+    // Use the same desktop modal for consistency
+    setShowNewProductModal(true)
   }
 
   const handleMobileAdd = () => {
-    setEditingProduct(null)
-    setShowMobileEditor(true)
+    // Use the same desktop modal for consistency
+    setShowNewProductModal(true)
   }
 
   const handleMobileEditorSave = async (product: Product) => {

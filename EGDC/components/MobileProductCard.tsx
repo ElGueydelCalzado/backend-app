@@ -196,13 +196,13 @@ export default function MobileProductCard({
         onTouchEnd={handleTouchEnd}
       >
       {/* Compact Card Content */}
-      <div className="p-3">
+      <div className="p-2">
         {/* Basic Product Info */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {/* Edit Button - Top Right Corner */}
-          <div className="absolute -top-1 -right-1 z-10">
+          <div className="absolute -top-0.5 -right-0.5 z-10">
             <button
-              className="action-button w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors shadow-sm"
+              className="action-button w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors shadow-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit?.(product)
@@ -215,13 +215,13 @@ export default function MobileProductCard({
 
           {/* Marca, Modelo + Image Button */}
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-lg leading-tight">
+            <h3 className="font-semibold text-gray-900 text-base leading-tight">
               {product.marca}
               <span className="ml-2">{product.modelo}</span>
             </h3>
             {product.google_drive && (
               <button
-                className="action-button flex-shrink-0 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-sm transition-colors"
+                className="action-button flex-shrink-0 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   window.open(product.google_drive!, '_blank')
@@ -234,17 +234,17 @@ export default function MobileProductCard({
           </div>
 
           {/* Categoría, Color, Talla + Stock Status */}
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
+          <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600">
+            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-xs">
               {product.categoria}
             </span>
-            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">
+            <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs">
               {product.color}
             </span>
-            <span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
-              Talla {product.talla}
+            <span className="bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded text-xs">
+              T{product.talla}
             </span>
-            <div className={`flex flex-col items-center px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color} ml-auto`}>
+            <div className={`flex flex-col items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color} ml-auto`}>
               <span>{stockStatus.status}</span>
               <span className="font-bold text-gray-900">{totalInventory}</span>
             </div>
@@ -252,26 +252,26 @@ export default function MobileProductCard({
         </div>
 
         {/* Expand/Collapse Indicator */}
-        <div className="flex justify-center mt-2">
+        <div className="flex justify-center mt-1">
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
+            <ChevronUp className="w-4 h-4 text-gray-400" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-gray-400" />
           )}
         </div>
       </div>
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-gray-200 p-4 space-y-4">
+        <div className="border-t border-gray-200 p-2 space-y-2">
           
           {/* Product Details Section */}
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Detalles del Producto
+            <h4 className="font-medium text-gray-800 mb-1 flex items-center gap-1 text-sm">
+              <Package className="w-3 h-3" />
+              Detalles
             </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="text-gray-500">SKU:</span>
                 <p className="font-medium">{product.sku || 'N/A'}</p>
@@ -295,16 +295,16 @@ export default function MobileProductCard({
 
           {/* Multi-Location Inventory */}
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
+            <h4 className="font-medium text-gray-800 mb-1 flex items-center gap-1 text-sm">
+              <MapPin className="w-3 h-3" />
               Almacén
             </h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
+            <div className="grid grid-cols-2 gap-1 text-xs">
+              <div className="flex justify-between p-1 bg-gray-50 rounded text-xs">
                 <span>EGDC:</span>
                 <span className="font-medium">{product.inv_egdc || 0}</span>
               </div>
-              <div className="flex justify-between p-2 bg-gray-50 rounded">
+              <div className="flex justify-between p-1 bg-gray-50 rounded text-xs">
                 <span>FAMI:</span>
                 <span className="font-medium">{product.inv_fami || 0}</span>
               </div>
@@ -313,36 +313,36 @@ export default function MobileProductCard({
 
           {/* Pricing Information */}
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
+            <h4 className="font-medium text-gray-800 mb-1 flex items-center gap-1 text-sm">
+              <DollarSign className="w-3 h-3" />
               Precios
             </h4>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div className="flex flex-col items-center p-2 bg-orange-50 rounded">
-                <span className="text-gray-600">SHEIN</span>
-                <span className="font-medium text-sm">${product.precio_shein || 0}</span>
+            <div className="grid grid-cols-3 gap-1 text-xs">
+              <div className="flex flex-col items-center p-1 bg-orange-50 rounded">
+                <span className="text-gray-600 text-xs">SHEIN</span>
+                <span className="font-medium text-xs">${product.precio_shein || 0}</span>
               </div>
-              <div className="flex flex-col items-center p-2 bg-green-50 rounded">
-                <span className="text-gray-600">Shopify</span>
-                <span className="font-medium text-sm">${product.precio_shopify || 0}</span>
+              <div className="flex flex-col items-center p-1 bg-green-50 rounded">
+                <span className="text-gray-600 text-xs">Shopify</span>
+                <span className="font-medium text-xs">${product.precio_shopify || 0}</span>
               </div>
-              <div className="flex flex-col items-center p-2 bg-yellow-50 rounded">
-                <span className="text-gray-600">MeLi</span>
-                <span className="font-medium text-sm">${product.precio_meli || 0}</span>
+              <div className="flex flex-col items-center p-1 bg-yellow-50 rounded">
+                <span className="text-gray-600 text-xs">MeLi</span>
+                <span className="font-medium text-xs">${product.precio_meli || 0}</span>
               </div>
             </div>
           </div>
 
           {/* Platform Availability */}
           <div>
-            <h4 className="font-semibold text-gray-800 mb-2">Plataformas</h4>
+            <h4 className="font-medium text-gray-800 mb-1 text-sm">Plataformas</h4>
             <div className="relative">
               {/* Gradient overlays for scroll indicators */}
               <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none" />
               <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none" />
               
               {/* Scrollable platform container */}
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex gap-1 overflow-x-auto scrollbar-hide scroll-smooth py-0.5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {product.shein && (
                   <span className="flex-shrink-0 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                     SHEIN

@@ -81,18 +81,17 @@ export default function MobileProductCardList({
       </div>
 
       {/* Product Cards */}
-      <div className="space-y-3 flex flex-col items-center">
+      <div className="space-y-2">
         {products.map((product) => (
-          <div key={product.id} className="w-2/3 max-w-sm">
-            <MobileProductCard
-              product={product}
-              onEdit={onEdit}
-              onSelect={onSelect}
-              onDelete={onDelete}
-              onCreateNew={onCreateNew}
-              isSelected={selectedProducts.has(product.id)}
-            />
-          </div>
+          <MobileProductCard
+            key={product.id}
+            product={product}
+            onEdit={onEdit}
+            onSelect={onSelect}
+            onDelete={onDelete}
+            onCreateNew={onCreateNew}
+            isSelected={selectedProducts.has(product.id)}
+          />
         ))}
       </div>
 
