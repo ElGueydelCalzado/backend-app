@@ -46,12 +46,12 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       disabled: true
     },
     {
-      id: 'tbd1',
-      label: 'TBD 1',
-      icon: '🔧',
-      href: '/tbd1',
-      active: pathname === '/tbd1',
-      disabled: true
+      id: 'escanear',
+      label: 'Escanear',
+      icon: '👁️',
+      href: '/escanear',
+      active: pathname === '/escanear',
+      disabled: false
     },
     {
       id: 'tbd2',
