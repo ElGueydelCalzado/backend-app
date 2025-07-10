@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { X, Check } from 'lucide-react'
 
 interface SortConfig {
-  field: 'alphabetical' | 'price' | 'stock' | 'date' | 'category'
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
   direction: 'asc' | 'desc'
+  priceField?: 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo'
 }
 
 interface Filters {
@@ -45,12 +46,14 @@ export default function MobileSort({
     { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor', icon: '📦' },
     { field: 'date', direction: 'desc', label: 'Más Recientes', icon: '📅' },
     { field: 'date', direction: 'asc', label: 'Más Antiguos', icon: '📅' },
-    { field: 'category', direction: 'asc', label: 'Categoría A-Z', icon: '📂' },
-    { field: 'category', direction: 'desc', label: 'Categoría Z-A', icon: '📂' },
   ] as const
 
   const handleSortSelect = (field: SortConfig['field'], direction: SortConfig['direction']) => {
-    onSortChange({ field, direction })
+    onSortChange({ 
+      field, 
+      direction,
+      priceField: field === 'price' ? (sortConfig.priceField || 'precio_shopify') : undefined
+    })
   }
 
   const handlePriceRangeChange = (min: number, max: number) => {
@@ -64,7 +67,17 @@ export default function MobileSort({
     const current = sortOptions.find(
       option => option.field === sortConfig.field && option.direction === sortConfig.direction
     )
-    return current?.label || 'Alfabético A-Z'
+    let label = current?.label || 'Alfabético A-Z'
+    if (sortConfig.field === 'price' && sortConfig.priceField) {
+      const priceLabels = {
+        precio_shein: 'SHEIN',
+        precio_shopify: 'Shopify',
+        precio_meli: 'MeLi',
+        costo: 'Costo'
+      }
+      label += ` (${priceLabels[sortConfig.priceField]})`
+    }
+    return label
   }
 
   return (
@@ -143,10 +156,45 @@ export default function MobileSort({
 
           {activeTab === 'price' && (
             <div className="space-y-4">
+              {/* Price Field Selection */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Campo de Precio para Ordenar</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Selecciona qué precio usar para ordenar los productos
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { field: 'precio_shein', label: 'SHEIN', icon: '🟠' },
+                    { field: 'precio_shopify', label: 'Shopify', icon: '🟢' },
+                    { field: 'precio_meli', label: 'MeLi', icon: '🟡' },
+                    { field: 'costo', label: 'Costo', icon: '💰' },
+                  ].map((priceOption) => (
+                    <button
+                      key={priceOption.field}
+                      onClick={() => onSortChange({ 
+                        ...sortConfig, 
+                        priceField: priceOption.field as any
+                      })}
+                      className={`flex items-center justify-center space-x-2 p-3 rounded-lg border-2 transition-all ${
+                        sortConfig.priceField === priceOption.field
+                          ? 'border-orange-500 bg-orange-50 text-orange-800'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-lg">{priceOption.icon}</span>
+                      <span className="font-medium text-sm">{priceOption.label}</span>
+                      {sortConfig.priceField === priceOption.field && (
+                        <Check className="h-4 w-4 text-orange-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Rango de Precios</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Filtra productos por rango de precio (basado en precio Shopify/costo)
+                  Filtra productos por rango de precio
                 </p>
               </div>
 

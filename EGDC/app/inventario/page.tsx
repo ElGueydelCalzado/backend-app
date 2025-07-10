@@ -20,7 +20,6 @@ import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
 import MobileSort from '@/components/MobileSort'
-import BarcodeScannerButton from '@/components/BarcodeScannerButton'
 
 interface Filters {
   categories: Set<string>
@@ -32,8 +31,9 @@ interface Filters {
 }
 
 interface SortConfig {
-  field: 'alphabetical' | 'price' | 'stock' | 'date' | 'category'
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
   direction: 'asc' | 'desc'
+  priceField?: 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo'
 }
 
 interface UniqueValues {
@@ -114,7 +114,8 @@ export default function InventarioPage() {
   
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: 'alphabetical',
-    direction: 'asc'
+    direction: 'asc',
+    priceField: 'precio_shopify'
   })
   
   const [showMobileSort, setShowMobileSort] = useState(false)
@@ -793,23 +794,6 @@ export default function InventarioPage() {
     setShowMobileEditor(true)
   }
 
-  // Barcode scanner handlers
-  const handleBarcodeProductFound = (product: Product) => {
-    // Focus on the found product by filtering
-    setMobileSearchTerm(`${product.marca} ${product.modelo}`)
-    showMessage(
-      `Producto encontrado: ${product.marca} ${product.modelo}`,
-      'success'
-    )
-  }
-
-  const handleBarcodeProductNotFound = (barcode: string) => {
-    showMessage(
-      `No se encontró producto con código: ${barcode}`,
-      'error'
-    )
-  }
-
   const handleMobileEditorSave = async (product: Product) => {
     try {
       const response = await fetch('/api/inventory/update', {
@@ -906,8 +890,9 @@ export default function InventarioPage() {
       
       case 'price':
         sorted.sort((a, b) => {
-          const aPrice = a.precio_shopify || a.costo || 0
-          const bPrice = b.precio_shopify || b.costo || 0
+          const priceField = sortConfig.priceField || 'precio_shopify'
+          const aPrice = (a as any)[priceField] || a.costo || 0
+          const bPrice = (b as any)[priceField] || b.costo || 0
           return sortConfig.direction === 'asc' 
             ? aPrice - bPrice
             : bPrice - aPrice
@@ -931,16 +916,6 @@ export default function InventarioPage() {
           return sortConfig.direction === 'asc' 
             ? aDate - bDate
             : bDate - aDate
-        })
-        break
-      
-      case 'category':
-        sorted.sort((a, b) => {
-          const aCategory = a.categoria || ''
-          const bCategory = b.categoria || ''
-          return sortConfig.direction === 'asc' 
-            ? aCategory.localeCompare(bCategory)
-            : bCategory.localeCompare(aCategory)
         })
         break
     }
@@ -1086,13 +1061,6 @@ export default function InventarioPage() {
                     onSearchResults={handleSearchResults}
                     onClearSearch={handleClearSearch}
                     className="flex-1 max-w-lg"
-                  />
-                  
-                  <BarcodeScannerButton
-                    onProductFound={handleBarcodeProductFound}
-                    onProductNotFound={handleBarcodeProductNotFound}
-                    size="md"
-                    variant="outline"
                   />
                   
                   <button

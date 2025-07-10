@@ -5,8 +5,9 @@ import FilterSection from './FilterSection'
 import ColumnControls, { ColumnConfig } from './ColumnControls'
 
 interface SortConfig {
-  field: 'alphabetical' | 'price' | 'stock' | 'date' | 'category'
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
   direction: 'asc' | 'desc'
+  priceField?: 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo'
 }
 
 interface SidebarTabsProps {
@@ -142,13 +143,21 @@ export default function SidebarTabs({
                         { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor' },
                         { field: 'date', direction: 'desc', label: 'Más Recientes' },
                         { field: 'date', direction: 'asc', label: 'Más Antiguos' },
-                        { field: 'category', direction: 'asc', label: 'Categoría A-Z' },
-                        { field: 'category', direction: 'desc', label: 'Categoría Z-A' },
                       ]
                       const current = sortOptions.find(
                         option => option.field === sortConfig.field && option.direction === sortConfig.direction
                       )
-                      return current?.label || 'Alfabético A-Z'
+                      let label = current?.label || 'Alfabético A-Z'
+                      if (sortConfig.field === 'price' && sortConfig.priceField) {
+                        const priceLabels = {
+                          precio_shein: 'SHEIN',
+                          precio_shopify: 'Shopify',
+                          precio_meli: 'MeLi',
+                          costo: 'Costo'
+                        }
+                        label += ` (${priceLabels[sortConfig.priceField]})`
+                      }
+                      return label
                     })()}
                   </p>
                 </div>
@@ -162,15 +171,17 @@ export default function SidebarTabs({
                   { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor', icon: '📦' },
                   { field: 'date', direction: 'desc', label: 'Más Recientes', icon: '📅' },
                   { field: 'date', direction: 'asc', label: 'Más Antiguos', icon: '📅' },
-                  { field: 'category', direction: 'asc', label: 'Categoría A-Z', icon: '📂' },
-                  { field: 'category', direction: 'desc', label: 'Categoría Z-A', icon: '📂' },
                 ].map((option, index) => {
                   const isSelected = sortConfig.field === option.field && sortConfig.direction === option.direction
                   
                   return (
                     <button
                       key={index}
-                      onClick={() => onSortChange({ field: option.field as any, direction: option.direction as any })}
+                      onClick={() => onSortChange({ 
+                        field: option.field as any, 
+                        direction: option.direction as any,
+                        priceField: option.field === 'price' ? (sortConfig.priceField || 'precio_shopify') : undefined
+                      })}
                       className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50 text-orange-800'
@@ -187,6 +198,42 @@ export default function SidebarTabs({
                     </button>
                   )
                 })}
+                
+                {/* Price Field Selection */}
+                {sortConfig.field === 'price' && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-3">Seleccionar Campo de Precio:</h4>
+                    <div className="space-y-2">
+                      {[
+                        { field: 'precio_shein', label: 'SHEIN', icon: '🟠' },
+                        { field: 'precio_shopify', label: 'Shopify', icon: '🟢' },
+                        { field: 'precio_meli', label: 'MercadoLibre', icon: '🟡' },
+                        { field: 'costo', label: 'Costo', icon: '💰' },
+                      ].map((priceOption) => (
+                        <button
+                          key={priceOption.field}
+                          onClick={() => onSortChange({ 
+                            ...sortConfig, 
+                            priceField: priceOption.field as any
+                          })}
+                          className={`w-full flex items-center justify-between p-2 rounded border transition-all ${
+                            sortConfig.priceField === priceOption.field
+                              ? 'border-blue-500 bg-blue-100 text-blue-800'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span>{priceOption.icon}</span>
+                            <span className="text-sm font-medium">{priceOption.label}</span>
+                          </div>
+                          {sortConfig.priceField === priceOption.field && (
+                            <span className="text-blue-600 text-sm">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
