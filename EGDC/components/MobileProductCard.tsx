@@ -60,6 +60,20 @@ export default function MobileProductCard({
       <div className="p-3">
         {/* Basic Product Info */}
         <div className="space-y-2">
+          {/* Edit Button - Top Left */}
+          <div className="absolute top-3 left-3 z-10">
+            <button
+              className="action-button w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center text-sm transition-colors shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit?.(product)
+              }}
+              title="Editar producto"
+            >
+              ✏️
+            </button>
+          </div>
+
           {/* Marca, Modelo + Image Button */}
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 text-lg leading-tight">
@@ -183,52 +197,47 @@ export default function MobileProductCard({
           {/* Platform Availability */}
           <div>
             <h4 className="font-semibold text-gray-800 mb-2">Plataformas</h4>
-            <div className="flex flex-wrap gap-2">
-              {product.shein && (
-                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
-                  SHEIN
-                </span>
-              )}
-              {product.shopify && (
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                  Shopify
-                </span>
-              )}
-              {product.meli && (
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
-                  MercadoLibre
-                </span>
-              )}
-              {product.tiktok && (
-                <span className="px-2 py-1 bg-black text-white rounded-full text-xs">
-                  TikTok
-                </span>
-              )}
-              {product.upseller && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                  Upseller
-                </span>
-              )}
-              {product.go_trendier && (
-                <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
-                  Go Trendier
-                </span>
-              )}
+            <div className="relative">
+              {/* Gradient overlays for scroll indicators */}
+              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none" />
+              
+              {/* Scrollable platform container */}
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {product.shein && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                    SHEIN
+                  </span>
+                )}
+                {product.shopify && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Shopify
+                  </span>
+                )}
+                {product.meli && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                    MeLi
+                  </span>
+                )}
+                {product.tiktok && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-black text-white rounded-full text-xs font-medium">
+                    TikTok
+                  </span>
+                )}
+                {product.upseller && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    Upseller
+                  </span>
+                )}
+                {product.go_trendier && (
+                  <span className="flex-shrink-0 px-3 py-1.5 bg-pink-100 text-pink-700 rounded-full text-xs font-medium">
+                    Go Trendier
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="pt-2">
-            <button 
-              className="action-button w-full bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation()
-                onEdit?.(product)
-              }}
-            >
-              Editar
-            </button>
-          </div>
         </div>
       )}
     </div>

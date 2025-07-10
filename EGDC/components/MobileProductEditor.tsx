@@ -266,66 +266,6 @@ export default function MobileProductEditor({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Bodega Principal
-          </label>
-          <input
-            type="number"
-            value={formData.inv_bodega_principal || ''}
-            onChange={(e) => handleInputChange('inv_bodega_principal', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Centro
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_centro || ''}
-            onChange={(e) => handleInputChange('inv_tienda_centro', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Norte
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_norte || ''}
-            onChange={(e) => handleInputChange('inv_tienda_norte', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Sur
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_sur || ''}
-            onChange={(e) => handleInputChange('inv_tienda_sur', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Inventario Online
-        </label>
-        <input
-          type="number"
-          value={formData.inv_online || ''}
-          onChange={(e) => handleInputChange('inv_online', parseInt(e.target.value) || 0)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-        />
       </div>
     </div>
   )

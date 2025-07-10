@@ -301,14 +301,14 @@ export default function InventoryTable({
                           />
                         </div>
                       ) : isEditing(index, fieldKey) ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-2 border-orange-200 shadow-md">
                           {fieldKey === 'google_drive' && value ? (
                             <>
                               <a
                                 href={value.toString()}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
                                 title="Abrir en nueva pestaña"
                               >
                                 <span>🔗</span>
@@ -324,7 +324,7 @@ export default function InventoryTable({
                                     stopEditing()
                                   }
                                 }}
-                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                                className="flex-1 px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner"
                                 disabled={saving}
                                 placeholder="URL de Google Drive..."
                                 autoFocus
@@ -341,40 +341,47 @@ export default function InventoryTable({
                                   stopEditing()
                                 }
                               }}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                              className="w-full px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner font-medium"
                               disabled={saving}
-                              placeholder={field.type === 'number' ? '0' : 'Valor...'}
+                              placeholder={field.type === 'number' ? '0.00' : 'Ingresa valor...'}
                               step={field.type === 'number' ? '0.01' : undefined}
                               autoFocus
                             />
                           )}
+                          {/* Edit mode indicators */}
+                          <div className="flex items-center gap-1 text-xs text-orange-600">
+                            <span title="Presiona Enter para guardar">⏎</span>
+                            <span title="Presiona Escape para cancelar">⎋</span>
+                          </div>
                         </div>
                       ) : (
-                        <div className="group relative flex items-center">
-                          <div className="flex-1 px-2 py-1 text-sm">
+                        <div className="group relative flex items-center hover:bg-gradient-to-r hover:from-orange-25 hover:to-orange-50 rounded-lg transition-all duration-200 min-h-[2.5rem]">
+                          <div className="flex-1 px-3 py-2 text-sm">
                             {fieldKey === 'google_drive' && value ? (
                               <div className="flex items-center gap-2">
                                 <a
                                   href={value.toString()}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                                  className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
                                   title="Abrir en nueva pestaña"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <span>🔗</span>
                                   Ver
                                 </a>
-                                <span className="flex-1 truncate">{value.toString()}</span>
+                                <span className="flex-1 truncate font-medium text-gray-700">{value.toString()}</span>
                               </div>
                             ) : (
-                              <span className="truncate">{value?.toString() || '-'}</span>
+                              <span className="truncate font-medium text-gray-800">
+                                {value?.toString() || <span className="text-gray-400 italic">Sin valor</span>}
+                              </span>
                             )}
                           </div>
                           <button
                             onClick={() => startEditing(index, fieldKey)}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                            title="Editar celda"
+                            className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-sm shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
+                            title="Hacer clic para editar"
                             disabled={saving}
                           >
                             ✏️
