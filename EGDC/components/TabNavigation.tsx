@@ -127,9 +127,9 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
 
       {/* Mobile: Horizontal slider */}
       <div className="md:hidden relative">
-        {/* Gradient overlays for scroll indicators */}
-        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none" />
+        {/* Gradient overlays for scroll indicators - positioned to not overlap content */}
+        <div className="absolute -left-2 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute -right-2 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
         
         {/* Scrollable tab container */}
         <div 

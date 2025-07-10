@@ -5,7 +5,7 @@ import { Product } from '@/lib/supabase'
 import FilterSection from '@/components/FilterSection'
 import InventoryTable from '@/components/InventoryTable'
 import LoadingScreen from '@/components/LoadingScreen'
-import MessageArea from '@/components/MessageArea'
+import ToastNotification, { useToast } from '@/components/ToastNotification'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import TabNavigation from '@/components/TabNavigation'
 import Sidebar, { SidebarState } from '@/components/Sidebar'
@@ -44,10 +44,7 @@ interface UniqueValues {
   sizes: Set<string>
 }
 
-interface Message {
-  text: string
-  type: 'success' | 'error' | 'info'
-}
+// Removed Message interface - now using toast notifications
 
 // Column configuration for the inventory table (auto-generated from database schema)
 const DEFAULT_COLUMNS: ColumnConfig[] = [
@@ -84,7 +81,7 @@ export default function InventarioPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [loadingText, setLoadingText] = useState('Cargando inventario...')
-  const [message, setMessage] = useState<Message | null>(null)
+  const { toasts, showToast, removeToast } = useToast()
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('open')
@@ -487,15 +484,14 @@ export default function InventarioPage() {
     showMessage('Cambios cancelados.', 'info')
   }
 
-  const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
-    setMessage({ text, type })
-    if (type !== 'error') {
-      setTimeout(() => setMessage(null), 5000)
-    }
+  // Note: showMessage is now replaced by showToast from useToast hook
+  // Usage: showToast(text, type, duration?)
+  const showMessage = (text: string, type: 'success' | 'error' | 'info', duration?: number) => {
+    return showToast(text, type, duration)
   }
 
   const clearMessage = () => {
-    setMessage(null)
+    // Toast messages auto-dismiss, no manual clearing needed
   }
 
   // Row management functions
@@ -802,7 +798,7 @@ export default function InventarioPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          products: [product]
+          changes: [product]
         })
       })
       
@@ -1132,9 +1128,7 @@ export default function InventarioPage() {
               </div>
               
               {/* Message Area */}
-              <div className="px-6 py-1">
-                <MessageArea message={message} />
-              </div>
+              {/* Message area removed - now using toast notifications */}
               
               {/* Table Section */}
               <div className="flex-1 px-6 pb-1 overflow-hidden">
@@ -1185,8 +1179,7 @@ export default function InventarioPage() {
         ) : (
           /* Mobile Layout - Optimized */
           <div className="h-[calc(100vh-120px)] flex flex-col">
-            {/* Message Area */}
-            <MessageArea message={message} />
+            {/* Message area removed - now using toast notifications */}
 
             {/* Mobile Search Bar */}
             <div className="p-4 bg-white border-b border-gray-200">
@@ -1306,6 +1299,15 @@ export default function InventarioPage() {
           onClose={() => setShowBulkUpdateModal(false)}
           onUpdate={handleBulkUpdate}
         />
+
+        {/* Toast Notifications */}
+        {toasts.map((toast) => (
+          <ToastNotification
+            key={toast.id}
+            message={toast}
+            onClose={removeToast}
+          />
+        ))}
       </div>
     </>
   )
