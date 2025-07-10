@@ -171,7 +171,7 @@ export default function MobileProductCard({
               </div>
               <div className="flex flex-col items-center p-2 bg-green-50 rounded">
                 <span className="text-gray-600">Shopify</span>
-                <span className="font-medium text-sm">${product.precio_egdc || 0}</span>
+                <span className="font-medium text-sm">${product.precio_shopify || 0}</span>
               </div>
               <div className="flex flex-col items-center p-2 bg-yellow-50 rounded">
                 <span className="text-gray-600">MeLi</span>

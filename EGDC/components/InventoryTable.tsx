@@ -32,7 +32,7 @@ const FIELD_CONFIG: Record<string, { label: string, icon: string, type: string, 
   shopify_modifier: { label: 'Mod. Shopify', icon: '⚙️', type: 'number', category: 'pricing' },
   meli_modifier: { label: 'Mod. MercadoLibre', icon: '⚙️', type: 'number', category: 'pricing' },
   precio_shein: { label: 'Precio SHEIN', icon: '💲', type: 'readonly', category: 'pricing' },
-  precio_egdc: { label: 'Precio Shopify', icon: '💲', type: 'readonly', category: 'pricing' },
+  precio_shopify: { label: 'Precio Shopify', icon: '💲', type: 'readonly', category: 'pricing' },
   precio_meli: { label: 'Precio MercadoLibre', icon: '💲', type: 'readonly', category: 'pricing' },
   inv_egdc: { label: 'EGDC', icon: '🏢', type: 'number', category: 'inventory' },
   inv_fami: { label: 'FAMI', icon: '🏭', type: 'number', category: 'inventory' },
@@ -154,7 +154,7 @@ export default function InventoryTable({
     switch (priceField) {
       case 'precio_shein':
         return calculatePriceShein(costo, product.shein_modifier)
-      case 'precio_egdc':
+      case 'precio_shopify':
         return calculatePriceShopify(costo, product.shopify_modifier)
       case 'precio_meli':
         return calculatePriceMeli(costo, product.meli_modifier)

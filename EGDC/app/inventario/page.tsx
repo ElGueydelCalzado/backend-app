@@ -54,7 +54,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'costo', label: 'Costo', visible: true, category: 'pricing' },
   { key: 'google_drive', label: 'Google Drive', visible: false, category: 'basic' },
   { key: 'precio_shein', label: 'Precio SHEIN', visible: true, category: 'pricing' },
-  { key: 'precio_egdc', label: 'Precio Shopify', visible: true, category: 'pricing' },
+  { key: 'precio_shopify', label: 'Precio Shopify', visible: true, category: 'pricing' },
   { key: 'precio_meli', label: 'Precio MercadoLibre', visible: true, category: 'pricing' },
   { key: 'shein_modifier', label: 'Mod. SHEIN', visible: false, category: 'pricing' },
   { key: 'shopify_modifier', label: 'Mod. Shopify', visible: false, category: 'pricing' },
