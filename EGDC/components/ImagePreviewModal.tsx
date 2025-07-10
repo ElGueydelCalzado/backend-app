@@ -56,15 +56,9 @@ export default function ImagePreviewModal({
         }
       }
       
-      // Fallback: Try direct Google Drive patterns
-      const directImages = await tryDirectGoogleDriveUrls(folderId)
-      
-      if (directImages.length > 0) {
-        setImages(directImages)
-        setCurrentImageIndex(0)
-      } else {
-        setError(true)
-      }
+      // If API failed, show error (no direct URLs work due to CSP)
+      console.log('API failed, showing error state')
+      setError(true)
       
     } catch (err) {
       console.error('Error loading images:', err)
@@ -74,52 +68,6 @@ export default function ImagePreviewModal({
     }
   }
 
-  const tryDirectGoogleDriveUrls = async (folderId: string): Promise<string[]> => {
-    // Try different Google Drive direct image URL patterns
-    const possibleUrls = [
-      // Pattern 1: Googleusercontent (often works for public files)
-      `https://lh3.googleusercontent.com/d/${folderId}=w1000`,
-      // Pattern 2: Drive thumbnail API (sometimes works)  
-      `https://drive.google.com/thumbnail?id=${folderId}&sz=w1000`,
-      // Pattern 3: Direct download (for single files)
-      `https://drive.google.com/uc?export=view&id=${folderId}`,
-      // Pattern 4: Alternative googleapis pattern
-      `https://www.googleapis.com/drive/v3/files/${folderId}?alt=media`
-    ]
-    
-    console.log('Trying direct Google Drive URLs...')
-    
-    for (const url of possibleUrls) {
-      try {
-        console.log('Testing URL:', url)
-        
-        // Try to load the image
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        
-        const imageLoaded = await new Promise((resolve) => {
-          img.onload = () => {
-            console.log('✅ Image loaded successfully:', url)
-            resolve(true)
-          }
-          img.onerror = () => {
-            console.log('❌ Image failed to load:', url)
-            resolve(false)
-          }
-          img.src = url
-        })
-        
-        if (imageLoaded) {
-          return [url]
-        }
-      } catch (err) {
-        console.log('Error testing URL:', url, err)
-      }
-    }
-    
-    console.log('❌ No direct URLs worked')
-    return []
-  }
 
 
   const extractFolderIdFromUrl = (url: string): string | null => {

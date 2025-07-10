@@ -33,15 +33,12 @@ export async function GET(
 
     const data = await response.json()
     
-    // Convert to direct image URLs
-    const images = data.files?.map((file: any) => ({
-      id: file.id,
-      name: file.name,
-      // Use thumbnailLink for preview, webContentLink for full image
-      thumbnailUrl: file.thumbnailLink?.replace('=s220', '=s800'), // Higher quality thumbnail
-      fullUrl: `https://drive.google.com/uc?export=view&id=${file.id}`,
-      directUrl: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`
-    })) || []
+    // Convert to proxied image URLs that bypass CSP
+    const images = data.files?.map((file: any) => {
+      // Use our proxy endpoint to serve images from our domain
+      const proxyUrl = `/api/drive-proxy/${file.id}`
+      return proxyUrl
+    }) || []
 
     return NextResponse.json({
       success: true,
