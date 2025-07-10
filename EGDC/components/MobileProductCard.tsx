@@ -142,10 +142,6 @@ export default function MobileProductCard({
                 <span>FAMI:</span>
                 <span className="font-medium">{product.inv_fami || 0}</span>
               </div>
-              <div className="flex justify-between p-2 bg-blue-50 rounded col-span-2">
-                <span className="font-medium">Online:</span>
-                <span className="font-medium">{product.inv_online || 0}</span>
-              </div>
             </div>
           </div>
 
