@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Product } from '@/lib/supabase'
 import { ChevronDown, ChevronUp, Package, MapPin, DollarSign, Trash2 } from 'lucide-react'
+import ImagePreviewModal from './ImagePreviewModal'
 
 interface MobileProductCardProps {
   product: Product
@@ -26,6 +27,7 @@ export default function MobileProductCard({
   const [isDragging, setIsDragging] = useState(false)
   const [showDeletePanel, setShowDeletePanel] = useState(false)
   const [showCreatePanel, setShowCreatePanel] = useState(false)
+  const [showImagePreview, setShowImagePreview] = useState(false)
   const startX = useRef(0)
   const currentX = useRef(0)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -220,7 +222,7 @@ export default function MobileProductCard({
                 className="action-button w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors shadow-sm"
                 onClick={(e) => {
                   e.stopPropagation()
-                  window.open(product.google_drive!, '_blank')
+                  setShowImagePreview(true)
                 }}
                 title="Ver imágenes del producto"
               >
@@ -384,6 +386,14 @@ export default function MobileProductCard({
         </div>
       )}
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        googleDriveUrl={product.google_drive || ''}
+        productName={`${product.marca} ${product.modelo}`}
+      />
     </div>
   )
 }
