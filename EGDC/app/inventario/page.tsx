@@ -766,10 +766,10 @@ export default function InventarioPage() {
     setShowMobileEditor(true)
   }
 
-  const handleMobileDelete = async (id: number) => {
-    if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+  const handleMobileDelete = async (product: Product) => {
+    if (confirm(`¿Está seguro de que desea eliminar ${product.marca} ${product.modelo}?`)) {
       try {
-        const response = await fetch(`/api/inventory/${id}`, {
+        const response = await fetch(`/api/inventory/${product.id}`, {
           method: 'DELETE'
         })
         
@@ -783,6 +783,27 @@ export default function InventarioPage() {
         showMessage('Error al eliminar producto', 'error')
       }
     }
+  }
+
+  const handleMobileCreateNew = (afterProduct: Product) => {
+    // Create a new product based on the current one (copying some fields)
+    const newProduct = {
+      ...afterProduct,
+      id: -Date.now(), // Temporary negative ID
+      marca: afterProduct.marca,
+      categoria: afterProduct.categoria,
+      modelo: '', // Clear model for user to fill
+      color: '',
+      talla: '',
+      sku: '',
+      ean: '',
+      costo: 0,
+      inv_egdc: 0,
+      inv_fami: 0
+    }
+    
+    setEditingProduct(newProduct as Product)
+    setShowMobileEditor(true)
   }
 
   const handleMobileAdd = () => {
@@ -1225,9 +1246,24 @@ export default function InventarioPage() {
                 products={getFilteredProducts()}
                 onEdit={handleMobileEdit}
                 onSelect={handleProductSelect}
+                onDelete={handleMobileDelete}
+                onCreateNew={handleMobileCreateNew}
                 selectedProducts={selectedProducts}
                 loading={loading}
               />
+            </div>
+
+            {/* Floating Action Button - Nuevo Producto */}
+            <div className="fixed bottom-6 right-6 z-40">
+              <button
+                onClick={handleMobileAdd}
+                className="w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95"
+                title="Crear nuevo producto"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
             </div>
 
             {/* Mobile Filters Modal */}

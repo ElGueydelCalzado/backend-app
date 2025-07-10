@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Product } from '@/lib/supabase'
-import { ChevronDown, ChevronUp, Package, MapPin, DollarSign } from 'lucide-react'
+import { ChevronDown, ChevronUp, Package, MapPin, DollarSign, Trash2 } from 'lucide-react'
 
 interface MobileProductCardProps {
   product: Product
   onEdit?: (product: Product) => void
   onSelect?: (productId: number, selected: boolean) => void
+  onDelete?: (product: Product) => void
+  onCreateNew?: (afterProduct: Product) => void
   isSelected?: boolean
 }
 
@@ -15,9 +17,18 @@ export default function MobileProductCard({
   product, 
   onEdit, 
   onSelect, 
+  onDelete,
+  onCreateNew,
   isSelected = false 
 }: MobileProductCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [showDeletePanel, setShowDeletePanel] = useState(false)
+  const [showCreatePanel, setShowCreatePanel] = useState(false)
+  const startX = useRef(0)
+  const currentX = useRef(0)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded)
@@ -47,15 +58,141 @@ export default function MobileProductCard({
 
   const stockStatus = getStockStatus()
 
+  // Touch event handlers for swipe functionality
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isExpanded) return // Don't allow swiping when expanded
+    
+    startX.current = e.touches[0].clientX
+    currentX.current = e.touches[0].clientX
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || isExpanded) return
+
+    currentX.current = e.touches[0].clientX
+    const deltaX = currentX.current - startX.current
+
+    // Allow both left and right swipes
+    if (deltaX < 0) {
+      // Left swipe - show delete panel
+      const clampedOffset = Math.max(deltaX, -100) // Limit to 100px
+      setSwipeOffset(clampedOffset)
+      setShowDeletePanel(true)
+      setShowCreatePanel(false)
+      e.preventDefault()
+    } else if (deltaX > 0) {
+      // Right swipe - show create new panel
+      const clampedOffset = Math.min(deltaX, 100) // Limit to 100px
+      setSwipeOffset(clampedOffset)
+      setShowCreatePanel(true)
+      setShowDeletePanel(false)
+      e.preventDefault()
+    } else {
+      setSwipeOffset(0)
+      setShowDeletePanel(false)
+      setShowCreatePanel(false)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    if (!isDragging || isExpanded) return
+
+    const deltaX = currentX.current - startX.current
+
+    if (deltaX < -50) {
+      // Left swipe - show delete panel
+      setSwipeOffset(-100)
+      setShowDeletePanel(true)
+      setShowCreatePanel(false)
+    } else if (deltaX > 50) {
+      // Right swipe - show create panel
+      setSwipeOffset(100)
+      setShowCreatePanel(true)
+      setShowDeletePanel(false)
+    } else {
+      // Reset to original position
+      setSwipeOffset(0)
+      setShowDeletePanel(false)
+      setShowCreatePanel(false)
+    }
+
+    setIsDragging(false)
+  }
+
+  const handleDeleteClick = () => {
+    onDelete?.(product)
+    // Reset card position
+    setSwipeOffset(0)
+    setShowDeletePanel(false)
+  }
+
+  const handleCreateNewClick = () => {
+    onCreateNew?.(product)
+    // Reset card position
+    setSwipeOffset(0)
+    setShowCreatePanel(false)
+  }
+
+  const resetCardPosition = () => {
+    setSwipeOffset(0)
+    setShowDeletePanel(false)
+    setShowCreatePanel(false)
+  }
+
   return (
-    <div 
-      className={`
-        relative bg-white rounded-xl border-2 transition-all duration-300 cursor-pointer
-        ${isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 shadow-sm hover:shadow-md'}
-        ${isSelected ? 'ring-2 ring-orange-400' : ''}
-      `}
-      onClick={handleCardClick}
-    >
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete Panel - Behind the card (right side) */}
+      <div 
+        className={`
+          absolute inset-0 bg-red-500 flex items-center justify-end pr-6 rounded-xl
+          transition-opacity duration-200
+          ${showDeletePanel ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
+        <button
+          onClick={handleDeleteClick}
+          className="flex items-center space-x-2 text-white font-medium"
+        >
+          <Trash2 className="w-5 h-5" />
+          <span>Eliminar</span>
+        </button>
+      </div>
+
+      {/* Create New Panel - Behind the card (left side) */}
+      <div 
+        className={`
+          absolute inset-0 bg-green-500 flex items-center justify-start pl-6 rounded-xl
+          transition-opacity duration-200
+          ${showCreatePanel ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
+        <button
+          onClick={handleCreateNewClick}
+          className="flex items-center space-x-2 text-white font-medium"
+        >
+          <span>+ Nuevo</span>
+        </button>
+      </div>
+
+      {/* Main Card - Slides over the delete panel */}
+      <div 
+        ref={cardRef}
+        className={`
+          relative bg-white rounded-xl border-2 cursor-pointer
+          ${isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 shadow-sm hover:shadow-md'}
+          ${isSelected ? 'ring-2 ring-orange-400' : ''}
+          transition-all duration-200
+        `}
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+        }}
+        onClick={handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
       {/* Compact Card Content */}
       <div className="p-3">
         {/* Basic Product Info */}
@@ -240,6 +377,7 @@ export default function MobileProductCard({
 
         </div>
       )}
+      </div>
     </div>
   )
 }
