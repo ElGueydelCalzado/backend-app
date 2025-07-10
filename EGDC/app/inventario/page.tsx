@@ -19,6 +19,7 @@ import MobileInventoryView from '@/components/MobileInventoryView'
 import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
+import MobileSort from '@/components/MobileSort'
 import BarcodeScannerButton from '@/components/BarcodeScannerButton'
 
 interface Filters {
@@ -27,6 +28,12 @@ interface Filters {
   models: Set<string>
   colors: Set<string>
   sizes: Set<string>
+  priceRange: { min: number; max: number }
+}
+
+interface SortConfig {
+  field: 'alphabetical' | 'price' | 'stock' | 'date' | 'category'
+  direction: 'asc' | 'desc'
 }
 
 interface UniqueValues {
@@ -101,8 +108,16 @@ export default function InventarioPage() {
     brands: new Set(),
     models: new Set(),
     colors: new Set(),
-    sizes: new Set()
+    sizes: new Set(),
+    priceRange: { min: 0, max: 10000 }
   })
+  
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: 'alphabetical',
+    direction: 'asc'
+  })
+  
+  const [showMobileSort, setShowMobileSort] = useState(false)
   
   const [uniqueValues, setUniqueValues] = useState<UniqueValues>({
     categories: new Set(),
@@ -306,7 +321,7 @@ export default function InventarioPage() {
             shopify_modifier: editedItem.shopify_modifier,
             meli_modifier: editedItem.meli_modifier,
             precio_shein: editedItem.precio_shein,
-            precio_egdc: editedItem.precio_egdc,
+            precio_shopify: editedItem.precio_shopify,
             precio_meli: editedItem.precio_meli,
             inv_egdc: editedItem.inv_egdc,
             inv_fami: editedItem.inv_fami,
@@ -500,7 +515,7 @@ export default function InventarioPage() {
       shopify_modifier: 2,
       meli_modifier: 2.5,
       precio_shein: null,
-      precio_egdc: null,
+      precio_shopify: null,
       precio_meli: null,
       inv_egdc: 0,
       inv_fami: 0,
@@ -717,7 +732,7 @@ export default function InventarioPage() {
   const handlePresetSelect = (preset: string) => {
     const presets = {
       basic: ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku'],
-      financial: ['categoria', 'marca', 'modelo', 'costo', 'precio_shein', 'precio_egdc', 'precio_meli'],
+      financial: ['categoria', 'marca', 'modelo', 'costo', 'precio_shein', 'precio_shopify', 'precio_meli'],
       stock: ['categoria', 'marca', 'modelo', 'inv_egdc', 'inv_fami', 'inventory_total'],
       complete: 'all'
     }
@@ -833,8 +848,104 @@ export default function InventarioPage() {
         item.talla?.toLowerCase().includes(mobileSearchTerm.toLowerCase())
       )
     }
+
+    // Apply filters
+    if (filters.categories.size > 0) {
+      filtered = filtered.filter(product => 
+        product.categoria && filters.categories.has(product.categoria)
+      )
+    }
+
+    if (filters.brands.size > 0) {
+      filtered = filtered.filter(product => 
+        product.marca && filters.brands.has(product.marca)
+      )
+    }
+
+    if (filters.models.size > 0) {
+      filtered = filtered.filter(product => 
+        product.modelo && filters.models.has(product.modelo)
+      )
+    }
+
+    if (filters.colors.size > 0) {
+      filtered = filtered.filter(product => 
+        product.color && filters.colors.has(product.color)
+      )
+    }
+
+    if (filters.sizes.size > 0) {
+      filtered = filtered.filter(product => 
+        product.talla && filters.sizes.has(product.talla)
+      )
+    }
+
+    // Apply price range filter
+    filtered = filtered.filter(product => {
+      const price = product.precio_shopify || product.costo || 0
+      return price >= filters.priceRange.min && price <= filters.priceRange.max
+    })
+
+    // Apply sorting
+    return applySorting(filtered)
+  }
+
+  const applySorting = (products: Product[]): Product[] => {
+    const sorted = [...products]
     
-    return filtered
+    switch (sortConfig.field) {
+      case 'alphabetical':
+        sorted.sort((a, b) => {
+          const aName = `${a.marca} ${a.modelo}`.toLowerCase()
+          const bName = `${b.marca} ${b.modelo}`.toLowerCase()
+          return sortConfig.direction === 'asc' 
+            ? aName.localeCompare(bName)
+            : bName.localeCompare(aName)
+        })
+        break
+      
+      case 'price':
+        sorted.sort((a, b) => {
+          const aPrice = a.precio_shopify || a.costo || 0
+          const bPrice = b.precio_shopify || b.costo || 0
+          return sortConfig.direction === 'asc' 
+            ? aPrice - bPrice
+            : bPrice - aPrice
+        })
+        break
+      
+      case 'stock':
+        sorted.sort((a, b) => {
+          const aStock = a.inventory_total || 0
+          const bStock = b.inventory_total || 0
+          return sortConfig.direction === 'asc' 
+            ? aStock - bStock
+            : bStock - aStock
+        })
+        break
+      
+      case 'date':
+        sorted.sort((a, b) => {
+          const aDate = new Date(a.created_at || 0).getTime()
+          const bDate = new Date(b.created_at || 0).getTime()
+          return sortConfig.direction === 'asc' 
+            ? aDate - bDate
+            : bDate - aDate
+        })
+        break
+      
+      case 'category':
+        sorted.sort((a, b) => {
+          const aCategory = a.categoria || ''
+          const bCategory = b.categoria || ''
+          return sortConfig.direction === 'asc' 
+            ? aCategory.localeCompare(bCategory)
+            : bCategory.localeCompare(aCategory)
+        })
+        break
+    }
+    
+    return sorted
   }
 
   // Check if there are any changes to cancel
@@ -959,6 +1070,8 @@ export default function InventarioPage() {
                 columnConfig={columnConfig}
                 onColumnToggle={handleColumnToggle}
                 onPresetSelect={handlePresetSelect}
+                sortConfig={sortConfig}
+                onSortChange={setSortConfig}
                 compact={false}
               />
             </Sidebar>
@@ -1109,21 +1222,33 @@ export default function InventarioPage() {
                   placeholder="Buscar productos..."
                   value={mobileSearchTerm}
                   onChange={(e) => handleMobileSearch(e.target.value)}
-                  className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <button
-                  onClick={() => setShowMobileFilters(!showMobileFilters)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-                  </svg>
-                </button>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
+                  <button
+                    onClick={() => setShowMobileSort(!showMobileSort)}
+                    className="flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Ordenar"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Filtros"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1142,7 +1267,7 @@ export default function InventarioPage() {
             {showMobileFilters && (
               <MobileFilters
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={(newFilters) => setFilters(newFilters)}
                 uniqueValues={uniqueValues}
                 onClose={() => setShowMobileFilters(false)}
               />
@@ -1158,6 +1283,21 @@ export default function InventarioPage() {
                   setEditingProduct(null)
                 }}
                 isNew={!editingProduct}
+              />
+            )}
+
+            {/* Mobile Sort Modal */}
+            {showMobileSort && (
+              <MobileSort
+                sortConfig={sortConfig}
+                onSortChange={setSortConfig}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClose={() => setShowMobileSort(false)}
+                priceRange={{
+                  min: Math.min(...allData.map(p => p.precio_shopify || p.costo || 0)),
+                  max: Math.max(...allData.map(p => p.precio_shopify || p.costo || 0))
+                }}
               />
             )}
           </div>

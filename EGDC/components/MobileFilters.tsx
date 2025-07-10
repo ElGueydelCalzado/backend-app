@@ -9,6 +9,7 @@ interface Filters {
   models: Set<string>
   colors: Set<string>
   sizes: Set<string>
+  priceRange: { min: number; max: number }
 }
 
 interface MobileFiltersProps {
@@ -46,10 +47,12 @@ export default function MobileFilters({
 
   const handleFilterChange = (filterType: keyof Filters, value: string, checked: boolean) => {
     const newFilters = { ...filters }
-    if (checked) {
-      newFilters[filterType].add(value)
-    } else {
-      newFilters[filterType].delete(value)
+    if (filterType !== 'priceRange') {
+      if (checked) {
+        (newFilters[filterType] as Set<string>).add(value)
+      } else {
+        (newFilters[filterType] as Set<string>).delete(value)
+      }
     }
     onFiltersChange(newFilters)
   }
@@ -60,12 +63,13 @@ export default function MobileFilters({
       brands: new Set(),
       models: new Set(),
       colors: new Set(),
-      sizes: new Set()
+      sizes: new Set(),
+      priceRange: filters.priceRange
     })
   }
 
   const getActiveFiltersCount = () => {
-    return Object.values(filters).reduce((count, filterSet) => count + filterSet.size, 0)
+    return filters.categories.size + filters.brands.size + filters.models.size + filters.colors.size + filters.sizes.size
   }
 
   const renderFilterSection = (
@@ -75,7 +79,7 @@ export default function MobileFilters({
     icon?: React.ReactNode
   ) => {
     const isExpanded = expandedSections.has(filterType)
-    const activeCount = filters[filterType].size
+    const activeCount = filterType === 'priceRange' ? 0 : (filters[filterType] as Set<string>).size
 
     return (
       <div className="border-b border-gray-200">
@@ -109,7 +113,7 @@ export default function MobileFilters({
                 >
                   <input
                     type="checkbox"
-                    checked={filters[filterType].has(value)}
+                    checked={filterType === 'priceRange' ? false : (filters[filterType] as Set<string>).has(value)}
                     onChange={(e) => handleFilterChange(filterType, value, e.target.checked)}
                     className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />

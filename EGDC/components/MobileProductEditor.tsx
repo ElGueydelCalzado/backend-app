@@ -47,7 +47,6 @@ export default function MobileProductEditor({
       // Auto-calculated fields - will be set by database
       precio_shein: null,
       precio_shopify: null,
-      precio_egdc: null,
       precio_meli: null,
       inventory_total: null,
       fecha: null,
