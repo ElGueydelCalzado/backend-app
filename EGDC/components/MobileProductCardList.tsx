@@ -66,7 +66,7 @@ export default function MobileProductCardList({
     <div className="space-y-4 p-4">
       {/* Products Header */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-base font-semibold text-gray-900">
           Productos ({products.length})
         </h2>
         {selectedProducts.size > 0 && (
