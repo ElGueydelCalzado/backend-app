@@ -131,7 +131,7 @@ export default function MobileProductCard({
           <div>
             <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Inventario por Ubicación
+              Almacén
             </h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex justify-between p-2 bg-gray-50 rounded">
