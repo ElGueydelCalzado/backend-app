@@ -28,35 +28,15 @@ export default function ImagePreviewModal({
   }, [isOpen, googleDriveUrl])
 
   const loadImagesFromDrive = async () => {
-    setLoading(true)
+    setLoading(false) // Skip loading since we're going straight to Drive link
     setError(false)
     
-    try {
-      console.log('Original Google Drive URL:', googleDriveUrl)
-      
-      // Extract folder ID from Google Drive URL
-      const folderId = extractFolderIdFromUrl(googleDriveUrl)
-      console.log('Extracted folder ID:', folderId)
-      
-      if (!folderId) {
-        throw new Error('Invalid Google Drive URL')
-      }
-
-      // Since CORS blocks direct access, we'll use iframe embedding
-      // This works for public Google Drive folders
-      const embedUrl = `https://drive.google.com/embeddedfolderview?id=${folderId}#grid`
-      console.log('Using embed URL:', embedUrl)
-      
-      // Set a single "image" which is actually an embedded folder view
-      setImages([embedUrl])
-      setCurrentImageIndex(0)
-      
-    } catch (err) {
-      console.error('Error loading folder:', err)
-      setError(true)
-    } finally {
-      setLoading(false)
-    }
+    // Due to browser security restrictions (CORS + CSP), we cannot embed
+    // Google Drive content directly. Instead, we'll show a nice interface
+    // that explains this and provides easy access to the Drive folder.
+    
+    console.log('Redirecting to Google Drive due to browser security restrictions')
+    console.log('Drive URL:', googleDriveUrl)
   }
 
 
@@ -128,51 +108,49 @@ export default function ImagePreviewModal({
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
-          {loading && (
-            <div className="flex items-center justify-center h-96">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <span className="ml-3 text-gray-600">Cargando imágenes...</span>
+          {/* Beautiful Google Drive Interface */}
+          <div className="flex flex-col items-center justify-center h-96 p-8 text-center">
+            {/* Google Drive Icon */}
+            <div className="w-24 h-24 mb-6 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12.01 2C6.5 2 2.01 6.49 2.01 12s4.49 10 9.99 10c5.51 0 10-4.49 10-10S17.52 2 12.01 2zM18 14h-5v5h-2v-5H6v-2h5V7h2v5h5v2z"/>
+              </svg>
             </div>
-          )}
 
-          {error && (
-            <div className="flex flex-col items-center justify-center h-96 p-8 text-center">
-              <div className="text-6xl mb-4">📁</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                Vista previa no disponible
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Las imágenes de Google Drive requieren permisos especiales para mostrar una vista previa. 
-                Usa el botón de abajo para ver todas las imágenes del producto.
-              </p>
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">
+              Imágenes de {productName}
+            </h3>
+
+            {/* Description */}
+            <p className="text-gray-600 mb-8 max-w-md leading-relaxed">
+              Las imágenes del producto están almacenadas en Google Drive. 
+              Haz clic en el botón de abajo para ver todas las imágenes en alta calidad.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={openInDrive}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg transform hover:scale-105"
               >
-                <ExternalLink className="w-4 h-4" />
-                Abrir carpeta en Google Drive
+                <ExternalLink className="w-5 h-5" />
+                <span className="font-semibold">Ver Imágenes en Drive</span>
+              </button>
+              
+              <button
+                onClick={onClose}
+                className="flex items-center gap-3 px-8 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <span>Cerrar</span>
               </button>
             </div>
-          )}
 
-          {!loading && !error && images.length > 0 && (
-            <div className="relative">
-              {/* Google Drive Folder Embed */}
-              <div className="flex items-center justify-center bg-gray-100">
-                <iframe
-                  src={images[currentImageIndex]}
-                  className="w-full h-[70vh] border-0"
-                  title={`${productName} - Imágenes del producto`}
-                  allow="autoplay"
-                />
-              </div>
-
-              {/* Info Footer */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                Vista de carpeta Google Drive
-              </div>
-            </div>
-          )}
+            {/* Subtle hint */}
+            <p className="text-xs text-gray-400 mt-6">
+              Se abrirá en una nueva pestaña
+            </p>
+          </div>
         </div>
       </div>
     </div>
