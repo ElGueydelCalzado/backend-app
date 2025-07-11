@@ -30,6 +30,14 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       disabled: false
     },
     {
+      id: 'buscar',
+      label: 'Buscar',
+      icon: '🔍',
+      href: '/escanear',
+      active: pathname === '/escanear',
+      disabled: false
+    },
+    {
       id: 'ventas',
       label: 'Ventas',
       icon: '💰',
@@ -43,6 +51,14 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       icon: '📈',
       href: '/analiticas',
       active: pathname === '/analiticas',
+      disabled: true
+    },
+    {
+      id: 'tbd2',
+      label: 'TBD 2',
+      icon: '⚙️',
+      href: '/tbd2',
+      active: pathname === '/tbd2',
       disabled: true
     }
   ]
@@ -111,9 +127,9 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
 
       {/* Mobile: Horizontal slider */}
       <div className="md:hidden relative">
-        {/* Gradient overlays for scroll indicators */}
-        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none" />
+        {/* Gradient overlays for scroll indicators - positioned to not overlap content */}
+        <div className="absolute -left-2 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute -right-2 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
         
         {/* Scrollable tab container */}
         <div 
@@ -126,12 +142,11 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
               return (
                 <div
                   key={tab.id}
-                  className="flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
+                  className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
                   aria-disabled="true"
-                  title="Próximamente disponible"
+                  title={`${tab.label} - Próximamente disponible`}
                 >
-                  <span className="text-lg mb-1 opacity-50">{tab.icon}</span>
-                  <span className="text-xs font-medium text-gray-400 text-center leading-none">{tab.label}</span>
+                  <span className="text-xl opacity-50">{tab.icon}</span>
                 </div>
               )
             }
@@ -143,19 +158,17 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
                 role="tab"
                 aria-selected={tab.active}
                 aria-controls={`${tab.id}-panel`}
+                title={tab.label}
                 className={`
-                  flex-shrink-0 flex flex-col items-center justify-center min-w-[80px] h-16 rounded-xl transition-all duration-300 transform active:scale-95
+                  flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 transform active:scale-95
                   ${tab.active 
                     ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 scale-105' 
                     : 'bg-white text-gray-600 border border-gray-200 shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600'
                   }
                 `}
               >
-                <span className={`text-lg mb-1 ${tab.active ? 'animate-pulse' : ''}`}>
+                <span className={`text-xl ${tab.active ? 'animate-pulse' : ''}`}>
                   {tab.icon}
-                </span>
-                <span className="text-xs font-semibold text-center leading-none">
-                  {tab.label}
                 </span>
               </Link>
             )

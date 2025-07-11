@@ -20,7 +20,6 @@ export interface Product {
   // Auto-calculated prices (generated columns)
   precio_shein: number | null
   precio_shopify: number | null
-  precio_egdc: number | null
   precio_meli: number | null
   
   // Multi-location inventory

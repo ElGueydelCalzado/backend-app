@@ -5,7 +5,7 @@ import { Product } from '@/lib/supabase'
 import FilterSection from '@/components/FilterSection'
 import InventoryTable from '@/components/InventoryTable'
 import LoadingScreen from '@/components/LoadingScreen'
-import MessageArea from '@/components/MessageArea'
+import ToastNotification, { useToast } from '@/components/ToastNotification'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import TabNavigation from '@/components/TabNavigation'
 import Sidebar, { SidebarState } from '@/components/Sidebar'
@@ -16,8 +16,10 @@ import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import { ColumnConfig } from '@/components/ColumnControls'
 import MobileInventoryView from '@/components/MobileInventoryView'
+import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
+import MobileSort from '@/components/MobileSort'
 
 interface Filters {
   categories: Set<string>
@@ -25,6 +27,13 @@ interface Filters {
   models: Set<string>
   colors: Set<string>
   sizes: Set<string>
+  priceRange: { min: number; max: number }
+}
+
+interface SortConfig {
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
+  direction: 'asc' | 'desc'
+  priceFields?: ('precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo')[]
 }
 
 interface UniqueValues {
@@ -35,10 +44,7 @@ interface UniqueValues {
   sizes: Set<string>
 }
 
-interface Message {
-  text: string
-  type: 'success' | 'error' | 'info'
-}
+// Removed Message interface - now using toast notifications
 
 // Column configuration for the inventory table (auto-generated from database schema)
 const DEFAULT_COLUMNS: ColumnConfig[] = [
@@ -75,7 +81,7 @@ export default function InventarioPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [loadingText, setLoadingText] = useState('Cargando inventario...')
-  const [message, setMessage] = useState<Message | null>(null)
+  const { toasts, showToast, removeToast } = useToast()
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('open')
@@ -99,8 +105,17 @@ export default function InventarioPage() {
     brands: new Set(),
     models: new Set(),
     colors: new Set(),
-    sizes: new Set()
+    sizes: new Set(),
+    priceRange: { min: 0, max: 10000 }
   })
+  
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: 'alphabetical',
+    direction: 'asc',
+    priceFields: ['precio_shopify']
+  })
+  
+  const [showMobileSort, setShowMobileSort] = useState(false)
   
   const [uniqueValues, setUniqueValues] = useState<UniqueValues>({
     categories: new Set(),
@@ -305,7 +320,6 @@ export default function InventarioPage() {
             meli_modifier: editedItem.meli_modifier,
             precio_shein: editedItem.precio_shein,
             precio_shopify: editedItem.precio_shopify,
-            precio_egdc: editedItem.precio_egdc,
             precio_meli: editedItem.precio_meli,
             inv_egdc: editedItem.inv_egdc,
             inv_fami: editedItem.inv_fami,
@@ -470,15 +484,14 @@ export default function InventarioPage() {
     showMessage('Cambios cancelados.', 'info')
   }
 
-  const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
-    setMessage({ text, type })
-    if (type !== 'error') {
-      setTimeout(() => setMessage(null), 5000)
-    }
+  // Note: showMessage is now replaced by showToast from useToast hook
+  // Usage: showToast(text, type, duration?)
+  const showMessage = (text: string, type: 'success' | 'error' | 'info', duration?: number) => {
+    return showToast(text, type, duration)
   }
 
   const clearMessage = () => {
-    setMessage(null)
+    // Toast messages auto-dismiss, no manual clearing needed
   }
 
   // Row management functions
@@ -500,7 +513,6 @@ export default function InventarioPage() {
       meli_modifier: 2.5,
       precio_shein: null,
       precio_shopify: null,
-      precio_egdc: null,
       precio_meli: null,
       inv_egdc: 0,
       inv_fami: 0,
@@ -754,11 +766,17 @@ export default function InventarioPage() {
     setShowMobileEditor(true)
   }
 
-  const handleMobileDelete = async (id: number) => {
-    if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+  const handleMobileDelete = async (product: Product) => {
+    if (confirm(`¿Está seguro de que desea eliminar ${product.marca} ${product.modelo}?`)) {
       try {
-        const response = await fetch(`/api/inventory/${id}`, {
-          method: 'DELETE'
+        const response = await fetch('/api/inventory/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ids: [product.id]
+          })
         })
         
         if (!response.ok) {
@@ -766,40 +784,92 @@ export default function InventarioPage() {
         }
         
         await loadInventoryData()
-        showMessage('Producto eliminado exitosamente', 'success')
+        showToast('Producto eliminado exitosamente', 'success')
       } catch (error) {
-        showMessage('Error al eliminar producto', 'error')
+        showToast('Error al eliminar producto', 'error')
       }
     }
   }
 
-  const handleMobileAdd = () => {
-    setEditingProduct(null)
+  const handleMobileCreateNew = (afterProduct: Product) => {
+    // Create a duplicate product with modified fields for single product line insertion
+    const tempId = -Date.now() // Use negative ID for new products
+    const duplicatedProduct: Product = {
+      ...afterProduct,
+      id: tempId,
+      sku: '', // Clear SKU to be set by user
+      ean: '', // Clear EAN to be set by user
+      inventory_total: 0, // Start with 0 inventory
+      inv_egdc: 0,
+      inv_fami: 0,
+      inv_bodega_principal: 0,
+      inv_tienda_centro: 0,
+      inv_tienda_norte: 0,
+      inv_tienda_sur: 0,
+      inv_online: 0,
+      // Keep pricing and modifiers from original
+      // Keep categoria, marca, modelo, color from original
+      // User can modify these in the editor
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    // Open mobile editor with the duplicated product
+    setEditingProduct(duplicatedProduct)
     setShowMobileEditor(true)
   }
 
+  const handleMobileAdd = () => {
+    // Use the same desktop modal for consistency
+    setShowNewProductModal(true)
+  }
+
   const handleMobileEditorSave = async (product: Product) => {
+    const isNewProduct = product.id < 0 // Negative IDs indicate new products
+    
     try {
-      const response = await fetch('/api/inventory/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          products: [product]
+      if (isNewProduct) {
+        // Create new product
+        const { id, ...productData } = product // Remove the temporary negative ID
+        const response = await fetch('/api/inventory', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            product: productData
+          })
         })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Error al guardar producto')
+        
+        if (!response.ok) {
+          throw new Error('Error al crear producto')
+        }
+        
+        showMessage('Producto creado exitosamente', 'success')
+      } else {
+        // Update existing product
+        const response = await fetch('/api/inventory/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            changes: [product]
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error('Error al actualizar producto')
+        }
+        
+        showMessage('Producto actualizado exitosamente', 'success')
       }
       
       await loadInventoryData()
       setShowMobileEditor(false)
       setEditingProduct(null)
-      showMessage('Producto guardado exitosamente', 'success')
     } catch (error) {
-      showMessage('Error al guardar producto', 'error')
+      showMessage(isNewProduct ? 'Error al crear producto' : 'Error al actualizar producto', 'error')
     }
   }
 
@@ -816,8 +886,101 @@ export default function InventarioPage() {
         item.talla?.toLowerCase().includes(mobileSearchTerm.toLowerCase())
       )
     }
+
+    // Apply filters
+    if (filters.categories.size > 0) {
+      filtered = filtered.filter(product => 
+        product.categoria && filters.categories.has(product.categoria)
+      )
+    }
+
+    if (filters.brands.size > 0) {
+      filtered = filtered.filter(product => 
+        product.marca && filters.brands.has(product.marca)
+      )
+    }
+
+    if (filters.models.size > 0) {
+      filtered = filtered.filter(product => 
+        product.modelo && filters.models.has(product.modelo)
+      )
+    }
+
+    if (filters.colors.size > 0) {
+      filtered = filtered.filter(product => 
+        product.color && filters.colors.has(product.color)
+      )
+    }
+
+    if (filters.sizes.size > 0) {
+      filtered = filtered.filter(product => 
+        product.talla && filters.sizes.has(product.talla)
+      )
+    }
+
+    // Apply price range filter
+    filtered = filtered.filter(product => {
+      const price = product.precio_shopify || product.costo || 0
+      return price >= filters.priceRange.min && price <= filters.priceRange.max
+    })
+
+    // Apply sorting
+    return applySorting(filtered)
+  }
+
+  const applySorting = (products: Product[]): Product[] => {
+    const sorted = [...products]
     
-    return filtered
+    switch (sortConfig.field) {
+      case 'alphabetical':
+        sorted.sort((a, b) => {
+          const aName = `${a.marca} ${a.modelo}`.toLowerCase()
+          const bName = `${b.marca} ${b.modelo}`.toLowerCase()
+          return sortConfig.direction === 'asc' 
+            ? aName.localeCompare(bName)
+            : bName.localeCompare(aName)
+        })
+        break
+      
+      case 'price':
+        sorted.sort((a, b) => {
+          const priceFields = sortConfig.priceFields || ['precio_shopify']
+          // Calculate average price from selected fields
+          const getAveragePrice = (product: any) => {
+            const prices = priceFields.map(field => product[field] || product.costo || 0)
+            return prices.reduce((sum, price) => sum + price, 0) / prices.length
+          }
+          
+          const aPrice = getAveragePrice(a)
+          const bPrice = getAveragePrice(b)
+          return sortConfig.direction === 'asc' 
+            ? aPrice - bPrice
+            : bPrice - aPrice
+        })
+        break
+      
+      case 'stock':
+        sorted.sort((a, b) => {
+          const aStock = a.inventory_total || 0
+          const bStock = b.inventory_total || 0
+          return sortConfig.direction === 'asc' 
+            ? aStock - bStock
+            : bStock - aStock
+        })
+        break
+      
+      case 'date':
+        sorted.sort((a, b) => {
+          const aDate = new Date(a.created_at || 0).getTime()
+          const bDate = new Date(b.created_at || 0).getTime()
+          return sortConfig.direction === 'asc' 
+            ? aDate - bDate
+            : bDate - aDate
+        })
+        break
+    }
+    
+    return sorted
   }
 
   // Check if there are any changes to cancel
@@ -942,6 +1105,8 @@ export default function InventarioPage() {
                 columnConfig={columnConfig}
                 onColumnToggle={handleColumnToggle}
                 onPresetSelect={handlePresetSelect}
+                sortConfig={sortConfig}
+                onSortChange={setSortConfig}
                 compact={false}
               />
             </Sidebar>
@@ -957,6 +1122,7 @@ export default function InventarioPage() {
                     onClearSearch={handleClearSearch}
                     className="flex-1 max-w-lg"
                   />
+                  
                   <button
                     onClick={() => setShowNewProductModal(true)}
                     className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
@@ -1020,9 +1186,7 @@ export default function InventarioPage() {
               </div>
               
               {/* Message Area */}
-              <div className="px-6 py-1">
-                <MessageArea message={message} />
-              </div>
+              {/* Message area removed - now using toast notifications */}
               
               {/* Table Section */}
               <div className="flex-1 px-6 pb-1 overflow-hidden">
@@ -1073,26 +1237,77 @@ export default function InventarioPage() {
         ) : (
           /* Mobile Layout - Optimized */
           <div className="h-[calc(100vh-120px)] flex flex-col">
-            {/* Message Area */}
-            <MessageArea message={message} />
+            {/* Message area removed - now using toast notifications */}
 
-            {/* Mobile Inventory View */}
-            <MobileInventoryView
-              products={getFilteredProducts()}
-              onEdit={handleMobileEdit}
-              onDelete={handleMobileDelete}
-              onAdd={handleMobileAdd}
-              searchTerm={mobileSearchTerm}
-              onSearch={handleMobileSearch}
-              showFilters={showMobileFilters}
-              onToggleFilters={() => setShowMobileFilters(!showMobileFilters)}
-            />
+            {/* Mobile Search Bar */}
+            <div className="p-4 bg-white border-b border-gray-200">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={mobileSearchTerm}
+                  onChange={(e) => handleMobileSearch(e.target.value)}
+                  className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-1">
+                  <button
+                    onClick={() => setShowMobileSort(!showMobileSort)}
+                    className="flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Ordenar"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Filtros"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Product Card View */}
+            <div className="flex-1 overflow-y-auto">
+              <MobileProductCardList
+                products={getFilteredProducts()}
+                onEdit={handleMobileEdit}
+                onSelect={handleProductSelect}
+                onDelete={handleMobileDelete}
+                onCreateNew={handleMobileCreateNew}
+                selectedProducts={selectedProducts}
+                loading={loading}
+              />
+            </div>
+
+            {/* Floating Action Button - Nuevo Producto */}
+            <div className="fixed bottom-6 right-6 z-40">
+              <button
+                onClick={handleMobileAdd}
+                className="w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95"
+                title="Crear nuevo producto"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
 
             {/* Mobile Filters Modal */}
             {showMobileFilters && (
               <MobileFilters
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={(newFilters) => setFilters(newFilters)}
                 uniqueValues={uniqueValues}
                 onClose={() => setShowMobileFilters(false)}
               />
@@ -1108,6 +1323,22 @@ export default function InventarioPage() {
                   setEditingProduct(null)
                 }}
                 isNew={!editingProduct}
+                availableCategories={Array.from(uniqueValues.categories).sort()}
+              />
+            )}
+
+            {/* Mobile Sort Modal */}
+            {showMobileSort && (
+              <MobileSort
+                sortConfig={sortConfig}
+                onSortChange={setSortConfig}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClose={() => setShowMobileSort(false)}
+                priceRange={{
+                  min: Math.min(...allData.map(p => p.precio_shopify || p.costo || 0)),
+                  max: Math.max(...allData.map(p => p.precio_shopify || p.costo || 0))
+                }}
               />
             )}
           </div>
@@ -1142,6 +1373,15 @@ export default function InventarioPage() {
           onClose={() => setShowBulkUpdateModal(false)}
           onUpdate={handleBulkUpdate}
         />
+
+        {/* Toast Notifications */}
+        {toasts.map((toast) => (
+          <ToastNotification
+            key={toast.id}
+            message={toast}
+            onClose={removeToast}
+          />
+        ))}
       </div>
     </>
   )

@@ -35,19 +35,21 @@ export default auth((request) => {
   // Referrer Policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   
-  // Content Security Policy
+  // Content Security Policy - Updated for Vercel live features and barcode scanner
   response.headers.set('Content-Security-Policy', 
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' vercel.live; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob: vercel.com; " +
     "connect-src 'self' *.vercel.app *.google.com; " +
-    "font-src 'self'"
+    "font-src 'self'; " +
+    "frame-src 'self' vercel.live; " +
+    "media-src 'self' blob:"
   )
   
-  // Permissions Policy
+  // Permissions Policy - Allow camera for barcode scanning
   response.headers.set('Permissions-Policy', 
-    'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
+    'geolocation=(), microphone=(), camera=(self), payment=(), usb=(), magnetometer=(), gyroscope=()'
   )
   
   return response

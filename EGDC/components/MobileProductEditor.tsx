@@ -9,13 +9,15 @@ interface MobileProductEditorProps {
   onSave: (product: Product) => void
   onClose: () => void
   isNew?: boolean
+  availableCategories?: string[]
 }
 
 export default function MobileProductEditor({
   product,
   onSave,
   onClose,
-  isNew = false
+  isNew = false,
+  availableCategories = []
 }: MobileProductEditorProps) {
   const [formData, setFormData] = useState<Partial<Product>>(
     product || {
@@ -47,7 +49,6 @@ export default function MobileProductEditor({
       // Auto-calculated fields - will be set by database
       precio_shein: null,
       precio_shopify: null,
-      precio_egdc: null,
       precio_meli: null,
       inventory_total: null,
       fecha: null,
@@ -78,14 +79,17 @@ export default function MobileProductEditor({
           <Tag className="inline h-4 w-4 mr-1" />
           Categoría *
         </label>
-        <input
-          type="text"
+        <select
           required
           value={formData.categoria || ''}
           onChange={(e) => handleInputChange('categoria', e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          placeholder="Ej: Zapatos, Botas, Tenis"
-        />
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white"
+        >
+          <option value="">Seleccionar categoría...</option>
+          {availableCategories.map(categoria => (
+            <option key={categoria} value={categoria}>{categoria}</option>
+          ))}
+        </select>
       </div>
 
       <div>
@@ -266,66 +270,6 @@ export default function MobileProductEditor({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Bodega Principal
-          </label>
-          <input
-            type="number"
-            value={formData.inv_bodega_principal || ''}
-            onChange={(e) => handleInputChange('inv_bodega_principal', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Centro
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_centro || ''}
-            onChange={(e) => handleInputChange('inv_tienda_centro', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Norte
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_norte || ''}
-            onChange={(e) => handleInputChange('inv_tienda_norte', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tienda Sur
-          </label>
-          <input
-            type="number"
-            value={formData.inv_tienda_sur || ''}
-            onChange={(e) => handleInputChange('inv_tienda_sur', parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Inventario Online
-        </label>
-        <input
-          type="number"
-          value={formData.inv_online || ''}
-          onChange={(e) => handleInputChange('inv_online', parseInt(e.target.value) || 0)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-        />
       </div>
     </div>
   )
@@ -384,8 +328,8 @@ export default function MobileProductEditor({
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
       <div className="bg-white w-full h-[90vh] rounded-t-xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900">
             {isNew ? 'Nuevo Producto' : 'Editar Producto'}
           </h2>
           <button

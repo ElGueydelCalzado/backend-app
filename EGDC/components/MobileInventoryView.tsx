@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { Product } from '@/lib/supabase'
-import { Search, Filter, Plus, MoreVertical, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react'
+import { Search, Filter, Plus, MoreVertical, Edit, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react'
+import BarcodeScannerButton from './BarcodeScannerButton'
 
 interface MobileInventoryViewProps {
   products: Product[]
@@ -27,6 +28,31 @@ export default function MobileInventoryView({
 }: MobileInventoryViewProps) {
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
   const [showActions, setShowActions] = useState<number | null>(null)
+  const [scanResult, setScanResult] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+
+  // Handle barcode scan result
+  const handleProductFound = (product: Product) => {
+    setScanResult({
+      type: 'success',
+      message: `Producto encontrado: ${product.marca} ${product.modelo}`
+    })
+    
+    // Auto-search for the product
+    onSearch(`${product.marca} ${product.modelo}`)
+    
+    // Clear message after 3 seconds
+    setTimeout(() => setScanResult(null), 3000)
+  }
+
+  const handleProductNotFound = (barcode: string) => {
+    setScanResult({
+      type: 'error',
+      message: `No se encontró producto con código: ${barcode}`
+    })
+    
+    // Clear message after 3 seconds
+    setTimeout(() => setScanResult(null), 3000)
+  }
 
   // Mobile-optimized product cards
   const renderProductCard = (product: Product) => (
@@ -137,6 +163,22 @@ export default function MobileInventoryView({
           />
         </div>
 
+        {/* Scan Result Message */}
+        {scanResult && (
+          <div className={`mb-3 p-3 rounded-lg border flex items-center space-x-2 ${
+            scanResult.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {scanResult.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            )}
+            <span className="text-sm font-medium">{scanResult.message}</span>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex space-x-2">
           <button
@@ -150,6 +192,15 @@ export default function MobileInventoryView({
             <Filter className="h-4 w-4" />
             <span>Filtros</span>
           </button>
+          
+          <BarcodeScannerButton
+            onProductFound={handleProductFound}
+            onProductNotFound={handleProductNotFound}
+            size="md"
+            variant="outline"
+            className="flex-1"
+          />
+          
           <button
             onClick={onAdd}
             className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium text-sm hover:bg-green-700 transition-colors"
