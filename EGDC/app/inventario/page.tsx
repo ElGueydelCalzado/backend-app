@@ -323,11 +323,8 @@ export default function InventarioPage() {
             precio_meli: editedItem.precio_meli,
             inv_egdc: editedItem.inv_egdc,
             inv_fami: editedItem.inv_fami,
-            inv_bodega_principal: editedItem.inv_bodega_principal,
-            inv_tienda_centro: editedItem.inv_tienda_centro,
-            inv_tienda_norte: editedItem.inv_tienda_norte,
-            inv_tienda_sur: editedItem.inv_tienda_sur,
-            inv_online: editedItem.inv_online,
+            inv_osiel: editedItem.inv_osiel,
+            inv_molly: editedItem.inv_molly,
             inventory_total: editedItem.inventory_total,
             shein: editedItem.shein,
             meli: editedItem.meli,
@@ -353,6 +350,8 @@ export default function InventarioPage() {
           editedItem.meli_modifier !== originalItem.meli_modifier ||
           editedItem.inv_egdc !== originalItem.inv_egdc ||
           editedItem.inv_fami !== originalItem.inv_fami ||
+          editedItem.inv_osiel !== originalItem.inv_osiel ||
+          editedItem.inv_molly !== originalItem.inv_molly ||
           editedItem.shein !== originalItem.shein ||
           editedItem.meli !== originalItem.meli ||
           editedItem.shopify !== originalItem.shopify ||
@@ -376,13 +375,15 @@ export default function InventarioPage() {
             meli_modifier: editedItem.meli_modifier,
             inv_egdc: editedItem.inv_egdc,
             inv_fami: editedItem.inv_fami,
+            inv_osiel: editedItem.inv_osiel,
+            inv_molly: editedItem.inv_molly,
             shein: editedItem.shein,
             meli: editedItem.meli,
             shopify: editedItem.shopify,
             tiktok: editedItem.tiktok,
             upseller: editedItem.upseller,
             go_trendier: editedItem.go_trendier
-          })
+          } as any)
         }
       })
       
@@ -516,11 +517,8 @@ export default function InventarioPage() {
       precio_meli: null,
       inv_egdc: 0,
       inv_fami: 0,
-      inv_bodega_principal: 0,
-      inv_tienda_centro: 0,
-      inv_tienda_norte: 0,
-      inv_tienda_sur: 0,
-      inv_online: 0,
+      inv_osiel: 0,
+      inv_molly: 0,
       inventory_total: 0,
       shein: false,
       meli: false,
@@ -767,8 +765,10 @@ export default function InventarioPage() {
   }
 
   const handleMobileDelete = async (product: Product) => {
+    console.log('📱 Mobile delete called for product:', product.marca, product.modelo)
     if (confirm(`¿Está seguro de que desea eliminar ${product.marca} ${product.modelo}?`)) {
       try {
+        console.log('🔄 Sending delete request...')
         const response = await fetch('/api/inventory/delete', {
           method: 'POST',
           headers: {
@@ -779,13 +779,23 @@ export default function InventarioPage() {
           })
         })
         
+        console.log('📡 Delete response status:', response.status, response.ok)
+        
         if (!response.ok) {
           throw new Error('Error al eliminar producto')
+        }
+        
+        const result = await response.json()
+        console.log('📊 Delete result:', result)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al eliminar producto')
         }
         
         await loadInventoryData()
         showToast('Producto eliminado exitosamente', 'success')
       } catch (error) {
+        console.error('❌ Mobile delete error:', error)
         showToast('Error al eliminar producto', 'error')
       }
     }
@@ -802,11 +812,8 @@ export default function InventarioPage() {
       inventory_total: 0, // Start with 0 inventory
       inv_egdc: 0,
       inv_fami: 0,
-      inv_bodega_principal: 0,
-      inv_tienda_centro: 0,
-      inv_tienda_norte: 0,
-      inv_tienda_sur: 0,
-      inv_online: 0,
+      inv_osiel: 0,
+      inv_molly: 0,
       // Keep pricing and modifiers from original
       // Keep categoria, marca, modelo, color from original
       // User can modify these in the editor
@@ -825,12 +832,16 @@ export default function InventarioPage() {
   }
 
   const handleMobileEditorSave = async (product: Product) => {
-    const isNewProduct = product.id < 0 // Negative IDs indicate new products
+    const isNewProduct = product.id < 0 || !product.id // Negative IDs or undefined indicate new products
+    
+    console.log('📱 Mobile editor save - isNewProduct:', isNewProduct, 'product:', product)
     
     try {
       if (isNewProduct) {
         // Create new product
         const { id, ...productData } = product // Remove the temporary negative ID
+        console.log('🔄 Creating new product with data:', productData)
+        
         const response = await fetch('/api/inventory', {
           method: 'POST',
           headers: {
@@ -841,35 +852,114 @@ export default function InventarioPage() {
           })
         })
         
+        console.log('📡 Create response status:', response.status, response.ok)
+        
         if (!response.ok) {
-          throw new Error('Error al crear producto')
+          const errorData = await response.json()
+          console.error('❌ Create error response:', errorData)
+          throw new Error(errorData.error || 'Error al crear producto')
+        }
+        
+        const result = await response.json()
+        console.log('✅ Create result:', result)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al crear producto')
         }
         
         showMessage('Producto creado exitosamente', 'success')
       } else {
         // Update existing product
+        console.log('🔄 Updating existing product with data:', product)
+        
+        // Filter out calculated fields and timestamps that the API doesn't accept
+        const updateData = {
+          id: product.id,
+          categoria: product.categoria || null,
+          marca: product.marca || null,
+          modelo: product.modelo || null,
+          color: product.color || null,
+          talla: product.talla || null,
+          sku: product.sku || null,
+          ean: product.ean || null,
+          google_drive: product.google_drive || null,
+          costo: typeof product.costo === 'number' ? product.costo : (parseFloat(product.costo as any) || null),
+          shein_modifier: typeof product.shein_modifier === 'number' ? product.shein_modifier : (parseFloat(product.shein_modifier as any) || 1.0),
+          shopify_modifier: typeof product.shopify_modifier === 'number' ? product.shopify_modifier : (parseFloat(product.shopify_modifier as any) || 1.0),
+          meli_modifier: typeof product.meli_modifier === 'number' ? product.meli_modifier : (parseFloat(product.meli_modifier as any) || 1.0),
+          inv_egdc: typeof product.inv_egdc === 'number' ? product.inv_egdc : (parseInt(product.inv_egdc as any) || 0),
+          inv_fami: typeof product.inv_fami === 'number' ? product.inv_fami : (parseInt(product.inv_fami as any) || 0),
+          inv_osiel: typeof product.inv_osiel === 'number' ? product.inv_osiel : (parseInt(product.inv_osiel as any) || 0),
+          inv_molly: typeof product.inv_molly === 'number' ? product.inv_molly : (parseInt(product.inv_molly as any) || 0),
+          shein: Boolean(product.shein),
+          meli: Boolean(product.meli),
+          shopify: Boolean(product.shopify),
+          tiktok: Boolean(product.tiktok),
+          upseller: Boolean(product.upseller),
+          go_trendier: Boolean(product.go_trendier)
+          // Excluded: precio_*, inventory_total, created_at, updated_at, fecha
+        }
+        
+        // Validate required fields
+        if (!updateData.id || updateData.id <= 0) {
+          throw new Error('Invalid product ID')
+        }
+        
+        console.log('🔍 Data types validation:')
+        console.log('- ID:', typeof updateData.id, updateData.id)
+        console.log('- Cost:', typeof updateData.costo, updateData.costo)
+        console.log('- Modifiers:', typeof updateData.shein_modifier, typeof updateData.shopify_modifier, typeof updateData.meli_modifier)
+        
+        console.log('📤 Sending filtered update request body:', JSON.stringify({ changes: [updateData] }, null, 2))
+        
         const response = await fetch('/api/inventory/update', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            changes: [product]
+            changes: [updateData]
           })
         })
         
+        console.log('📡 Update response status:', response.status, response.ok)
+        
         if (!response.ok) {
-          throw new Error('Error al actualizar producto')
+          let errorData;
+          try {
+            errorData = await response.json()
+            console.error('❌ Update error response:', errorData)
+            console.error('❌ Full error details:', JSON.stringify(errorData, null, 2))
+          } catch (parseError) {
+            console.error('❌ Could not parse error response:', parseError)
+            console.error('❌ Raw response status:', response.status, response.statusText)
+            errorData = { error: `HTTP ${response.status}: ${response.statusText}` }
+          }
+          throw new Error(errorData.error || 'Error al actualizar producto')
+        }
+        
+        const result = await response.json()
+        console.log('✅ Update result:', result)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al actualizar producto')
         }
         
         showMessage('Producto actualizado exitosamente', 'success')
       }
       
+      // Reload data and sync all state properly
       await loadInventoryData()
+      
+      // Close editor after successful save
       setShowMobileEditor(false)
       setEditingProduct(null)
     } catch (error) {
-      showMessage(isNewProduct ? 'Error al crear producto' : 'Error al actualizar producto', 'error')
+      console.error('❌ Mobile editor save error:', error)
+      showMessage(
+        error instanceof Error ? error.message : (isNewProduct ? 'Error al crear producto' : 'Error al actualizar producto'), 
+        'error'
+      )
     }
   }
 
@@ -1322,7 +1412,7 @@ export default function InventarioPage() {
                   setShowMobileEditor(false)
                   setEditingProduct(null)
                 }}
-                isNew={!editingProduct}
+                isNew={!editingProduct || editingProduct.id < 0}
                 availableCategories={Array.from(uniqueValues.categories).sort()}
               />
             )}

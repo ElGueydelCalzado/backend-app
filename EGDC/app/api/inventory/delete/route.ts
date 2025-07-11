@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = {
-      success: errors.length === 0,
+      success: results.length > 0,
       deleted: results.length,
       errors: errors.length,
       results,

@@ -46,11 +46,8 @@ export default function MobileProductCard({
 
   const totalInventory = (product.inv_egdc || 0) + 
                         (product.inv_fami || 0) + 
-                        (product.inv_bodega_principal || 0) + 
-                        (product.inv_tienda_centro || 0) + 
-                        (product.inv_tienda_norte || 0) + 
-                        (product.inv_tienda_sur || 0) + 
-                        (product.inv_online || 0)
+                        (product.inv_osiel || 0) + 
+                        (product.inv_molly || 0)
 
   const getStockStatus = () => {
     if (totalInventory === 0) return { status: 'Sin Stock', color: 'text-red-600 bg-red-50' }
@@ -102,19 +99,23 @@ export default function MobileProductCard({
     if (!isDragging || isExpanded) return
 
     const deltaX = currentX.current - startX.current
+    console.log('👆 Touch end - deltaX:', deltaX, 'product:', product.marca)
 
     if (deltaX < -50) {
       // Left swipe - show delete panel
+      console.log('⬅️ Left swipe detected - showing delete panel')
       setSwipeOffset(-100)
       setShowDeletePanel(true)
       setShowCreatePanel(false)
     } else if (deltaX > 50) {
       // Right swipe - show create panel
+      console.log('➡️ Right swipe detected - showing create panel')
       setSwipeOffset(100)
       setShowCreatePanel(true)
       setShowDeletePanel(false)
     } else {
       // Reset to original position
+      console.log('🔄 Reset swipe position')
       setSwipeOffset(0)
       setShowDeletePanel(false)
       setShowCreatePanel(false)
@@ -124,6 +125,7 @@ export default function MobileProductCard({
   }
 
   const handleDeleteClick = () => {
+    console.log('🗑️ Delete button clicked for product:', product.marca, product.modelo)
     onDelete?.(product)
     // Reset card position
     setSwipeOffset(0)
@@ -313,6 +315,14 @@ export default function MobileProductCard({
               <div className="flex justify-between p-1 bg-gray-50 rounded text-xs">
                 <span>FAMI:</span>
                 <span className="font-medium">{product.inv_fami || 0}</span>
+              </div>
+              <div className="flex justify-between p-1 bg-gray-50 rounded text-xs">
+                <span>Osiel:</span>
+                <span className="font-medium">{product.inv_osiel || 0}</span>
+              </div>
+              <div className="flex justify-between p-1 bg-gray-50 rounded text-xs">
+                <span>Molly:</span>
+                <span className="font-medium">{product.inv_molly || 0}</span>
               </div>
             </div>
           </div>

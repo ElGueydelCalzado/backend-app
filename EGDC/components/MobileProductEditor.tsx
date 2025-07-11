@@ -34,11 +34,8 @@ export default function MobileProductEditor({
       meli_modifier: 2.0,
       inv_egdc: 0,
       inv_fami: 0,
-      inv_bodega_principal: 0,
-      inv_tienda_centro: 0,
-      inv_tienda_norte: 0,
-      inv_tienda_sur: 0,
-      inv_online: 0,
+      inv_osiel: 0,
+      inv_molly: 0,
       shein: false,
       meli: false,
       shopify: false,
@@ -58,6 +55,7 @@ export default function MobileProductEditor({
   )
 
   const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'inventory' | 'platforms'>('basic')
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(['basic']))
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -67,9 +65,37 @@ export default function MobileProductEditor({
   }
 
   const handleSave = () => {
-    if (formData.marca && formData.modelo && formData.categoria) {
-      onSave(formData as Product)
+    // Validate required fields
+    if (!formData.marca || !formData.modelo || !formData.categoria) {
+      alert('Por favor complete los campos obligatorios: Marca, Modelo y Categoría')
+      return
     }
+
+    // Validate cost for new products
+    if (isNew && (!formData.costo || formData.costo <= 0)) {
+      alert('Por favor ingrese un costo válido para el producto')
+      return
+    }
+
+    // Check if all tabs have been visited for new products
+    const requiredTabs = ['basic', 'pricing', 'inventory', 'platforms']
+    const allTabsVisited = requiredTabs.every(tab => visitedTabs.has(tab))
+    
+    if (isNew && !allTabsVisited) {
+      const missingTabs = requiredTabs.filter(tab => !visitedTabs.has(tab))
+      const tabNames = {
+        basic: 'Básico',
+        pricing: 'Precios', 
+        inventory: 'Stock',
+        platforms: 'Plataformas'
+      }
+      const missingTabNames = missingTabs.map(tab => tabNames[tab as keyof typeof tabNames]).join(', ')
+      alert(`Por favor visite todas las pestañas antes de guardar. Faltan: ${missingTabNames}`)
+      return
+    }
+
+    console.log('💾 Saving product data:', formData)
+    onSave(formData as Product)
   }
 
   const renderBasicInfo = () => (
@@ -270,6 +296,30 @@ export default function MobileProductEditor({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
           />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Osiel
+          </label>
+          <input
+            type="number"
+            value={formData.inv_osiel || ''}
+            onChange={(e) => handleInputChange('inv_osiel', parseInt(e.target.value) || 0)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Molly
+          </label>
+          <input
+            type="number"
+            value={formData.inv_molly || ''}
+            onChange={(e) => handleInputChange('inv_molly', parseInt(e.target.value) || 0)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+          />
+        </div>
       </div>
     </div>
   )
@@ -342,20 +392,33 @@ export default function MobileProductEditor({
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 overflow-x-auto">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          {tabs.map(tab => {
+            const isVisited = visitedTabs.has(tab.id)
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id as any)
+                  setVisitedTabs(prev => new Set([...prev, tab.id]))
+                }}
+                className={`flex items-center space-x-2 px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap relative ${
+                  isActive
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {isNew && isVisited && !isActive && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
+                {isNew && !isVisited && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {/* Content */}

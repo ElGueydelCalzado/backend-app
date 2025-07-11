@@ -1,4 +1,4 @@
-// Database types for PostgreSQL client
+// Database types for PostgreSQL client - NEW SIMPLIFIED SCHEMA
 
 export interface Product {
   id: number
@@ -10,6 +10,7 @@ export interface Product {
   talla: string | null
   sku: string | null
   ean: string | null
+  google_drive: string | null
   costo: number | null
   
   // Pricing modifiers (editable by user)
@@ -22,14 +23,11 @@ export interface Product {
   precio_shopify: number | null
   precio_meli: number | null
   
-  // Multi-location inventory
+  // Simplified inventory (4 locations)
   inv_egdc: number | null
   inv_fami: number | null
-  inv_bodega_principal: number | null
-  inv_tienda_centro: number | null
-  inv_tienda_norte: number | null
-  inv_tienda_sur: number | null
-  inv_online: number | null
+  inv_osiel: number | null
+  inv_molly: number | null
   inventory_total: number | null
   
   // Platform availability flags
@@ -39,7 +37,6 @@ export interface Product {
   tiktok: boolean | null
   upseller: boolean | null
   go_trendier: boolean | null
-  google_drive: string | null
   
   // Timestamps
   created_at: string | null
