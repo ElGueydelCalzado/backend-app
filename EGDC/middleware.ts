@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export default auth((request) => {
+export default async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
-  const isAuthenticated = !!request.auth
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+  const isAuthenticated = !!token
   
   // If already on login page and authenticated, redirect to inventory
   if (url.pathname === '/login' && isAuthenticated) {
@@ -53,7 +55,7 @@ export default auth((request) => {
   )
   
   return response
-})
+}
 
 export const config = {
   matcher: [

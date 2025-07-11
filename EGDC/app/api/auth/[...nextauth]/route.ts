@@ -1,4 +1,7 @@
-import { handlers } from '@/lib/auth'
+import { authConfig } from '@/lib/auth-config'
+import NextAuth from 'next-auth'
 
-// NextAuth v5 handlers for Google OAuth authentication
-export const { GET, POST } = handlers
+// NextAuth v4 handlers for Google OAuth authentication
+const handler = NextAuth(authConfig)
+
+export { handler as GET, handler as POST }
