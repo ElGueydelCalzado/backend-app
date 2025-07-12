@@ -487,6 +487,55 @@ export default function InventarioPage() {
     showMessage('Cambios cancelados.', 'info')
   }
 
+  // Auto-save function for individual cell changes
+  const handleAutoSave = async (productId: number, field: keyof Product, value: string | number | boolean | null) => {
+    try {
+      setSaving(true)
+      
+      // Prepare the change for the API
+      const change = {
+        id: productId,
+        [field]: value
+      }
+
+      // Send the single field update to the API
+      const response = await fetch('/api/inventory/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ changes: [change] })
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al guardar cambio')
+      }
+
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Error al guardar')
+      }
+
+      // Show success feedback (subtle)
+      showToast(`${field} actualizado`, 'success', 2000)
+      
+      // Update the original view to reflect the saved change
+      setOriginalView(prev => prev.map(product => 
+        product.id === productId ? { ...product, [field]: value } : product
+      ))
+      
+    } catch (error) {
+      console.error('Error auto-saving:', error)
+      showToast(
+        error instanceof Error ? error.message : 'Error al guardar automáticamente',
+        'error'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Note: showMessage is now replaced by showToast from useToast hook
   // Usage: showToast(text, type, duration?)
   const showMessage = (text: string, type: 'success' | 'error' | 'info', duration?: number) => {
@@ -1321,6 +1370,8 @@ export default function InventarioPage() {
                     selectedProducts={selectedProducts}
                     onProductSelect={handleProductSelect}
                     onSelectAll={handleSelectAll}
+                    autoSave={true}
+                    onAutoSave={handleAutoSave}
                   />
                 </ErrorBoundary>
               </div>
