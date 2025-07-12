@@ -17,10 +17,10 @@ interface WarehouseTabsProps {
 }
 
 const WAREHOUSE_TABS = [
-  { id: 'egdc' as WarehouseFilter, label: 'EGDC Store', icon: '🏪', color: 'bg-orange-500 hover:bg-orange-600', type: 'own' },
-  { id: 'fami' as WarehouseFilter, label: 'FAMI Wholesale', icon: '🏭', color: 'bg-green-500 hover:bg-green-600', type: 'supplier' },
-  { id: 'osiel' as WarehouseFilter, label: 'Osiel Wholesale', icon: '📦', color: 'bg-purple-500 hover:bg-purple-600', type: 'supplier' },
-  { id: 'molly' as WarehouseFilter, label: 'Molly Wholesale', icon: '🛍️', color: 'bg-pink-500 hover:bg-pink-600', type: 'supplier' }
+  { id: 'egdc' as WarehouseFilter, label: 'EGDC', icon: '🏪', color: 'bg-orange-500 hover:bg-orange-600', type: 'own' },
+  { id: 'fami' as WarehouseFilter, label: 'FAMI', icon: '🏭', color: 'bg-green-500 hover:bg-green-600', type: 'supplier' },
+  { id: 'osiel' as WarehouseFilter, label: 'Osiel', icon: '📦', color: 'bg-purple-500 hover:bg-purple-600', type: 'supplier' },
+  { id: 'molly' as WarehouseFilter, label: 'Molly', icon: '🛍️', color: 'bg-pink-500 hover:bg-pink-600', type: 'supplier' }
 ]
 
 export default function WarehouseTabs({ 
@@ -32,9 +32,6 @@ export default function WarehouseTabs({
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-3">
       <div className="flex items-center gap-2 overflow-x-auto">
-        <span className="text-sm font-medium text-gray-600 mr-3 flex-shrink-0">
-          Businesses:
-        </span>
         
         {isDemoMode && (
           <div className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full mr-2 flex-shrink-0">

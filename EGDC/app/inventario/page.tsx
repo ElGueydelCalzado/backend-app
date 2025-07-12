@@ -1341,6 +1341,14 @@ export default function InventarioPage() {
             
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Warehouse Tabs - positioned above search bar */}
+              <WarehouseTabs
+                activeWarehouse={activeWarehouse}
+                onWarehouseChange={handleWarehouseChange}
+                productCounts={calculateProductCounts()}
+                isDemoMode={useDummyData}
+              />
+
               {/* Search Bar and Actions */}
               <div className="px-6 py-2 bg-white border-b border-gray-200">
                 <div className="flex items-center gap-3">
@@ -1415,14 +1423,6 @@ export default function InventarioPage() {
               
               {/* Message Area */}
               {/* Message area removed - now using toast notifications */}
-
-              {/* Warehouse Tabs - positioned between search bar and table */}
-              <WarehouseTabs
-                activeWarehouse={activeWarehouse}
-                onWarehouseChange={handleWarehouseChange}
-                productCounts={calculateProductCounts()}
-                isDemoMode={useDummyData}
-              />
               
               {/* Table Section */}
               <div className="flex-1 px-6 pb-1 overflow-hidden">
@@ -1482,6 +1482,14 @@ export default function InventarioPage() {
           <div className="h-[calc(100vh-120px)] flex flex-col">
             {/* Message area removed - now using toast notifications */}
 
+            {/* Mobile Warehouse Tabs */}
+            <WarehouseTabs
+              activeWarehouse={activeWarehouse}
+              onWarehouseChange={handleWarehouseChange}
+              productCounts={calculateProductCounts()}
+              isDemoMode={useDummyData}
+            />
+
             {/* Mobile Search Bar */}
             <div className="p-4 bg-white border-b border-gray-200">
               <div className="relative">
@@ -1519,14 +1527,6 @@ export default function InventarioPage() {
                 </div>
               </div>
             </div>
-
-            {/* Mobile Warehouse Tabs */}
-            <WarehouseTabs
-              activeWarehouse={activeWarehouse}
-              onWarehouseChange={handleWarehouseChange}
-              productCounts={calculateProductCounts()}
-              isDemoMode={useDummyData}
-            />
 
             {/* Mobile Product Card View */}
             <div className="flex-1 overflow-y-auto">

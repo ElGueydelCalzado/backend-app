@@ -126,6 +126,13 @@ export default function ColumnControls({
       }
       setCustomPresets(newPresets)
       saveCustomPresets(newPresets)
+      
+      // Automatically apply the saved preset to the table
+      // Hide all columns first
+      columns.forEach(col => onColumnToggle(col.key, false))
+      // Then show only the columns in the saved preset
+      tempPresetColumns.forEach(key => onColumnToggle(key, true))
+      
       setEditingPreset(null)
       setTempPresetColumns([])
     }
