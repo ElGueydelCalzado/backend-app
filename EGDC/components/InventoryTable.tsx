@@ -340,22 +340,12 @@ export default function InventoryTable({
                                   setImagePreviewProduct(product)
                                   setShowImagePreview(true)
                                 }}
-                                className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
-                                title="Vista previa de imágenes"
-                              >
-                                <span>📷</span>
-                                Vista previa
-                              </button>
-                              <a
-                                href={value.toString()}
-                                target="_blank"
-                                rel="noopener noreferrer"
                                 className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
-                                title="Abrir en nueva pestaña"
+                                title="Ver imágenes del producto"
                               >
                                 <span>🔗</span>
                                 Ver
-                              </a>
+                              </button>
                               <input
                                 type="text"
                                 value={value?.toString() || ''}
@@ -415,23 +405,12 @@ export default function InventoryTable({
                                     setImagePreviewProduct(product)
                                     setShowImagePreview(true)
                                   }}
-                                  className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
-                                  title="Vista previa de imágenes"
-                                >
-                                  <span>📷</span>
-                                  Vista previa
-                                </button>
-                                <a
-                                  href={value.toString()}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
                                   className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
-                                  title="Abrir en nueva pestaña"
-                                  onClick={(e) => e.stopPropagation()}
+                                  title="Ver imágenes del producto"
                                 >
                                   <span>🔗</span>
                                   Ver
-                                </a>
+                                </button>
                                 <span className="flex-1 truncate font-medium text-gray-700">{value.toString()}</span>
                               </div>
                             ) : (
