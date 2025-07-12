@@ -825,7 +825,7 @@ export default function InventarioPage() {
         throw new Error(result.error || 'Error al eliminar productos')
       }
 
-      showToast(`${selectedProducts.size} producto${selectedProducts.size > 1 ? 's eliminados' : ' eliminado'} exitosamente`, 'success')
+      showToast(`${selectedProducts.size} producto${selectedProducts.size > 1 ? 's' : ''} eliminado${selectedProducts.size > 1 ? 's' : ''}`, 'success')
       
       // Clear selection and reload data
       setSelectedProducts(new Set())
