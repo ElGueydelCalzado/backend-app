@@ -683,7 +683,7 @@ export default function InventarioPage() {
     
     setEditedView(newEditedView)
     setOriginalView(newOriginalView)
-    showMessage('Nueva fila agregada. No olvides guardar los cambios.', 'info')
+    showToast('Nueva línea agregada', 'info')
   }
 
   const handleRemoveRow = async (index: number) => {
