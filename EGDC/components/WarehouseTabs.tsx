@@ -29,9 +29,40 @@ export default function WarehouseTabs({
   productCounts,
   isDemoMode = false
 }: WarehouseTabsProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-3">
-      <div className="flex items-center gap-2 overflow-x-auto">
+    <div className={`
+      bg-white border-b border-gray-200 px-6 relative
+      transition-all duration-300 ease-in-out
+      ${isCollapsed ? 'py-1' : 'py-3'}
+    `}>
+      {/* Collapse Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className={`
+          absolute -right-3 z-20
+          w-6 h-6 
+          bg-gradient-to-r from-orange-500 to-orange-600 
+          text-white 
+          rounded-full 
+          shadow-lg 
+          hover:from-orange-600 hover:to-orange-700
+          transition-all duration-200
+          flex items-center justify-center
+          text-xs font-bold
+          ${isCollapsed ? 'top-2' : 'top-6'}
+        `}
+        title={isCollapsed ? 'Expandir pestañas de almacén' : 'Contraer pestañas de almacén'}
+      >
+        {isCollapsed ? '→' : '←'}
+      </button>
+
+      <div className={`
+        flex items-center gap-2 overflow-x-auto
+        transition-all duration-300 ease-in-out
+        ${isCollapsed ? 'opacity-0 max-h-0 overflow-hidden' : 'opacity-100 max-h-20'}
+      `}>
         
         {isDemoMode && (
           <div className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full mr-2 flex-shrink-0">
