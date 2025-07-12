@@ -14,6 +14,7 @@ import SearchBar from '@/components/SearchBar'
 import ProductCollectionWizard from '@/components/ProductCollectionWizard'
 import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
+import BulkDeleteConfirmModal from '@/components/BulkDeleteConfirmModal'
 import { ColumnConfig } from '@/components/ColumnControls'
 import MobileInventoryView from '@/components/MobileInventoryView'
 import MobileProductCardList from '@/components/MobileProductCardList'
@@ -95,6 +96,7 @@ export default function InventarioPage() {
   const [showNewProductModal, setShowNewProductModal] = useState(false)
   const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false)
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set())
   const [showExportMenu, setShowExportMenu] = useState(false)
   
@@ -793,16 +795,12 @@ export default function InventarioPage() {
     }
   }
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedProducts.size === 0) return
+    setShowBulkDeleteModal(true)
+  }
 
-    const selectedProductsData = getSelectedProducts()
-    
-    // Confirm deletion
-    const confirmMessage = `¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto${selectedProducts.size > 1 ? 's' : ''}?\n\nProductos a eliminar:\n${selectedProductsData.slice(0, 5).map(p => `• ${p.marca} ${p.modelo} (${p.color}, ${p.talla})`).join('\n')}${selectedProducts.size > 5 ? `\n... y ${selectedProducts.size - 5} más` : ''}\n\nEsta acción no se puede deshacer.`
-    
-    if (!confirm(confirmMessage)) return
-
+  const handleBulkDeleteConfirm = async () => {
     try {
       setSaving(true)
       setLoadingText(`Eliminando ${selectedProducts.size} productos...`)
@@ -839,6 +837,7 @@ export default function InventarioPage() {
       )
     } finally {
       setSaving(false)
+      setShowBulkDeleteModal(false)
     }
   }
 
@@ -1683,6 +1682,13 @@ export default function InventarioPage() {
           selectedProducts={getSelectedProducts()}
           onClose={() => setShowBulkUpdateModal(false)}
           onUpdate={handleBulkUpdate}
+        />
+
+        <BulkDeleteConfirmModal
+          isOpen={showBulkDeleteModal}
+          products={getSelectedProducts()}
+          onConfirm={handleBulkDeleteConfirm}
+          onCancel={() => setShowBulkDeleteModal(false)}
         />
 
         {/* Toast Notifications */}
