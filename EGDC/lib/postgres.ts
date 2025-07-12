@@ -1,12 +1,9 @@
 import { Pool } from 'pg'
 
-// Database connection configuration with SSL handling for GCP Cloud SQL
+// Database connection configuration - disable SSL for GCP Cloud SQL compatibility
 const config = {
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { 
-    rejectUnauthorized: false,
-    require: true
-  } : false,
+  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
+  ssl: false,
   max: 20, // Maximum number of connections
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

@@ -1,13 +1,10 @@
 import { Pool, PoolClient } from 'pg'
 import { Product, ChangeLog } from './types'
 
-// PostgreSQL connection pool with environment-specific SSL configuration
+// PostgreSQL connection pool - disable SSL for GCP Cloud SQL compatibility
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { 
-    rejectUnauthorized: false,
-    require: true
-  } : false,
+  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
+  ssl: false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
