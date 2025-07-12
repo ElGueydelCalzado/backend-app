@@ -47,9 +47,9 @@ async function runMigrationTests() {
     // Test 4: Inventory Totals
     console.log('\n4️⃣  Testing inventory totals...')
     const expectedTotal = sampleProduct.inv_egdc + sampleProduct.inv_fami + 
-                         sampleProduct.inv_bodega_principal + sampleProduct.inv_tienda_centro + 
-                         sampleProduct.inv_tienda_norte + sampleProduct.inv_tienda_sur + 
-                         sampleProduct.inv_online
+                         sampleProduct.inv_osiel + sampleProduct.inv_osiel + 
+                         sampleProduct.inv_molly + sampleProduct.inv_molly + 
+                         sampleProduct.inv_molly
     const actualTotal = sampleProduct.inventory_total
     
     console.log(`   EGDC: ${sampleProduct.inv_egdc}, FAMI: ${sampleProduct.inv_fami}`)

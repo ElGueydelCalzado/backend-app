@@ -17,11 +17,8 @@ interface BulkImportRequest {
     meli_modifier?: number | null
     inv_egdc?: number | null
     inv_fami?: number | null
-    inv_bodega_principal?: number | null
-    inv_tienda_centro?: number | null
-    inv_tienda_norte?: number | null
-    inv_tienda_sur?: number | null
-    inv_online?: number | null
+    inv_osiel?: number | null
+    inv_molly?: number | null
     shein?: boolean | null
     meli?: boolean | null
     shopify?: boolean | null
@@ -100,11 +97,8 @@ export async function POST(request: NextRequest) {
           meli_modifier: product.meli_modifier || 2.5,
           inv_egdc: product.inv_egdc || 0,
           inv_fami: product.inv_fami || 0,
-          inv_bodega_principal: product.inv_bodega_principal || 0,
-          inv_tienda_centro: product.inv_tienda_centro || 0,
-          inv_tienda_norte: product.inv_tienda_norte || 0,
-          inv_tienda_sur: product.inv_tienda_sur || 0,
-          inv_online: product.inv_online || 0,
+          inv_osiel: product.inv_osiel || 0,
+          inv_molly: product.inv_molly || 0,
           shein: product.shein || false,
           meli: product.meli || false,
           shopify: product.shopify || false,

@@ -5,8 +5,8 @@ const config = {
   host: process.env.DB_HOST || '34.45.148.180',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'egdc_inventory',
-  user: process.env.DB_USER || 'egdc_user',
-  password: process.env.DB_PASSWORD || 'EgdcSecure2024!',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'admin',
   ssl: false, // Set to true for production
   max: 10, // Maximum number of connections
   idleTimeoutMillis: 30000,

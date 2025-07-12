@@ -18,11 +18,8 @@ interface BulkUpdateRequest {
     meli_modifier?: number | null
     inv_egdc?: number | null
     inv_fami?: number | null
-    inv_bodega_principal?: number | null
-    inv_tienda_centro?: number | null
-    inv_tienda_norte?: number | null
-    inv_tienda_sur?: number | null
-    inv_online?: number | null
+    inv_osiel?: number | null
+    inv_molly?: number | null
     shein?: boolean | null
     meli?: boolean | null
     shopify?: boolean | null

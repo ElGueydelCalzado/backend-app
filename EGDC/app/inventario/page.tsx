@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import FilterSection from '@/components/FilterSection'
 import InventoryTable from '@/components/InventoryTable'
 import LoadingScreen from '@/components/LoadingScreen'
@@ -65,6 +65,8 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'meli_modifier', label: 'Mod. MercadoLibre', visible: false, category: 'pricing' },
   { key: 'inv_egdc', label: 'EGDC', visible: true, category: 'inventory' },
   { key: 'inv_fami', label: 'FAMI', visible: true, category: 'inventory' },
+  { key: 'inv_osiel', label: 'Osiel', visible: true, category: 'inventory' },
+  { key: 'inv_molly', label: 'Molly', visible: true, category: 'inventory' },
   { key: 'inventory_total', label: 'Total', visible: true, category: 'inventory' },
   { key: 'shein', label: 'SHEIN', visible: false, category: 'platforms' },
   { key: 'meli', label: 'MercadoLibre', visible: false, category: 'platforms' },

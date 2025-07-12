@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import { ChevronDown, ChevronUp, Package, MapPin, DollarSign, Trash2 } from 'lucide-react'
 import ImagePreviewModal from './ImagePreviewModal'
 

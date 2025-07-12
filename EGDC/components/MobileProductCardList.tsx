@@ -1,6 +1,6 @@
 'use client'
 
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import MobileProductCard from './MobileProductCard'
 
 interface MobileProductCardListProps {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
 
 interface ProductListProps {

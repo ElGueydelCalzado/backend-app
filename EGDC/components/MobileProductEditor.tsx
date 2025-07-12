@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import { X, Save, DollarSign, Package, Tag, Palette, Hash } from 'lucide-react'
 
 interface MobileProductEditorProps {

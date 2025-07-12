@@ -12,7 +12,7 @@ import { db } from '../lib/database-postgres'
 
 async function testConnection() {
   try {
-    console.log('🔌 Testing Supabase connection...')
+    console.log('🔌 Testing PostgreSQL connection...')
     
     // Test basic connection
     const products = await db.getAllProducts()

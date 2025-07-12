@@ -156,10 +156,9 @@ function validateProductInput(data: any): { valid: boolean; errors: string[] } {
     }
   }
   
-  // Validate inventory fields
+  // Validate inventory fields (4 locations)
   const inventoryFields = [
-    'inv_egdc', 'inv_fami', 'inv_bodega_principal', 
-    'inv_tienda_centro', 'inv_tienda_norte', 'inv_tienda_sur', 'inv_online'
+    'inv_egdc', 'inv_fami', 'inv_osiel', 'inv_molly'
   ]
   
   for (const field of inventoryFields) {

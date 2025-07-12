@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import LoadingScreen from '@/components/LoadingScreen'
 import MessageArea from '@/components/MessageArea'
 import QuickStats from '@/components/QuickStats'

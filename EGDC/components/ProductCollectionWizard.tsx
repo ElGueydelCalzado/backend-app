@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 
 interface ProductFormData {
   categoria: string

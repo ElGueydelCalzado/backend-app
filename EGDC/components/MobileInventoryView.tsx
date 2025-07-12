@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import { Search, Filter, Plus, MoreVertical, Edit, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react'
 import BarcodeScannerButton from './BarcodeScannerButton'
 
