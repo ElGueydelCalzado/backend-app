@@ -3,6 +3,7 @@ import { Product } from '@/lib/types'
 import LoadingButton from './LoadingButton'
 import { ColumnConfig } from './ColumnControls'
 import DeleteConfirmModal from './DeleteConfirmModal'
+import ImagePreviewModal from './ImagePreviewModal'
 
 interface InventoryTableProps {
   editedView: Product[]
@@ -71,6 +72,8 @@ export default function InventoryTable({
 }: InventoryTableProps) {
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const [productToDelete, setProductToDelete] = useState<{ product: Product; index: number } | null>(null)
+  const [showImagePreview, setShowImagePreview] = useState(false)
+  const [imagePreviewProduct, setImagePreviewProduct] = useState<Product | null>(null)
   
   // Get visible columns based on configuration
   const visibleColumns = columnConfig ? 
@@ -331,6 +334,18 @@ export default function InventoryTable({
                         <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-2 border-orange-200 shadow-md">
                           {fieldKey === 'google_drive' && value ? (
                             <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setImagePreviewProduct(product)
+                                  setShowImagePreview(true)
+                                }}
+                                className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                title="Vista previa de imágenes"
+                              >
+                                <span>📷</span>
+                                Vista previa
+                              </button>
                               <a
                                 href={value.toString()}
                                 target="_blank"
@@ -394,6 +409,18 @@ export default function InventoryTable({
                           <div className="flex-1 px-3 py-2 text-sm">
                             {fieldKey === 'google_drive' && value ? (
                               <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setImagePreviewProduct(product)
+                                    setShowImagePreview(true)
+                                  }}
+                                  className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                  title="Vista previa de imágenes"
+                                >
+                                  <span>📷</span>
+                                  Vista previa
+                                </button>
                                 <a
                                   href={value.toString()}
                                   target="_blank"
@@ -490,6 +517,17 @@ export default function InventoryTable({
         product={productToDelete?.product || null}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={showImagePreview}
+        onClose={() => {
+          setShowImagePreview(false)
+          setImagePreviewProduct(null)
+        }}
+        googleDriveUrl={imagePreviewProduct?.google_drive || ''}
+        productName={imagePreviewProduct ? `${imagePreviewProduct.marca} ${imagePreviewProduct.modelo}` : ''}
       />
     </div>
   )
