@@ -825,7 +825,7 @@ export default function InventarioPage() {
         throw new Error(result.error || 'Error al eliminar productos')
       }
 
-      showMessage(`¡${selectedProducts.size} producto${selectedProducts.size > 1 ? 's eliminados' : ' eliminado'} exitosamente!`, 'success')
+      showToast(`${selectedProducts.size} producto${selectedProducts.size > 1 ? 's eliminados' : ' eliminado'} exitosamente`, 'success')
       
       // Clear selection and reload data
       setSelectedProducts(new Set())
@@ -833,7 +833,7 @@ export default function InventarioPage() {
 
     } catch (error) {
       console.error('Bulk delete error:', error)
-      showMessage(
+      showToast(
         error instanceof Error ? error.message : 'Error al eliminar productos',
         'error'
       )
