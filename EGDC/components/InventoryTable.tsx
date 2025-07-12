@@ -18,6 +18,9 @@ interface InventoryTableProps {
   onSelectAll?: (selected: boolean) => void
   autoSave?: boolean // New prop to enable auto-save mode
   onAutoSave?: (productId: number, field: keyof Product, value: string | number | boolean | null) => void // New prop for auto-save callback
+  isSupplierView?: boolean // New prop to indicate supplier products (read-only + BUY)
+  supplierName?: string // Name of the supplier business
+  onBuyProduct?: (product: Product, quantity: number) => void // Callback for buying from supplier
 }
 
 // Field display configuration
@@ -61,7 +64,10 @@ export default function InventoryTable({
   onProductSelect,
   onSelectAll,
   autoSave = false,
-  onAutoSave
+  onAutoSave,
+  isSupplierView = false,
+  supplierName,
+  onBuyProduct
 }: InventoryTableProps) {
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const [productToDelete, setProductToDelete] = useState<{ product: Product; index: number } | null>(null)
@@ -209,20 +215,24 @@ export default function InventoryTable({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <span className="text-2xl mr-3 drop-shadow-sm">📦</span>
-              Inventario EGDC
+              <span className="text-2xl mr-3 drop-shadow-sm">
+                {isSupplierView ? '🏭' : '📦'}
+              </span>
+              {isSupplierView ? `${supplierName} Catalog` : 'Inventario EGDC'}
               <span className="ml-3 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full shadow-sm">
                 {editedView.length} productos
               </span>
+              {isSupplierView && (
+                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full shadow-sm">
+                  SUPPLIER VIEW
+                </span>
+              )}
             </h2>
           </div>
           
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg border border-green-200">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium">Auto-guardado activo</span>
-            </div>
+            {/* Auto-save indicator removed per user request */}
           </div>
         </div>
       </div>
@@ -263,8 +273,10 @@ export default function InventoryTable({
                 )
               })}
               {/* Actions Column Header */}
-              <th className="w-16 px-1 py-0.5 text-center text-xs font-bold text-gray-800 uppercase tracking-wider border-r border-gray-300 bg-gray-50">
-                <span title="Acciones">⚡</span>
+              <th className="w-20 px-1 py-0.5 text-center text-xs font-bold text-gray-800 uppercase tracking-wider border-r border-gray-300 bg-gray-50">
+                <span title={isSupplierView ? "Comprar" : "Acciones"}>
+                  {isSupplierView ? "🛒" : "⚡"}
+                </span>
               </th>
             </tr>
           </thead>
@@ -315,7 +327,7 @@ export default function InventoryTable({
                             disabled={saving}
                           />
                         </div>
-                      ) : isEditing(index, fieldKey) ? (
+                      ) : !isSupplierView && isEditing(index, fieldKey) ? (
                         <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-2 border-orange-200 shadow-md">
                           {fieldKey === 'google_drive' && value ? (
                             <>
@@ -401,43 +413,68 @@ export default function InventoryTable({
                               </span>
                             )}
                           </div>
-                          <button
-                            onClick={() => startEditing(index, fieldKey)}
-                            className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-sm shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
-                            title="Hacer clic para editar"
-                            disabled={saving}
-                          >
-                            ✏️
-                          </button>
+                          {!isSupplierView && (
+                            <button
+                              onClick={() => startEditing(index, fieldKey)}
+                              className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-sm shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
+                              title="Hacer clic para editar"
+                              disabled={saving}
+                            >
+                              ✏️
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
                   )
                 })}
                 {/* Actions Column */}
-                <td className="w-16 px-1 py-0.5 text-center border-r border-gray-200 relative">
+                <td className="w-20 px-1 py-0.5 text-center border-r border-gray-200 relative">
                   <div className="flex items-center justify-center gap-1">
-                    {/* Add Row Button */}
-                    {onAddRow && (
+                    {isSupplierView ? (
+                      /* BUY Button for Supplier Products */
                       <button
-                        onClick={() => onAddRow(index)}
-                        className="w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
-                        title="Agregar producto después de esta fila"
+                        onClick={() => {
+                          const quantity = prompt(`¿Cuántas unidades de ${product.modelo} deseas comprar?`)
+                          if (quantity && onBuyProduct) {
+                            const qty = parseInt(quantity, 10)
+                            if (qty > 0) {
+                              onBuyProduct(product, qty)
+                            }
+                          }
+                        }}
+                        className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                        title={`Comprar ${product.modelo} de ${supplierName}`}
                         disabled={saving}
                       >
-                        +
+                        🛒 BUY
                       </button>
-                    )}
-                    {/* Remove Row Button (for all rows) */}
-                    {onRemoveRow && (
-                      <button
-                        onClick={() => handleDeleteClick(product, index)}
-                        className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
-                        title="Eliminar esta fila"
-                        disabled={saving}
-                      >
-                        ×
-                      </button>
+                    ) : (
+                      /* EGDC Products - Add/Remove buttons */
+                      <>
+                        {/* Add Row Button */}
+                        {onAddRow && (
+                          <button
+                            onClick={() => onAddRow(index)}
+                            className="w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                            title="Agregar producto después de esta fila"
+                            disabled={saving}
+                          >
+                            +
+                          </button>
+                        )}
+                        {/* Remove Row Button (for all rows) */}
+                        {onRemoveRow && (
+                          <button
+                            onClick={() => handleDeleteClick(product, index)}
+                            className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                            title="Eliminar esta fila"
+                            disabled={saving}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>

@@ -20,6 +20,8 @@ import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
 import MobileSort from '@/components/MobileSort'
+import WarehouseTabs, { WarehouseFilter } from '@/components/WarehouseTabs'
+import { getWarehouseData } from '@/lib/dummy-warehouse-data'
 
 interface Filters {
   categories: Set<string>
@@ -119,6 +121,10 @@ export default function InventarioPage() {
   
   const [showMobileSort, setShowMobileSort] = useState(false)
   
+  // Warehouse filtering state
+  const [activeWarehouse, setActiveWarehouse] = useState<WarehouseFilter>('egdc')
+  const [useDummyData, setUseDummyData] = useState(false) // Switch between real and dummy data
+  
   const [uniqueValues, setUniqueValues] = useState<UniqueValues>({
     categories: new Set(),
     brands: new Set(),
@@ -148,7 +154,7 @@ export default function InventarioPage() {
     if (allData.length > 0) {
       applyFilters()
     }
-  }, [filters, allData])
+  }, [filters, allData, activeWarehouse])
 
   const loadInventoryData = async () => {
     try {
@@ -196,7 +202,10 @@ export default function InventarioPage() {
   const applyFilters = (data: Product[] = allData, currentFilters: Filters = filters) => {
     let filtered = data
 
-    // Apply all filters
+    // No warehouse filtering needed - data is already separated by business
+    // EGDC tab = real database data, Supplier tabs = pre-filtered dummy data
+
+    // Apply category/brand/model/color/size filters
     filtered = filtered.filter(item => {
       const catMatch = currentFilters.categories.size === 0 || (item.categoria && currentFilters.categories.has(item.categoria))
       const brandMatch = currentFilters.brands.size === 0 || (item.marca && currentFilters.brands.has(item.marca))
@@ -251,6 +260,80 @@ export default function InventarioPage() {
     }
     
     setFilters(newFilters)
+  }
+
+  // Warehouse filtering functions
+  const calculateProductCounts = () => {
+    if (useDummyData) {
+      // For dummy data, get counts from each business dataset
+      return {
+        egdc: getWarehouseData('egdc').length,
+        fami: getWarehouseData('fami').length,
+        osiel: getWarehouseData('osiel').length,
+        molly: getWarehouseData('molly').length
+      }
+    } else {
+      // For real EGDC data, only show EGDC count (others will use dummy data)
+      return {
+        egdc: allData.length, // All real data belongs to EGDC
+        fami: getWarehouseData('fami').length,
+        osiel: getWarehouseData('osiel').length,
+        molly: getWarehouseData('molly').length
+      }
+    }
+  }
+
+  const handleWarehouseChange = (warehouse: WarehouseFilter) => {
+    setActiveWarehouse(warehouse)
+    
+    // EGDC is our own business with real database, others are suppliers with dummy data
+    if (warehouse === 'egdc') {
+      setUseDummyData(false)
+      // Reload real EGDC data from database
+      loadInventoryData()
+    } else {
+      setUseDummyData(true)
+      // Load dummy supplier data for the selected supplier business
+      const warehouseData = getWarehouseData(warehouse)
+      setAllData(warehouseData)
+      
+      // Extract unique values for filters from supplier data
+      const categories = new Set(warehouseData.map(item => item.categoria).filter(Boolean) as string[])
+      const brands = new Set(warehouseData.map(item => item.marca).filter(Boolean) as string[])
+      const models = new Set(warehouseData.map(item => item.modelo).filter(Boolean) as string[])
+      const colors = new Set(warehouseData.map(item => item.color).filter(Boolean) as string[])
+      const sizes = new Set(warehouseData.map(item => item.talla).filter(Boolean) as string[])
+      
+      setUniqueValues({ categories, brands, models, colors, sizes })
+      
+      // Apply filters to the supplier data
+      applyFilters(warehouseData, filters)
+    }
+  }
+
+  // Handle buying products from suppliers
+  const handleBuyProduct = async (product: Product, quantity: number) => {
+    try {
+      // Create a purchase order (dummy implementation for now)
+      showToast(`Orden de compra creada: ${quantity}x ${product.modelo} de ${activeWarehouse.toUpperCase()}`, 'success', 4000)
+      
+      // In the future, this will:
+      // 1. Send purchase order to supplier API
+      // 2. Deduct quantity from supplier inventory
+      // 3. Add product to EGDC inventory (or create if doesn't exist)
+      
+      console.log('Purchase Order Created:', {
+        supplier: activeWarehouse,
+        product: product,
+        quantity: quantity,
+        total_cost: (product.precio_shopify || 0) * quantity, // Using shopify price as EGDC wholesale price
+        order_date: new Date().toISOString()
+      })
+      
+    } catch (error) {
+      console.error('Error creating purchase order:', error)
+      showToast('Error al crear orden de compra', 'error')
+    }
   }
 
   const handleCellEdit = (index: number, field: keyof Product, value: string | number | boolean | null) => {
@@ -1332,6 +1415,14 @@ export default function InventarioPage() {
               
               {/* Message Area */}
               {/* Message area removed - now using toast notifications */}
+
+              {/* Warehouse Tabs - positioned between search bar and table */}
+              <WarehouseTabs
+                activeWarehouse={activeWarehouse}
+                onWarehouseChange={handleWarehouseChange}
+                productCounts={calculateProductCounts()}
+                isDemoMode={useDummyData}
+              />
               
               {/* Table Section */}
               <div className="flex-1 px-6 pb-1 overflow-hidden">
@@ -1376,6 +1467,11 @@ export default function InventarioPage() {
                     onSelectAll={handleSelectAll}
                     autoSave={true}
                     onAutoSave={handleAutoSave}
+                    isSupplierView={useDummyData} // True when viewing supplier catalogs
+                    supplierName={activeWarehouse === 'fami' ? 'FAMI' : 
+                                 activeWarehouse === 'osiel' ? 'Osiel' : 
+                                 activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
+                    onBuyProduct={handleBuyProduct}
                   />
                 </ErrorBoundary>
               </div>
@@ -1423,6 +1519,14 @@ export default function InventarioPage() {
                 </div>
               </div>
             </div>
+
+            {/* Mobile Warehouse Tabs */}
+            <WarehouseTabs
+              activeWarehouse={activeWarehouse}
+              onWarehouseChange={handleWarehouseChange}
+              productCounts={calculateProductCounts()}
+              isDemoMode={useDummyData}
+            />
 
             {/* Mobile Product Card View */}
             <div className="flex-1 overflow-y-auto">
