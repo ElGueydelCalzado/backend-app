@@ -40,9 +40,9 @@ export default function WarehouseTabs({
       {/* Collapse Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`
-          absolute -right-3 z-20
-          w-6 h-6 
+        className="
+          absolute right-2 top-2 z-20
+          w-5 h-5 
           bg-gradient-to-r from-orange-500 to-orange-600 
           text-white 
           rounded-full 
@@ -51,11 +51,10 @@ export default function WarehouseTabs({
           transition-all duration-200
           flex items-center justify-center
           text-xs font-bold
-          ${isCollapsed ? 'top-2' : 'top-6'}
-        `}
+        "
         title={isCollapsed ? 'Expandir pestañas de almacén' : 'Contraer pestañas de almacén'}
       >
-        {isCollapsed ? '→' : '←'}
+        {isCollapsed ? '↓' : '↑'}
       </button>
 
       <div className={`
