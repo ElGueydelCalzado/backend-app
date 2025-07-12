@@ -686,19 +686,55 @@ export default function InventarioPage() {
     showMessage('Nueva fila agregada. No olvides guardar los cambios.', 'info')
   }
 
-  const handleRemoveRow = (index: number) => {
+  const handleRemoveRow = async (index: number) => {
     const productToRemove = editedView[index]
 
-    const newEditedView = editedView.filter((_, i) => i !== index)
-    const newOriginalView = originalView.filter((_, i) => i !== index)
-    
-    setEditedView(newEditedView)
-    setOriginalView(newOriginalView)
-    
-    if (productToRemove.id >= 0) {
-      showMessage('Producto marcado para eliminación. Guarda cambios para confirmar.', 'info')
-    } else {
-      showMessage('Fila eliminada.', 'info')
+    // For new products (negative ID), just remove from the view
+    if (productToRemove.id < 0) {
+      const newEditedView = editedView.filter((_, i) => i !== index)
+      const newOriginalView = originalView.filter((_, i) => i !== index)
+      
+      setEditedView(newEditedView)
+      setOriginalView(newOriginalView)
+      showToast('Fila eliminada', 'info')
+      return
+    }
+
+    // For existing products, delete immediately from database
+    try {
+      setSaving(true)
+      setLoadingText('Eliminando producto...')
+
+      const response = await fetch('/api/inventory/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: [productToRemove.id] })
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar producto')
+      }
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al eliminar producto')
+      }
+
+      // Reload data to get fresh inventory
+      await loadInventoryData()
+      showToast('Producto eliminado exitosamente', 'success')
+
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      showToast(
+        error instanceof Error ? error.message : 'Error al eliminar producto',
+        'error'
+      )
+    } finally {
+      setSaving(false)
     }
   }
 
