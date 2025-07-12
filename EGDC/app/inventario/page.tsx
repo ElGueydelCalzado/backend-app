@@ -705,6 +705,8 @@ export default function InventarioPage() {
       setSaving(true)
       setLoadingText('Eliminando producto...')
 
+      console.log('🗑️ Deleting product:', productToRemove.id, productToRemove.marca, productToRemove.modelo)
+
       const response = await fetch('/api/inventory/delete', {
         method: 'POST',
         headers: {
@@ -713,22 +715,36 @@ export default function InventarioPage() {
         body: JSON.stringify({ ids: [productToRemove.id] })
       })
 
+      console.log('📡 Delete response status:', response.status, response.ok)
+
       if (!response.ok) {
-        throw new Error('Error al eliminar producto')
+        const errorText = await response.text()
+        console.error('❌ Delete response error:', errorText)
+        throw new Error(`Error al eliminar producto: ${response.status}`)
       }
 
       const result = await response.json()
+      console.log('📊 Delete result:', result)
 
       if (!result.success) {
+        console.error('❌ Delete API returned error:', result.error)
         throw new Error(result.error || 'Error al eliminar producto')
       }
 
+      console.log('✅ Product deleted successfully, reloading data...')
+      
       // Reload data to get fresh inventory
-      await loadInventoryData()
-      showToast('Producto eliminado exitosamente', 'success')
+      try {
+        await loadInventoryData()
+        showToast('Producto eliminado exitosamente', 'success')
+      } catch (reloadError) {
+        console.error('⚠️ Error reloading data after delete, but delete was successful:', reloadError)
+        // Even if reload fails, the delete was successful
+        showToast('Producto eliminado exitosamente', 'success')
+      }
 
     } catch (error) {
-      console.error('Error deleting product:', error)
+      console.error('❌ Error in handleRemoveRow:', error)
       showToast(
         error instanceof Error ? error.message : 'Error al eliminar producto',
         'error'
