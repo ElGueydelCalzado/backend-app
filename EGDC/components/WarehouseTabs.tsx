@@ -58,11 +58,6 @@ export default function WarehouseTabs({
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
-              {tab.type === 'own' && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">
-                  OWN
-                </span>
-              )}
               {productCounts && (
                 <span className={`
                   px-2 py-0.5 rounded-full text-xs font-bold

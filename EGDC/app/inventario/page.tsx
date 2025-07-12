@@ -793,6 +793,55 @@ export default function InventarioPage() {
     }
   }
 
+  const handleBulkDelete = async () => {
+    if (selectedProducts.size === 0) return
+
+    const selectedProductsData = getSelectedProducts()
+    
+    // Confirm deletion
+    const confirmMessage = `¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto${selectedProducts.size > 1 ? 's' : ''}?\n\nProductos a eliminar:\n${selectedProductsData.slice(0, 5).map(p => `• ${p.marca} ${p.modelo} (${p.color}, ${p.talla})`).join('\n')}${selectedProducts.size > 5 ? `\n... y ${selectedProducts.size - 5} más` : ''}\n\nEsta acción no se puede deshacer.`
+    
+    if (!confirm(confirmMessage)) return
+
+    try {
+      setSaving(true)
+      setLoadingText(`Eliminando ${selectedProducts.size} productos...`)
+
+      const response = await fetch('/api/inventory/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: Array.from(selectedProducts) })
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar productos')
+      }
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al eliminar productos')
+      }
+
+      showMessage(`¡${selectedProducts.size} producto${selectedProducts.size > 1 ? 's eliminados' : ' eliminado'} exitosamente!`, 'success')
+      
+      // Clear selection and reload data
+      setSelectedProducts(new Set())
+      await loadInventoryData()
+
+    } catch (error) {
+      console.error('Bulk delete error:', error)
+      showMessage(
+        error instanceof Error ? error.message : 'Error al eliminar productos',
+        'error'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Export functionality
   const handleExport = async (format: 'csv' | 'xlsx' = 'csv') => {
     try {
@@ -1374,14 +1423,25 @@ export default function InventarioPage() {
                     Importar CSV
                   </button>
                   {selectedProducts.size > 0 && (
-                    <button
-                      onClick={() => setShowBulkUpdateModal(true)}
-                      className="px-2 py-1.5 md:px-3 md:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-xs md:text-sm lg:text-base"
-                    >
-                      <span className="text-sm md:text-base">📝</span>
-                      <span className="hidden sm:inline">Editar {selectedProducts.size}</span>
-                      <span className="sm:hidden">Editar</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setShowBulkUpdateModal(true)}
+                        className="px-2 py-1.5 md:px-3 md:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-xs md:text-sm lg:text-base"
+                      >
+                        <span className="text-sm md:text-base">📝</span>
+                        <span className="hidden sm:inline">Editar {selectedProducts.size}</span>
+                        <span className="sm:hidden">Editar</span>
+                      </button>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="px-2 py-1.5 md:px-3 md:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-xs md:text-sm lg:text-base"
+                        disabled={saving}
+                      >
+                        <span className="text-sm md:text-base">🗑️</span>
+                        <span className="hidden sm:inline">Eliminar {selectedProducts.size}</span>
+                        <span className="sm:hidden">Eliminar</span>
+                      </button>
+                    </>
                   )}
                   <div className="relative">
                     <button
