@@ -1,13 +1,10 @@
 import { Pool, PoolClient } from 'pg'
 import { Product, ChangeLog } from './types'
 
-// Parse the connection string to remove SSL requirement for local development
-const connectionString = process.env.DATABASE_URL?.replace('?sslmode=require', '')
-
-// PostgreSQL connection pool
+// PostgreSQL connection pool with environment-specific SSL configuration
 const pool = new Pool({
-  connectionString: connectionString,
-  ssl: false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

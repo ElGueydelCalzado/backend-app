@@ -10,12 +10,9 @@ import dotenv from 'dotenv'
 // Load environment variables
 dotenv.config({ path: resolve(__dirname, '../.env.local') })
 
-// Parse the connection string to remove SSL requirement for local development
-const connectionString = process.env.DATABASE_URL?.replace('?sslmode=require', '')
-
 const pool = new Pool({
-  connectionString: connectionString,
-  ssl: false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

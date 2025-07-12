@@ -14,7 +14,7 @@ if [ ! -f ".env.production.local" ]; then
 # Copy these values to your deployment platform (Vercel, Railway, etc.)
 
 # Database Configuration (Google Cloud SQL)
-DATABASE_URL=postgresql://egdc_user:EgdcSecure2024!@34.45.148.180:5432/egdc_inventory?sslmode=require
+DATABASE_URL=postgresql://egdc_user:egdc1!@34.45.148.180:5432/egdc_inventory?sslmode=require
 
 # Application Configuration
 NODE_ENV=production

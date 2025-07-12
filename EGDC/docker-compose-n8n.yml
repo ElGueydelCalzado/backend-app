@@ -57,7 +57,7 @@ services:
       
       # EGDC API connection
       - EGDC_API_URL=http://host.docker.internal:3000/api
-      - EGDC_DATABASE_URL=postgresql://egdc_user:EgdcSecure2024!@34.45.148.180:5432/egdc_inventory
+      - EGDC_DATABASE_URL=postgresql://egdc_user:egdc1!@34.45.148.180:5432/egdc_inventory
 
     volumes:
       - n8n_data:/home/node/.n8n

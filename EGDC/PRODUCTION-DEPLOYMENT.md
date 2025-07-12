@@ -41,7 +41,7 @@ nano .env.production.local
 **Required Environment Variables:**
 ```bash
 # Database (Google Cloud SQL)
-DATABASE_URL=postgresql://egdc_user:EgdcSecure2024!@34.45.148.180:5432/egdc_inventory?sslmode=require
+DATABASE_URL=postgresql://egdc_user:egdc1!@34.45.148.180:5432/egdc_inventory?sslmode=require
 
 # Application
 NODE_ENV=production
