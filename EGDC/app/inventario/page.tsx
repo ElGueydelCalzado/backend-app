@@ -58,19 +58,19 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'talla', label: 'Talla', visible: true, category: 'basic' },
   { key: 'sku', label: 'SKU', visible: true, category: 'basic' },
   { key: 'ean', label: 'EAN', visible: false, category: 'basic' },
-  { key: 'costo', label: 'Costo', visible: true, category: 'pricing' },
+  { key: 'costo', label: 'Costo', visible: false, category: 'pricing' },
   { key: 'google_drive', label: 'Google Drive', visible: false, category: 'basic' },
-  { key: 'precio_shein', label: 'Precio SHEIN', visible: true, category: 'pricing' },
-  { key: 'precio_shopify', label: 'Precio Shopify', visible: true, category: 'pricing' },
-  { key: 'precio_meli', label: 'Precio MercadoLibre', visible: true, category: 'pricing' },
+  { key: 'precio_shein', label: 'Precio SHEIN', visible: false, category: 'pricing' },
+  { key: 'precio_shopify', label: 'Precio Shopify', visible: false, category: 'pricing' },
+  { key: 'precio_meli', label: 'Precio MercadoLibre', visible: false, category: 'pricing' },
   { key: 'shein_modifier', label: 'Mod. SHEIN', visible: false, category: 'pricing' },
   { key: 'shopify_modifier', label: 'Mod. Shopify', visible: false, category: 'pricing' },
   { key: 'meli_modifier', label: 'Mod. MercadoLibre', visible: false, category: 'pricing' },
-  { key: 'inv_egdc', label: 'EGDC', visible: true, category: 'inventory' },
-  { key: 'inv_fami', label: 'FAMI', visible: true, category: 'inventory' },
-  { key: 'inv_osiel', label: 'Osiel', visible: true, category: 'inventory' },
-  { key: 'inv_molly', label: 'Molly', visible: true, category: 'inventory' },
-  { key: 'inventory_total', label: 'Total', visible: true, category: 'inventory' },
+  { key: 'inv_egdc', label: 'EGDC', visible: false, category: 'inventory' },
+  { key: 'inv_fami', label: 'FAMI', visible: false, category: 'inventory' },
+  { key: 'inv_osiel', label: 'Osiel', visible: false, category: 'inventory' },
+  { key: 'inv_molly', label: 'Molly', visible: false, category: 'inventory' },
+  { key: 'inventory_total', label: 'Total', visible: false, category: 'inventory' },
   { key: 'shein', label: 'SHEIN', visible: false, category: 'platforms' },
   { key: 'meli', label: 'MercadoLibre', visible: false, category: 'platforms' },
   { key: 'shopify', label: 'Shopify', visible: false, category: 'platforms' },
@@ -78,6 +78,15 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'upseller', label: 'Upseller', visible: false, category: 'platforms' },
   { key: 'go_trendier', label: 'Go Trendier', visible: false, category: 'platforms' }
 ]
+
+// Apply "basico" preset configuration (only show: categoria, marca, modelo, color, talla, sku)
+const getBasicoPresetColumns = (): ColumnConfig[] => {
+  const basicColumns = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
+  return DEFAULT_COLUMNS.map(col => ({
+    ...col,
+    visible: basicColumns.includes(col.key)
+  }))
+}
 
 export default function InventarioPage() {
   const [allData, setAllData] = useState<Product[]>([])
@@ -90,7 +99,7 @@ export default function InventarioPage() {
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('open')
-  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(getBasicoPresetColumns())
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [showNewProductModal, setShowNewProductModal] = useState(false)
