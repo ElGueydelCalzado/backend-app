@@ -100,11 +100,19 @@ export default function InventoryTable({
     onCellEdit(index, field, processedValue)
   }
 
-  const handleCellComplete = (index: number, field: keyof Product, value: string | number | boolean | null, productId: number) => {
+  const handleCellComplete = (index: number, field: keyof Product, productId: number) => {
+    // Get the current value from the edited view
+    const currentValue = editedView[index][field]
+    
+    console.log('🎯 Cell complete:', { index, field, productId, currentValue, autoSave })
+    
     // If auto-save is enabled and we have a valid product ID (not a new product)
     if (autoSave && productId > 0 && onAutoSave) {
+      console.log('💾 Triggering auto-save...')
       // Auto-save the individual cell change
-      onAutoSave(productId, field, value)
+      onAutoSave(productId, field, currentValue)
+    } else {
+      console.log('⏭️ Skipping auto-save:', { autoSave, productId, hasOnAutoSave: !!onAutoSave })
     }
     stopEditing()
   }
@@ -211,43 +219,10 @@ export default function InventoryTable({
           
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            {autoSave ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg border border-green-200">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-medium">Auto-guardado activo</span>
-                </div>
-                <LoadingButton
-                  loading={false}
-                  onClick={onCancel}
-                  variant="secondary"
-                  disabled={saving}
-                  size="sm"
-                >
-                  ↺ Cancelar
-                </LoadingButton>
-              </div>
-            ) : (
-              <>
-                <LoadingButton
-                  loading={false}
-                  onClick={onCancel}
-                  variant="secondary"
-                  disabled={saving}
-                  size="sm"
-                >
-                  ↺ Cancelar
-                </LoadingButton>
-                <LoadingButton
-                  loading={saving}
-                  onClick={onSave}
-                  variant="primary"
-                  size="sm"
-                >
-                  💾 Guardar Cambios
-                </LoadingButton>
-              </>
-            )}
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg border border-green-200">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-sm font-medium">Auto-guardado activo</span>
+            </div>
           </div>
         </div>
       </div>
@@ -359,13 +334,11 @@ export default function InventoryTable({
                                 value={value?.toString() || ''}
                                 onChange={(e) => handleInputChange(index, fieldKey as keyof Product, e.target.value, field.type)}
                                 onBlur={() => {
-                                  const currentValue = product[fieldKey as keyof Product]
-                                  handleCellComplete(index, fieldKey as keyof Product, currentValue, product.id)
+                                  handleCellComplete(index, fieldKey as keyof Product, product.id)
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
-                                    const currentValue = product[fieldKey as keyof Product]
-                                    handleCellComplete(index, fieldKey as keyof Product, currentValue, product.id)
+                                    handleCellComplete(index, fieldKey as keyof Product, product.id)
                                   } else if (e.key === 'Escape') {
                                     stopEditing()
                                   }
@@ -382,13 +355,11 @@ export default function InventoryTable({
                               value={value?.toString() || ''}
                               onChange={(e) => handleInputChange(index, fieldKey as keyof Product, e.target.value, field.type)}
                               onBlur={() => {
-                                const currentValue = product[fieldKey as keyof Product]
-                                handleCellComplete(index, fieldKey as keyof Product, currentValue, product.id)
+                                handleCellComplete(index, fieldKey as keyof Product, product.id)
                               }}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                  const currentValue = product[fieldKey as keyof Product]
-                                  handleCellComplete(index, fieldKey as keyof Product, currentValue, product.id)
+                                  handleCellComplete(index, fieldKey as keyof Product, product.id)
                                 } else if (e.key === 'Escape') {
                                   stopEditing()
                                 }

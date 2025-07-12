@@ -490,6 +490,7 @@ export default function InventarioPage() {
   // Auto-save function for individual cell changes
   const handleAutoSave = async (productId: number, field: keyof Product, value: string | number | boolean | null) => {
     try {
+      console.log('🔄 Auto-saving:', { productId, field, value })
       setSaving(true)
       
       // Prepare the change for the API
@@ -497,6 +498,8 @@ export default function InventarioPage() {
         id: productId,
         [field]: value
       }
+
+      console.log('📤 Sending to API:', change)
 
       // Send the single field update to the API
       const response = await fetch('/api/inventory/update', {
@@ -512,6 +515,7 @@ export default function InventarioPage() {
       }
 
       const result = await response.json()
+      console.log('✅ API Response:', result)
       
       if (!result.success) {
         throw new Error(result.error || 'Error al guardar')
@@ -526,7 +530,7 @@ export default function InventarioPage() {
       ))
       
     } catch (error) {
-      console.error('Error auto-saving:', error)
+      console.error('❌ Error auto-saving:', error)
       showToast(
         error instanceof Error ? error.message : 'Error al guardar automáticamente',
         'error'
