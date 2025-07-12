@@ -2,13 +2,9 @@ import { Pool } from 'pg'
 
 // Database connection configuration
 const config = {
-  host: process.env.DB_HOST || '34.45.148.180',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'egdc_inventory',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'admin',
-  ssl: false, // Set to true for production
-  max: 10, // Maximum number of connections
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 20, // Maximum number of connections
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 }
