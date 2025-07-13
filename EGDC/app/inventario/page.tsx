@@ -79,15 +79,6 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'go_trendier', label: 'Go Trendier', visible: false, category: 'platforms' }
 ]
 
-// Apply "basico" preset configuration (only show: categoria, marca, modelo, color, talla, sku)
-const getBasicoPresetColumns = (): ColumnConfig[] => {
-  const basicColumns = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
-  return DEFAULT_COLUMNS.map(col => ({
-    ...col,
-    visible: basicColumns.includes(col.key)
-  }))
-}
-
 export default function InventarioPage() {
   const [allData, setAllData] = useState<Product[]>([])
   const [originalView, setOriginalView] = useState<Product[]>([])
@@ -99,7 +90,7 @@ export default function InventarioPage() {
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('open')
-  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(getBasicoPresetColumns())
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [showNewProductModal, setShowNewProductModal] = useState(false)
@@ -159,6 +150,20 @@ export default function InventarioPage() {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Apply "Basico" preset on page load
+  useEffect(() => {
+    const applyBasicoPreset = () => {
+      const basicColumns = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
+      const updatedColumns = DEFAULT_COLUMNS.map(col => ({
+        ...col,
+        visible: basicColumns.includes(col.key)
+      }))
+      setColumnConfig(updatedColumns)
+    }
+
+    applyBasicoPreset()
+  }, []) // Only run once on mount
 
   // Apply filters whenever they change
   useEffect(() => {
