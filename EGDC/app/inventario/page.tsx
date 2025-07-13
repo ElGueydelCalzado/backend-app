@@ -151,19 +151,6 @@ export default function InventarioPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Apply "Basico" preset on page load
-  useEffect(() => {
-    const applyBasicoPreset = () => {
-      const basicColumns = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
-      const updatedColumns = DEFAULT_COLUMNS.map(col => ({
-        ...col,
-        visible: basicColumns.includes(col.key)
-      }))
-      setColumnConfig(updatedColumns)
-    }
-
-    applyBasicoPreset()
-  }, []) // Only run once on mount
 
   // Apply filters whenever they change
   useEffect(() => {
@@ -991,6 +978,11 @@ export default function InventarioPage() {
       }))
     )
   }
+
+  // Apply "Basico" preset on page load
+  useEffect(() => {
+    handlePresetSelect('basic')
+  }, []) // Only run once on mount
 
   // Mobile handlers
   const handleMobileSearch = (term: string) => {
