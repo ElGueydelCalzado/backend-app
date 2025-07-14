@@ -65,15 +65,15 @@ CREATE TABLE IF NOT EXISTS products (
     -- Multi-location inventory
     inv_egdc INTEGER DEFAULT 0,
     inv_fami INTEGER DEFAULT 0,
-    inv_bodega_principal INTEGER DEFAULT 0,
-    inv_tienda_centro INTEGER DEFAULT 0,
-    inv_tienda_norte INTEGER DEFAULT 0,
-    inv_tienda_sur INTEGER DEFAULT 0,
-    inv_online INTEGER DEFAULT 0,
+    inv_osiel INTEGER DEFAULT 0,
+    inv_osiel INTEGER DEFAULT 0,
+    inv_molly INTEGER DEFAULT 0,
+    inv_molly INTEGER DEFAULT 0,
+    inv_molly INTEGER DEFAULT 0,
     inventory_total INTEGER GENERATED ALWAYS AS (
-        COALESCE(inv_egdc, 0) + COALESCE(inv_fami, 0) + COALESCE(inv_bodega_principal, 0) + 
-        COALESCE(inv_tienda_centro, 0) + COALESCE(inv_tienda_norte, 0) + 
-        COALESCE(inv_tienda_sur, 0) + COALESCE(inv_online, 0)
+        COALESCE(inv_egdc, 0) + COALESCE(inv_fami, 0) + COALESCE(inv_osiel, 0) + 
+        COALESCE(inv_osiel, 0) + COALESCE(inv_molly, 0) + 
+        COALESCE(inv_molly, 0) + COALESCE(inv_molly, 0)
     ) STORED,
     
     -- Platform availability flags

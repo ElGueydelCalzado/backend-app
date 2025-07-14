@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**EGDC** is a production-ready Next.js 15 inventory management system for footwear products, built with TypeScript and Supabase. It replaces a legacy Google Apps Script/Sheets system with a modern, scalable web application featuring real-time inventory tracking, automated pricing calculations, and comprehensive multi-location stock management.
+**EGDC** is a production-ready Next.js 15 SaaS multi-tenant inventory management platform for footwear businesses, built with TypeScript and PostgreSQL. It replaces a legacy Google Apps Script/Sheets system with a modern, scalable B2B platform featuring real-time inventory tracking, automated pricing calculations, supplier integration, and comprehensive multi-business warehouse management.
 
 ## Current Project Status
 
-✅ **FULLY FUNCTIONAL** - Complete inventory management system  
+✅ **FULLY FUNCTIONAL** - Complete SaaS multi-tenant platform  
 ✅ **PRODUCTION READY** - All core features implemented and working  
-✅ **DATABASE COMPLETE** - Automated pricing, triggers, and audit trails  
-✅ **UI/UX COMPLETE** - Modern, responsive interface with advanced filtering  
-✅ **API ENDPOINTS** - REST API for inventory operations  
+✅ **DATABASE COMPLETE** - PostgreSQL with automated pricing, triggers, and audit trails  
+✅ **UI/UX COMPLETE** - Modern, responsive interface with warehouse switching  
+✅ **API ENDPOINTS** - REST API for inventory operations and supplier integration  
+✅ **SUPPLIER INTEGRATION** - Multi-business warehouse architecture with BUY functionality  
 ✅ **SCRIPTS READY** - Database management and testing utilities  
 
 ## Development Commands
@@ -36,48 +37,106 @@ npx tsx scripts/final-update.ts         # Final database configuration
 npx tsx scripts/db-direct.ts            # Direct database operations
 ```
 
+## **🔥 CRITICAL: Git Workflow Requirements**
+
+**⚠️ ALWAYS FOLLOW PROPER GITHUB WORKFLOW - NO EXCEPTIONS ⚠️**
+
+### **Required Git Workflow for All Development:**
+
+```bash
+# 1. ALWAYS create feature branches for new work
+git checkout main
+git pull origin main
+git checkout -b feature/descriptive-name
+git checkout -b hotfix/urgent-fix
+git checkout -b improvement/optimization-name
+
+# 2. Develop and commit on feature branch
+git add .
+git commit -m "feat: descriptive commit message"
+
+# 3. Push feature branch to remote
+git push -u origin feature/descriptive-name
+
+# 4. Create Pull Request for code review
+# 5. After approval, merge to main
+git checkout main
+git pull origin main
+git merge feature/descriptive-name
+git push origin main
+
+# 6. Clean up feature branch
+git branch -d feature/descriptive-name
+git push origin --delete feature/descriptive-name
+```
+
+### **Git Workflow Rules:**
+- 🚫 **NEVER commit directly to main branch**
+- ✅ **ALWAYS create feature branches for new work**
+- ✅ **ALWAYS test builds before committing** (`npm run build` && `npm run type-check`)
+- ✅ **ALWAYS use descriptive branch names** (feature/oauth-auth, hotfix/login-bug)
+- ✅ **ALWAYS use conventional commits** (feat:, fix:, docs:, style:, refactor:, test:)
+- ✅ **ALWAYS create Pull Requests for code review**
+- ✅ **ALWAYS merge to main only after testing and approval**
+
+### **Branch Naming Convention:**
+- `feature/` - New features (feature/barcode-scanning)
+- `hotfix/` - Urgent production fixes (hotfix/auth-login-bug)
+- `improvement/` - Enhancements (improvement/mobile-optimization)
+- `docs/` - Documentation updates (docs/update-readme)
+
+### **Protection Rules:**
+- Main branch should be protected in production
+- Require Pull Request reviews before merging
+- Require status checks to pass before merging
+- Require branches to be up to date before merging
+
 ## Architecture
 
 ### Tech Stack
 - **Frontend**: Next.js 15.3.4 (App Router), React 19.1.0, TypeScript 5.8.3
 - **Styling**: Tailwind CSS 3.4.0 with responsive design system
-- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Database**: PostgreSQL (GCP Cloud SQL) with Row Level Security
 - **Icons**: Lucide React 0.525.0
 - **Development**: ESLint, PostCSS, Autoprefixer
 
 ### Key Features Implemented
 
 #### 🔥 **Core Inventory Management**
-- **Real-time Table Editing**: Direct cell editing with immediate visual feedback
+- **Real-time Table Editing**: Direct cell editing with auto-save functionality
 - **Automated Pricing System**: Database-calculated prices with platform-specific formulas
-- **Multi-location Inventory**: Track stock across 7 different locations with auto-totaling
+- **Multi-business Warehouse System**: Independent warehouses for EGDC + supplier integration
+- **Supplier Integration**: Read-only catalogs with BUY functionality for purchase orders
 - **Comprehensive Audit Trail**: All changes logged with timestamps and old/new values
 
 #### 🎯 **Advanced Filtering & Search**
 - **Hierarchical Filtering**: Categories → Brands → Models cascade filtering
 - **Real-time Search**: Search across product names, SKUs, brands, models
 - **Multi-select Filters**: Filter by multiple categories, brands, models simultaneously
+- **Warehouse Switching**: Independent filtering for each business warehouse
 - **Quick Filter Tags**: Visual filter tags with easy removal
 
-#### 📊 **Dashboard & Analytics**
-- **Real-time Statistics**: Product counts, inventory totals, low stock alerts
-- **Inventory by Location**: Visual breakdown of stock distribution
-- **Platform Distribution**: Track products across sales channels
-- **Value Analysis**: Total inventory value, average costs, value per unit
+#### 📊 **SaaS Multi-Tenant Architecture**
+- **Independent Business Warehouses**: EGDC (own), FAMI/Osiel/Molly (suppliers)
+- **Supplier Catalogs**: Read-only product views with wholesale pricing
+- **Purchase Order System**: BUY buttons with quantity selection and order creation
+- **Visual Business Distinctions**: Clear indicators for own vs supplier products
+- **Real-time Product Counts**: Dynamic badges showing inventory per warehouse
 
 #### 🎨 **Modern UI/UX**
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
-- **Visual Indicators**: Stock status, price calculations, change highlighting
+- **Warehouse Tabs**: Professional business switching interface with icons and badges
+- **Auto-save Functionality**: Real-time saving without manual save buttons
 - **Loading States**: Smooth loading animations and states
-- **Error Handling**: User-friendly error messages and recovery
+- **Toast Notifications**: Non-intrusive success/error feedback system
 
 ### Database Schema
 
 #### **Products Table** (Complete)
 - **Basic Info**: fecha, categoria, marca, modelo, color, talla, sku, ean
 - **Pricing**: costo, shein_modifier, shopify_modifier, meli_modifier
-- **Auto-Calculated Prices**: precio_shein, precio_egdc, precio_meli (generated columns)
-- **Multi-location Inventory**: inv_egdc, inv_fami, inv_bodega_principal, inv_tienda_centro, inv_tienda_norte, inv_tienda_sur, inv_online
+- **Auto-Calculated Prices**: precio_shein, precio_shopify, precio_meli (generated columns)
+- **Multi-warehouse Inventory**: inv_egdc, inv_fami, inv_osiel, inv_molly
 - **Auto-Calculated Total**: inventory_total (database trigger)
 - **Platform Flags**: shein, meli, shopify, tiktok, upseller, go_trendier, google_drive
 - **Timestamps**: created_at, updated_at (auto-managed)
@@ -103,9 +162,10 @@ npx tsx scripts/db-direct.ts            # Direct database operations
 #### **Core Components**
 
 1. **`InventoryTable.tsx`** - Main editing interface
-   - Direct cell editing with input validation
+   - Auto-save functionality with real-time updates
+   - Supplier view mode with BUY buttons
    - Real-time price calculations display
-   - Visual change indicators
+   - Visual distinctions for own vs supplier products
    - Responsive table with sticky headers
 
 2. **`ProductCard.tsx`** - Detailed product view
@@ -139,9 +199,17 @@ npx tsx scripts/db-direct.ts            # Direct database operations
    - Smooth loading animations
    - User feedback during operations
 
-8. **`MessageArea.tsx`** - User feedback
-   - Success/error notifications
-   - Operation status updates
+8. **`WarehouseTabs.tsx`** - Business warehouse switching
+   - Independent business tabs (EGDC, FAMI, Osiel, Molly)
+   - Visual indicators for own vs supplier businesses
+   - Real-time product count badges
+   - Demo mode indicators for supplier catalogs
+   - Responsive design for desktop and mobile
+
+9. **`ToastNotification.tsx`** - Modern feedback system
+   - Non-intrusive success/error notifications
+   - Auto-dismissing with customizable duration
+   - Multiple toast support with queue management
 
 ### API Endpoints
 
@@ -181,6 +249,15 @@ Choose the appropriate SQL script based on your needs:
 
 Required in `.env.local`:
 ```bash
+# PostgreSQL Database (GCP Cloud SQL)
+DATABASE_URL=postgresql://username:password@host:port/database
+POSTGRES_USER=your_postgres_user
+POSTGRES_PASSWORD=your_postgres_password
+POSTGRES_HOST=your_postgres_host
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=your_database_name
+
+# Legacy Supabase variables (for migration compatibility)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
@@ -206,22 +283,33 @@ The system automatically calculates prices using database-generated columns:
 
 **Only cost and modifier fields are user-editable** - prices recalculate automatically.
 
-## Multi-location Inventory (Automated)
+## Multi-Business Warehouse System
 
-Tracks stock across 7 locations with automatic totaling:
-- **inv_egdc** - Main EGDC inventory
-- **inv_fami** - FAMI inventory
-- **inv_bodega_principal** - Main warehouse
-- **inv_tienda_centro** - Centro store
-- **inv_tienda_norte** - Norte store
-- **inv_tienda_sur** - Sur store
-- **inv_online** - Online inventory
+### **SaaS Architecture Model**
+
+**EGDC Retailer (Your Business)**
+- **inv_egdc** - EGDC inventory (real PostgreSQL database)
+- Full editing capabilities with auto-save functionality
+- Real-time inventory management and pricing calculations
+
+**Supplier Businesses (Future SaaS Customers)**
+- **inv_fami** - FAMI wholesale inventory (dummy data for now)
+- **inv_osiel** - Osiel wholesale inventory (dummy data for now)  
+- **inv_molly** - Molly wholesale inventory (dummy data for now)
+- Read-only catalogs with BUY functionality for purchase orders
+- Wholesale pricing visible to EGDC for procurement decisions
+
+**Future Integration Plan**
+- Each supplier will have their own warehouse management software (your SaaS product)
+- EGDC connects to supplier APIs for real-time catalog access
+- Purchase orders automatically sync between retailer and supplier systems
+- Inventory transfers update both databases upon order fulfillment
 
 **Total inventory auto-calculated** via database trigger when any location changes.
 
 ## Development Workflow
 
-1. **Setup**: Run database script in Supabase SQL Editor
+1. **Setup**: Run database script in PostgreSQL (GCP Cloud SQL)
 2. **Install**: `npm install` to install dependencies
 3. **Configure**: Add environment variables to `.env.local`
 4. **Test**: Run `npx tsx scripts/test-connection.ts` to verify setup
@@ -240,17 +328,20 @@ EGDC/
 │   ├── layout.tsx                   # Root layout
 │   └── page.tsx                     # Main application
 ├── components/
-│   ├── InventoryTable.tsx           # Main editing interface
+│   ├── InventoryTable.tsx           # Main editing interface with supplier support
+│   ├── WarehouseTabs.tsx            # Multi-business warehouse switching
 │   ├── ProductCard.tsx              # Detailed product view
 │   ├── QuickStats.tsx               # Dashboard overview
 │   ├── SearchAndFilters.tsx         # Advanced filtering
+│   ├── ToastNotification.tsx        # Modern feedback system
 │   ├── ProductList.tsx              # List view
 │   ├── FilterSection.tsx            # Filter controls
-│   ├── LoadingScreen.tsx            # Loading states
-│   └── MessageArea.tsx              # User feedback
+│   └── LoadingScreen.tsx            # Loading states
 ├── lib/
-│   ├── supabase.ts                  # Client-side Supabase client
-│   └── database.ts                  # Server-side database manager
+│   ├── postgres.ts                  # PostgreSQL database manager
+│   ├── dummy-warehouse-data.ts      # Supplier catalog dummy data
+│   ├── supabase.ts                  # Legacy Supabase client (migration compatibility)
+│   └── types.ts                     # TypeScript type definitions
 ├── scripts/
 │   ├── test-connection.ts           # Test database connection
 │   ├── setup-db.ts                  # Database setup
@@ -299,15 +390,45 @@ EGDC/
 - [ ] Mobile Optimization: Responsive design improvements
 - [ ] User Management: Authentication, role-based access
 
-### Phase 4: Advanced Features (Month 2)
-- [ ] Reporting System: Custom reports, data export (CSV/Excel)
-- [ ] Real-time Updates: WebSocket/Supabase subscriptions
-- [ ] Mobile App: React Native companion
-- [ ] Notifications: Email/SMS alerts for low stock
+### Phase 4: SaaS Platform Expansion (Month 2)
+- [ ] **Wholesaler Software Development**: Build supplier-side warehouse management
+- [ ] **Real Supplier API Integration**: Replace dummy data with live supplier connections
+- [ ] **Purchase Order Management**: Full order lifecycle tracking and fulfillment
+- [ ] **Bulk Purchase System**: Multi-product purchase orders with quantity management
+- [ ] **Reporting System**: Custom reports, data export (CSV/Excel)
+- [ ] **Real-time Updates**: WebSocket connections for live inventory sync
+- [ ] **Mobile App**: React Native companion for both retailers and suppliers
+
+## SaaS Business Model Implementation
+
+### **Platform Strategy**
+This system implements a **B2B SaaS marketplace model** where:
+
+**Current Status:**
+- **EGDC** = Primary retailer customer (production system)
+- **FAMI, Osiel, Molly** = Target wholesale customers (demo/development phase)
+
+**Revenue Model:**
+- **Retailer Software**: Subscription-based inventory management (EGDC)
+- **Wholesaler Software**: SaaS subscriptions for suppliers (FAMI, Osiel, Molly)
+- **Transaction Fees**: Optional commission on purchase orders between businesses
+
+**Technical Architecture:**
+- **Independent Databases**: Each business maintains their own data
+- **API Integrations**: Cross-business catalog access and purchase orders
+- **Role-Based Access**: Retailers can view supplier catalogs, suppliers manage their own inventory
+- **Purchase Order System**: Automated inventory transfers between businesses
+
+**Implementation Phases:**
+1. ✅ **Retailer MVP** (EGDC system - completed)
+2. ✅ **Multi-tenant Architecture** (warehouse tabs + supplier integration - completed)
+3. 🔄 **Supplier Software Development** (next phase)
+4. 🔄 **Real API Integration** (replace dummy data with live connections)
+5. 🔄 **Platform Launch** (onboard real suppliers as SaaS customers)
 
 ### Critical Issues Identified (16 total: 2 Critical, 3 High, 4 Medium, 7 Low)
-**Status**: Currently addressing Phase 1 critical issues before proceeding
+**Status**: Phase 1-2 completed, transitioning to SaaS platform development
 
 ---
 
-**Status**: Production-ready inventory management system with full CRUD operations, automated pricing, and comprehensive audit trails.
+**Status**: Production-ready SaaS multi-tenant platform with retailer inventory management, supplier integration, purchase order system, and foundation for B2B marketplace expansion.

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Product } from '@/lib/supabase'
+import { Product } from '@/lib/types'
 import LoadingButton from './LoadingButton'
 import { ColumnConfig } from './ColumnControls'
 import DeleteConfirmModal from './DeleteConfirmModal'
+import ImagePreviewModal from './ImagePreviewModal'
 
 interface InventoryTableProps {
   editedView: Product[]
@@ -16,6 +17,11 @@ interface InventoryTableProps {
   selectedProducts?: Set<number>
   onProductSelect?: (productId: number, selected: boolean) => void
   onSelectAll?: (selected: boolean) => void
+  autoSave?: boolean // New prop to enable auto-save mode
+  onAutoSave?: (productId: number, field: keyof Product, value: string | number | boolean | null) => void // New prop for auto-save callback
+  isSupplierView?: boolean // New prop to indicate supplier products (read-only + BUY)
+  supplierName?: string // Name of the supplier business
+  onBuyProduct?: (product: Product, quantity: number) => void // Callback for buying from supplier
 }
 
 // Field display configuration
@@ -57,10 +63,17 @@ export default function InventoryTable({
   onRemoveRow,
   selectedProducts = new Set(),
   onProductSelect,
-  onSelectAll
+  onSelectAll,
+  autoSave = false,
+  onAutoSave,
+  isSupplierView = false,
+  supplierName,
+  onBuyProduct
 }: InventoryTableProps) {
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const [productToDelete, setProductToDelete] = useState<{ product: Product; index: number } | null>(null)
+  const [showImagePreview, setShowImagePreview] = useState(false)
+  const [imagePreviewProduct, setImagePreviewProduct] = useState<Product | null>(null)
   
   // Get visible columns based on configuration
   const visibleColumns = columnConfig ? 
@@ -94,6 +107,23 @@ export default function InventoryTable({
     }
 
     onCellEdit(index, field, processedValue)
+  }
+
+  const handleCellComplete = (index: number, field: keyof Product, productId: number) => {
+    // Get the current value from the edited view
+    const currentValue = editedView[index][field]
+    
+    console.log('🎯 Cell complete:', { index, field, productId, currentValue, autoSave })
+    
+    // If auto-save is enabled and we have a valid product ID (not a new product)
+    if (autoSave && productId > 0 && onAutoSave) {
+      console.log('💾 Triggering auto-save...')
+      // Auto-save the individual cell change
+      onAutoSave(productId, field, currentValue)
+    } else {
+      console.log('⏭️ Skipping auto-save:', { autoSave, productId, hasOnAutoSave: !!onAutoSave })
+    }
+    stopEditing()
   }
 
   const getCellId = (index: number, fieldKey: string) => `${index}-${fieldKey}`
@@ -188,33 +218,24 @@ export default function InventoryTable({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <span className="text-2xl mr-3 drop-shadow-sm">📦</span>
-              Inventario EGDC
+              <span className="text-2xl mr-3 drop-shadow-sm">
+                {isSupplierView ? '🏭' : '📦'}
+              </span>
+              {isSupplierView ? `${supplierName} Catalog` : 'Inventario EGDC'}
               <span className="ml-3 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full shadow-sm">
                 {editedView.length} productos
               </span>
+              {isSupplierView && (
+                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full shadow-sm">
+                  SUPPLIER VIEW
+                </span>
+              )}
             </h2>
           </div>
           
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <LoadingButton
-              loading={false}
-              onClick={onCancel}
-              variant="secondary"
-              disabled={saving}
-              size="sm"
-            >
-              ↺ Cancelar
-            </LoadingButton>
-            <LoadingButton
-              loading={saving}
-              onClick={onSave}
-              variant="primary"
-              size="sm"
-            >
-              💾 Guardar Cambios
-            </LoadingButton>
+            {/* Auto-save indicator removed per user request */}
           </div>
         </div>
       </div>
@@ -255,8 +276,10 @@ export default function InventoryTable({
                 )
               })}
               {/* Actions Column Header */}
-              <th className="w-16 px-1 py-0.5 text-center text-xs font-bold text-gray-800 uppercase tracking-wider border-r border-gray-300 bg-gray-50">
-                <span title="Acciones">⚡</span>
+              <th className="w-20 px-1 py-0.5 text-center text-xs font-bold text-gray-800 uppercase tracking-wider border-r border-gray-300 bg-gray-50">
+                <span title={isSupplierView ? "Comprar" : "Acciones"}>
+                  {isSupplierView ? "🛒" : "⚡"}
+                </span>
               </th>
             </tr>
           </thead>
@@ -295,36 +318,49 @@ export default function InventoryTable({
                           <input
                             type="checkbox"
                             checked={!!value}
-                            onChange={(e) => handleInputChange(index, fieldKey as keyof Product, e.target.checked.toString(), 'checkbox')}
+                            onChange={(e) => {
+                              const newValue = e.target.checked
+                              handleInputChange(index, fieldKey as keyof Product, newValue.toString(), 'checkbox')
+                              // Auto-save checkbox changes immediately
+                              if (autoSave && product.id > 0 && onAutoSave) {
+                                onAutoSave(product.id, fieldKey as keyof Product, newValue)
+                              }
+                            }}
                             className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                             disabled={saving}
                           />
                         </div>
-                      ) : isEditing(index, fieldKey) ? (
-                        <div className="flex items-center gap-2">
+                      ) : !isSupplierView && isEditing(index, fieldKey) ? (
+                        <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-2 border-orange-200 shadow-md">
                           {fieldKey === 'google_drive' && value ? (
                             <>
-                              <a
-                                href={value.toString()}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                                title="Abrir en nueva pestaña"
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setImagePreviewProduct(product)
+                                  setShowImagePreview(true)
+                                }}
+                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                title="Ver imágenes del producto"
                               >
                                 <span>🔗</span>
                                 Ver
-                              </a>
+                              </button>
                               <input
                                 type="text"
                                 value={value?.toString() || ''}
                                 onChange={(e) => handleInputChange(index, fieldKey as keyof Product, e.target.value, field.type)}
-                                onBlur={stopEditing}
+                                onBlur={() => {
+                                  handleCellComplete(index, fieldKey as keyof Product, product.id)
+                                }}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === 'Escape') {
+                                  if (e.key === 'Enter') {
+                                    handleCellComplete(index, fieldKey as keyof Product, product.id)
+                                  } else if (e.key === 'Escape') {
                                     stopEditing()
                                   }
                                 }}
-                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                                className="flex-1 px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner"
                                 disabled={saving}
                                 placeholder="URL de Google Drive..."
                                 autoFocus
@@ -335,79 +371,116 @@ export default function InventoryTable({
                               type={field.type}
                               value={value?.toString() || ''}
                               onChange={(e) => handleInputChange(index, fieldKey as keyof Product, e.target.value, field.type)}
-                              onBlur={stopEditing}
+                              onBlur={() => {
+                                handleCellComplete(index, fieldKey as keyof Product, product.id)
+                              }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === 'Escape') {
+                                if (e.key === 'Enter') {
+                                  handleCellComplete(index, fieldKey as keyof Product, product.id)
+                                } else if (e.key === 'Escape') {
                                   stopEditing()
                                 }
                               }}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                              className="w-full px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner font-medium"
                               disabled={saving}
-                              placeholder={field.type === 'number' ? '0' : 'Valor...'}
+                              placeholder={field.type === 'number' ? '0.00' : 'Ingresa valor...'}
                               step={field.type === 'number' ? '0.01' : undefined}
                               autoFocus
                             />
                           )}
+                          {/* Edit mode indicators */}
+                          <div className="flex items-center gap-1 text-xs text-orange-600">
+                            <span title="Presiona Enter para guardar">⏎</span>
+                            <span title="Presiona Escape para cancelar">⎋</span>
+                          </div>
                         </div>
                       ) : (
-                        <div className="group relative flex items-center">
-                          <div className="flex-1 px-2 py-1 text-sm">
+                        <div className="group relative flex items-center hover:bg-gradient-to-r hover:from-orange-25 hover:to-orange-50 rounded-lg transition-all duration-200 min-h-[2.5rem]">
+                          <div className="flex-1 px-3 py-2 text-sm">
                             {fieldKey === 'google_drive' && value ? (
                               <div className="flex items-center gap-2">
-                                <a
-                                  href={value.toString()}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                                  title="Abrir en nueva pestaña"
-                                  onClick={(e) => e.stopPropagation()}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setImagePreviewProduct(product)
+                                    setShowImagePreview(true)
+                                  }}
+                                  className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                  title="Ver imágenes del producto"
                                 >
                                   <span>🔗</span>
                                   Ver
-                                </a>
-                                <span className="flex-1 truncate">{value.toString()}</span>
+                                </button>
+                                <span className="flex-1 truncate font-medium text-gray-700">{value.toString()}</span>
                               </div>
                             ) : (
-                              <span className="truncate">{value?.toString() || '-'}</span>
+                              <span className="truncate font-medium text-gray-800">
+                                {value?.toString() || <span className="text-gray-400 italic">Sin valor</span>}
+                              </span>
                             )}
                           </div>
-                          <button
-                            onClick={() => startEditing(index, fieldKey)}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                            title="Editar celda"
-                            disabled={saving}
-                          >
-                            ✏️
-                          </button>
+                          {!isSupplierView && (
+                            <button
+                              onClick={() => startEditing(index, fieldKey)}
+                              className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center text-sm shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
+                              title="Hacer clic para editar"
+                              disabled={saving}
+                            >
+                              ✏️
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
                   )
                 })}
                 {/* Actions Column */}
-                <td className="w-16 px-1 py-0.5 text-center border-r border-gray-200 relative">
+                <td className="w-20 px-1 py-0.5 text-center border-r border-gray-200 relative">
                   <div className="flex items-center justify-center gap-1">
-                    {/* Add Row Button */}
-                    {onAddRow && (
+                    {isSupplierView ? (
+                      /* BUY Button for Supplier Products */
                       <button
-                        onClick={() => onAddRow(index)}
-                        className="w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
-                        title="Agregar producto después de esta fila"
+                        onClick={() => {
+                          const quantity = prompt(`¿Cuántas unidades de ${product.modelo} deseas comprar?`)
+                          if (quantity && onBuyProduct) {
+                            const qty = parseInt(quantity, 10)
+                            if (qty > 0) {
+                              onBuyProduct(product, qty)
+                            }
+                          }
+                        }}
+                        className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                        title={`Comprar ${product.modelo} de ${supplierName}`}
                         disabled={saving}
                       >
-                        +
+                        🛒 BUY
                       </button>
-                    )}
-                    {/* Remove Row Button (for all rows) */}
-                    {onRemoveRow && (
-                      <button
-                        onClick={() => handleDeleteClick(product, index)}
-                        className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
-                        title="Eliminar esta fila"
-                        disabled={saving}
-                      >
-                        ×
-                      </button>
+                    ) : (
+                      /* EGDC Products - Add/Remove buttons */
+                      <>
+                        {/* Add Row Button */}
+                        {onAddRow && (
+                          <button
+                            onClick={() => onAddRow(index)}
+                            className="w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                            title="Agregar producto después de esta fila"
+                            disabled={saving}
+                          >
+                            +
+                          </button>
+                        )}
+                        {/* Remove Row Button (for all rows) */}
+                        {onRemoveRow && (
+                          <button
+                            onClick={() => handleDeleteClick(product, index)}
+                            className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                            title="Eliminar esta fila"
+                            disabled={saving}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>
@@ -423,6 +496,17 @@ export default function InventoryTable({
         product={productToDelete?.product || null}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={showImagePreview}
+        onClose={() => {
+          setShowImagePreview(false)
+          setImagePreviewProduct(null)
+        }}
+        googleDriveUrl={imagePreviewProduct?.google_drive || ''}
+        productName={imagePreviewProduct ? `${imagePreviewProduct.marca} ${imagePreviewProduct.modelo}` : ''}
       />
     </div>
   )

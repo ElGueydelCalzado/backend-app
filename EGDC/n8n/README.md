@@ -75,7 +75,7 @@ The following environment variables are pre-configured:
 ```bash
 # EGDC API Connection
 EGDC_API_URL=http://host.docker.internal:3000/api
-EGDC_DATABASE_URL=postgresql://egdc_user:EgdcSecure2024!@34.45.148.180:5432/egdc_inventory
+EGDC_DATABASE_URL=postgresql://egdc_user:egdc1!@34.45.148.180:5432/egdc_inventory
 
 # n8n Configuration
 N8N_BASIC_AUTH_USER=admin

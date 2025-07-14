@@ -23,11 +23,8 @@ interface ProductForm {
   meli_modifier: number | null
   inv_egdc: number | null
   inv_fami: number | null
-  inv_bodega_principal: number | null
-  inv_tienda_centro: number | null
-  inv_tienda_norte: number | null
-  inv_tienda_sur: number | null
-  inv_online: number | null
+  inv_osiel: number | null
+  inv_molly: number | null
   shein: boolean
   shopify: boolean
   meli: boolean
@@ -48,11 +45,8 @@ const initialForm: ProductForm = {
   meli_modifier: 2.5,
   inv_egdc: 0,
   inv_fami: 0,
-  inv_bodega_principal: 0,
-  inv_tienda_centro: 0,
-  inv_tienda_norte: 0,
-  inv_tienda_sur: 0,
-  inv_online: 0,
+  inv_osiel: 0,
+  inv_molly: 0,
   shein: false,
   shopify: false,
   meli: false,
@@ -285,11 +279,11 @@ export default function NuevoProductoPage() {
                 {[
                   { key: 'inv_egdc', label: 'EGDC' },
                   { key: 'inv_fami', label: 'FAMI' },
-                  { key: 'inv_bodega_principal', label: 'Bodega' },
-                  { key: 'inv_tienda_centro', label: 'Centro' },
-                  { key: 'inv_tienda_norte', label: 'Norte' },
-                  { key: 'inv_tienda_sur', label: 'Sur' },
-                  { key: 'inv_online', label: 'Online' }
+                  { key: 'inv_osiel', label: 'Bodega' },
+                  { key: 'inv_osiel', label: 'Centro' },
+                  { key: 'inv_molly', label: 'Norte' },
+                  { key: 'inv_molly', label: 'Sur' },
+                  { key: 'inv_molly', label: 'Online' }
                 ].map(({ key, label }) => (
                   <div key={key}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>

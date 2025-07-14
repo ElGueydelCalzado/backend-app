@@ -1,10 +1,10 @@
 import { Pool, PoolClient } from 'pg'
 import { Product, ChangeLog } from './types'
 
-// PostgreSQL connection pool
+// PostgreSQL connection pool - disable SSL for GCP Cloud SQL compatibility
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
+  ssl: false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -49,7 +49,7 @@ export class DatabaseManager {
   /**
    * Create a new product
    */
-  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'precio_shein' | 'precio_egdc' | 'precio_meli' | 'inventory_total'>): Promise<Product> {
+  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'precio_shein' | 'precio_shopify' | 'precio_meli' | 'inventory_total'>): Promise<Product> {
     const client = await pool.connect()
     try {
       const fields = Object.keys(product).join(', ')
@@ -251,7 +251,7 @@ export class DatabaseManager {
         FROM products
       `)
 
-      // Get inventory by location
+      // Get inventory by location (4 locations)
       const locationResult = await client.query(`
         SELECT 
           'EGDC' as location, COALESCE(SUM(inv_egdc), 0) as total FROM products
@@ -260,19 +260,10 @@ export class DatabaseManager {
           'FAMI' as location, COALESCE(SUM(inv_fami), 0) as total FROM products
         UNION ALL
         SELECT 
-          'Bodega Principal' as location, COALESCE(SUM(inv_bodega_principal), 0) as total FROM products
+          'Osiel' as location, COALESCE(SUM(inv_osiel), 0) as total FROM products
         UNION ALL
         SELECT 
-          'Tienda Centro' as location, COALESCE(SUM(inv_tienda_centro), 0) as total FROM products
-        UNION ALL
-        SELECT 
-          'Tienda Norte' as location, COALESCE(SUM(inv_tienda_norte), 0) as total FROM products
-        UNION ALL
-        SELECT 
-          'Tienda Sur' as location, COALESCE(SUM(inv_tienda_sur), 0) as total FROM products
-        UNION ALL
-        SELECT 
-          'Online' as location, COALESCE(SUM(inv_online), 0) as total FROM products
+          'Molly' as location, COALESCE(SUM(inv_molly), 0) as total FROM products
         ORDER BY total DESC
       `)
 

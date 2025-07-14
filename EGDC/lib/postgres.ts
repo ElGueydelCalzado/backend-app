@@ -1,14 +1,10 @@
 import { Pool } from 'pg'
 
-// Database connection configuration
+// Database connection configuration - disable SSL for GCP Cloud SQL compatibility
 const config = {
-  host: process.env.DB_HOST || '34.45.148.180',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'egdc_inventory',
-  user: process.env.DB_USER || 'egdc_user',
-  password: process.env.DB_PASSWORD || 'EgdcSecure2024!',
-  ssl: false, // Set to true for production
-  max: 10, // Maximum number of connections
+  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
+  ssl: false,
+  max: 20, // Maximum number of connections
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 }
@@ -51,7 +47,54 @@ export class PostgresManager {
     return result.rows[0]
   }
 
+  static async checkDuplicates(sku?: string | null, ean?: string | null, excludeId?: number) {
+    if (!sku && !ean) return { duplicates: [], isValid: true }
+    
+    const conditions = []
+    const params = []
+    let paramIndex = 1
+    
+    if (sku && sku.trim() !== '') {
+      conditions.push(`sku = $${paramIndex}`)
+      params.push(sku.trim())
+      paramIndex++
+    }
+    
+    if (ean && ean.trim() !== '') {
+      conditions.push(`ean = $${paramIndex}`)
+      params.push(ean.trim())
+      paramIndex++
+    }
+    
+    if (excludeId) {
+      conditions.push(`id != $${paramIndex}`)
+      params.push(excludeId)
+      paramIndex++
+    }
+    
+    const query = `
+      SELECT id, sku, ean, marca, modelo 
+      FROM products 
+      WHERE ${conditions.join(' OR ')}
+    `
+    
+    const result = await this.query(query, params)
+    return {
+      duplicates: result.rows,
+      isValid: result.rows.length === 0
+    }
+  }
+
   static async createProduct(product: any) {
+    // Check for duplicates before creating
+    const duplicateCheck = await this.checkDuplicates(product.sku, product.ean)
+    if (!duplicateCheck.isValid) {
+      const duplicateDetails = duplicateCheck.duplicates.map(d => 
+        `ID: ${d.id}, SKU: ${d.sku || 'N/A'}, EAN: ${d.ean || 'N/A'} (${d.marca} ${d.modelo})`
+      ).join('; ')
+      throw new Error(`Duplicate SKU/EAN found. Existing products: ${duplicateDetails}`)
+    }
+    
     const fields = Object.keys(product).filter(key => key !== 'id')
     const values = fields.map(field => product[field])
     const placeholders = fields.map((_, index) => `$${index + 1}`)
@@ -67,6 +110,17 @@ export class PostgresManager {
   }
 
   static async updateProduct(id: number, updates: any) {
+    // Check for duplicates if SKU or EAN are being updated
+    if (updates.sku !== undefined || updates.ean !== undefined) {
+      const duplicateCheck = await this.checkDuplicates(updates.sku, updates.ean, id)
+      if (!duplicateCheck.isValid) {
+        const duplicateDetails = duplicateCheck.duplicates.map(d => 
+          `ID: ${d.id}, SKU: ${d.sku || 'N/A'}, EAN: ${d.ean || 'N/A'} (${d.marca} ${d.modelo})`
+        ).join('; ')
+        throw new Error(`Duplicate SKU/EAN found. Existing products: ${duplicateDetails}`)
+      }
+    }
+    
     const fields = Object.keys(updates)
     const values = fields.map(field => updates[field])
     const setClause = fields.map((field, index) => `${field} = $${index + 2}`)

@@ -8,7 +8,7 @@ export async function GET() {
       environment: process.env.NODE_ENV,
       database: process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL',
       branch: 'development',
-      deployment: 'preview-test',
+      deployment: 'updated-from-main',
       routes: {
         inventario: 'Should be available at /inventario',
         api: 'Health check working'

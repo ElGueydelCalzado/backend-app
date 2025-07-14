@@ -31,10 +31,7 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Delete the product
-        const deletedProduct = await PostgresManager.deleteProduct(productId)
-
-        // Log the deletion
+        // Log the deletion BEFORE deleting (while product still exists)
         await PostgresManager.logChange(
           productId,
           'deleted',
@@ -42,6 +39,9 @@ export async function POST(request: NextRequest) {
           'Product deleted',
           'delete'
         )
+
+        // Delete the product AFTER logging
+        const deletedProduct = await PostgresManager.deleteProduct(productId)
 
         results.push(deletedProduct)
       } catch (error) {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = {
-      success: errors.length === 0,
+      success: results.length > 0,
       deleted: results.length,
       errors: errors.length,
       results,

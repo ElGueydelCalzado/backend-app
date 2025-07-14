@@ -63,6 +63,8 @@ export default function ColumnControls({
   const [editingPreset, setEditingPreset] = useState<string | null>(null)
   const [customPresets, setCustomPresets] = useState(getCustomPresets())
   const [tempPresetColumns, setTempPresetColumns] = useState<string[]>([])
+  const [showNewPresetForm, setShowNewPresetForm] = useState(false)
+  const [newPresetName, setNewPresetName] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   
   const visibleCount = columns.filter(col => col.visible).length
@@ -124,6 +126,13 @@ export default function ColumnControls({
       }
       setCustomPresets(newPresets)
       saveCustomPresets(newPresets)
+      
+      // Automatically apply the saved preset to the table
+      // Hide all columns first
+      columns.forEach(col => onColumnToggle(col.key, false))
+      // Then show only the columns in the saved preset
+      tempPresetColumns.forEach(key => onColumnToggle(key, true))
+      
       setEditingPreset(null)
       setTempPresetColumns([])
     }
@@ -142,6 +151,40 @@ export default function ColumnControls({
     )
   }
 
+  const handleCreateNewPreset = () => {
+    if (!newPresetName.trim()) return
+    
+    // Get currently visible columns
+    const visibleColumns = columns.filter(col => col.visible).map(col => col.key)
+    
+    const newPresets = {
+      ...customPresets,
+      [newPresetName.trim()]: visibleColumns
+    }
+    
+    setCustomPresets(newPresets)
+    saveCustomPresets(newPresets)
+    setNewPresetName('')
+    setShowNewPresetForm(false)
+  }
+
+  const handleDeletePreset = (presetKey: string) => {
+    // Prevent deletion of default presets
+    if (Object.keys(DEFAULT_PRESETS).includes(presetKey)) {
+      return
+    }
+    
+    const newPresets = { ...customPresets }
+    delete newPresets[presetKey]
+    
+    setCustomPresets(newPresets)
+    saveCustomPresets(newPresets)
+  }
+
+  const isDefaultPreset = (key: string) => {
+    return Object.keys(DEFAULT_PRESETS).includes(key)
+  }
+
   if (compact) {
     return (
       <div className="space-y-3">
@@ -156,28 +199,83 @@ export default function ColumnControls({
         </div>
 
         {/* Quick Presets */}
-        <div className="grid grid-cols-2 gap-2">
-          {Object.entries(customPresets).map(([key, preset]) => (
-            <div key={key} className="relative group">
-              <button
-                onClick={() => handlePresetSelect(key)}
-                className="w-full text-xs px-2 py-1 bg-gray-100 hover:bg-orange-100 hover:text-orange-700 rounded transition-colors"
-              >
-                {key === 'basic' ? 'Básico' : 
-                 key === 'financial' ? 'Precios' : 
-                 key === 'stock' ? 'Stock' : 'Todo'}
-              </button>
-              {key !== 'complete' && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(customPresets).map(([key, preset]) => (
+              <div key={key} className="relative group">
                 <button
-                  onClick={(e) => handleEditPreset(key, e)}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                  title="Editar preset"
+                  onClick={() => handlePresetSelect(key)}
+                  className="w-full text-xs px-2 py-1 bg-gray-100 hover:bg-orange-100 hover:text-orange-700 rounded transition-colors"
                 >
-                  ✏️
+                  {key === 'basic' ? 'Básico' : 
+                   key === 'financial' ? 'Precios' : 
+                   key === 'stock' ? 'Stock' : 
+                   key === 'complete' ? 'Todo' : key}
                 </button>
-              )}
+                {key !== 'complete' && (
+                  <>
+                    <button
+                      onClick={(e) => handleEditPreset(key, e)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                      title="Editar preset"
+                    >
+                      ✏️
+                    </button>
+                    {!isDefaultPreset(key) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeletePreset(key)
+                        }}
+                        className="absolute -top-1 -left-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                        title="Eliminar preset"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Add New Preset Button */}
+          {!showNewPresetForm ? (
+            <button
+              onClick={() => setShowNewPresetForm(true)}
+              className="w-full text-xs px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors border border-green-300 border-dashed"
+            >
+              + Nuevo Preset
+            </button>
+          ) : (
+            <div className="space-y-1">
+              <input
+                type="text"
+                value={newPresetName}
+                onChange={(e) => setNewPresetName(e.target.value)}
+                placeholder="Nombre del preset"
+                className="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateNewPreset()}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={handleCreateNewPreset}
+                  className="flex-1 text-xs px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNewPresetForm(false)
+                    setNewPresetName('')
+                  }}
+                  className="flex-1 text-xs px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
     )
@@ -257,29 +355,83 @@ export default function ColumnControls({
       </div>
 
       {/* Quick Preset Buttons */}
-      <div className="grid grid-cols-2 gap-2">
-        {Object.entries(customPresets).map(([key, preset]) => (
-          <div key={key} className="relative group">
-            <button
-              onClick={() => handlePresetSelect(key)}
-              className="w-full text-sm px-3 py-2 bg-gray-100 hover:bg-orange-100 hover:text-orange-700 rounded-lg transition-colors font-medium"
-            >
-              {key === 'basic' ? '📝 Básico' : 
-               key === 'financial' ? '💰 Precios' : 
-               key === 'stock' ? '📦 Stock' : 
-               '🔍 Todo'}
-            </button>
-            {key !== 'complete' && (
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(customPresets).map(([key, preset]) => (
+            <div key={key} className="relative group">
               <button
-                onClick={(e) => handleEditPreset(key, e)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                title="Editar preset"
+                onClick={() => handlePresetSelect(key)}
+                className="w-full text-sm px-3 py-2 bg-gray-100 hover:bg-orange-100 hover:text-orange-700 rounded-lg transition-colors font-medium"
               >
-                ✏️
+                {key === 'basic' ? '📝 Básico' : 
+                 key === 'financial' ? '💰 Precios' : 
+                 key === 'stock' ? '📦 Stock' : 
+                 key === 'complete' ? '🔍 Todo' : `✨ ${key}`}
               </button>
-            )}
+              {key !== 'complete' && (
+                <>
+                  <button
+                    onClick={(e) => handleEditPreset(key, e)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                    title="Editar preset"
+                  >
+                    ✏️
+                  </button>
+                  {!isDefaultPreset(key) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeletePreset(key)
+                      }}
+                      className="absolute -top-1 -left-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                      title="Eliminar preset"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        {/* Add New Preset Button */}
+        {!showNewPresetForm ? (
+          <button
+            onClick={() => setShowNewPresetForm(true)}
+            className="w-full text-sm px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors border border-green-300 border-dashed font-medium"
+          >
+            + Crear Nuevo Preset
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={newPresetName}
+              onChange={(e) => setNewPresetName(e.target.value)}
+              placeholder="Nombre del preset personalizado"
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleCreateNewPreset()}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateNewPreset}
+                className="flex-1 text-sm px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
+              >
+                ✓ Crear
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewPresetForm(false)
+                  setNewPresetName('')
+                }}
+                className="flex-1 text-sm px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
+              >
+                ✕ Cancelar
+              </button>
+            </div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Edit Preset Modal */}
