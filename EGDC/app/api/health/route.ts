@@ -7,6 +7,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       database: process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL',
+      branch: 'preview/health-test',
+      deployment: 'preview-test',
       routes: {
         inventario: 'Should be available at /inventario',
         api: 'Health check working'
