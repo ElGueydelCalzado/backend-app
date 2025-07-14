@@ -23,12 +23,5 @@
         }
       ]
     }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/inventario",
-      "permanent": false
-    }
   ]
 }
