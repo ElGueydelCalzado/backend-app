@@ -1062,18 +1062,42 @@ export default function InventarioPage() {
     const products = getFilteredProducts()
     if (products.length > 0) {
       const tempId = -Date.now()
+      const baseProduct = products[0]
       const duplicatedProduct: Product = {
-        ...products[0], // Use first product as template
+        // Only copy non-calculated fields
         id: tempId,
+        categoria: baseProduct.categoria,
+        marca: baseProduct.marca,
+        modelo: baseProduct.modelo,
+        color: baseProduct.color,
+        talla: baseProduct.talla,
+        costo: baseProduct.costo,
+        shein_modifier: baseProduct.shein_modifier,
+        shopify_modifier: baseProduct.shopify_modifier,
+        meli_modifier: baseProduct.meli_modifier,
+        google_drive: baseProduct.google_drive,
+        shein: baseProduct.shein,
+        meli: baseProduct.meli,
+        shopify: baseProduct.shopify,
+        tiktok: baseProduct.tiktok,
+        upseller: baseProduct.upseller,
+        go_trendier: baseProduct.go_trendier,
+        // Clear fields that need to be unique or reset
         sku: '', // Clear SKU to be set by user
         ean: '', // Clear EAN to be set by user
-        inventory_total: 0,
+        inventory_total: null, // Will be calculated by database
         inv_egdc: 0,
         inv_fami: 0,
         inv_osiel: 0,
         inv_molly: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        // Don't include calculated price fields - database will generate them
+        precio_shein: null,
+        precio_shopify: null,
+        precio_meli: null,
+        // Date fields
+        fecha: null, // Will be set by database
+        created_at: null, // Will be set by database
+        updated_at: null // Will be set by database
       }
       setEditingProduct(duplicatedProduct)
       setShowMobileEditor(true)
@@ -1088,8 +1112,18 @@ export default function InventarioPage() {
     
     try {
       if (isNewProduct) {
-        // Create new product
-        const { id, ...productData } = product // Remove the temporary negative ID
+        // Create new product - exclude calculated fields and ID
+        const { 
+          id, 
+          precio_shein, 
+          precio_shopify, 
+          precio_meli, 
+          inventory_total,
+          fecha,
+          created_at,
+          updated_at,
+          ...productData 
+        } = product // Remove calculated fields and ID
         console.log('🔄 Creating new product with data:', productData)
         
         const response = await fetch('/api/inventory', {
@@ -1684,9 +1718,15 @@ export default function InventarioPage() {
                 <div className="absolute bottom-16 right-0 flex flex-col gap-3 mb-2">
                   {/* Import/Export */}
                   <div className="flex items-center gap-3">
-                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setShowMobileImportExport(true)
+                        setShowMobileFabMenu(false)
+                      }}
+                      className="bg-black bg-opacity-70 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-opacity-80 transition-all duration-200 active:scale-95 whitespace-nowrap"
+                    >
                       Import / Export
-                    </span>
+                    </button>
                     <button
                       onClick={() => {
                         setShowMobileImportExport(true)
@@ -1702,9 +1742,15 @@ export default function InventarioPage() {
                   
                   {/* Nuevo Producto */}
                   <div className="flex items-center gap-3">
-                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Nuevo Producto
-                    </span>
+                    <button
+                      onClick={() => {
+                        handleMobileAdd()
+                        setShowMobileFabMenu(false)
+                      }}
+                      className="bg-black bg-opacity-70 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-opacity-80 transition-all duration-200 active:scale-95 whitespace-nowrap"
+                    >
+                      Producto
+                    </button>
                     <button
                       onClick={() => {
                         handleMobileAdd()
@@ -1720,9 +1766,12 @@ export default function InventarioPage() {
                   
                   {/* Nueva Linea */}
                   <div className="flex items-center gap-3">
-                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Nueva Línea
-                    </span>
+                    <button
+                      onClick={handleNuevaLinea}
+                      className="bg-black bg-opacity-70 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-opacity-80 transition-all duration-200 active:scale-95 whitespace-nowrap"
+                    >
+                      Línea
+                    </button>
                     <button
                       onClick={handleNuevaLinea}
                       className="w-12 h-12 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
