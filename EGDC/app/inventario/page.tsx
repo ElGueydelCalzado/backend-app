@@ -1057,51 +1057,44 @@ export default function InventarioPage() {
   }
 
   const handleNuevaLinea = () => {
-    // For "Nueva Linea" we'll need to ask user to select which product to duplicate
-    // For now, we'll use the first product as a base or show a selection modal
-    const products = getFilteredProducts()
-    if (products.length > 0) {
-      const tempId = -Date.now()
-      const baseProduct = products[0]
-      const duplicatedProduct: Product = {
-        // Only copy non-calculated fields
-        id: tempId,
-        categoria: baseProduct.categoria,
-        marca: baseProduct.marca,
-        modelo: baseProduct.modelo,
-        color: baseProduct.color,
-        talla: baseProduct.talla,
-        costo: baseProduct.costo,
-        shein_modifier: baseProduct.shein_modifier,
-        shopify_modifier: baseProduct.shopify_modifier,
-        meli_modifier: baseProduct.meli_modifier,
-        google_drive: baseProduct.google_drive,
-        shein: baseProduct.shein,
-        meli: baseProduct.meli,
-        shopify: baseProduct.shopify,
-        tiktok: baseProduct.tiktok,
-        upseller: baseProduct.upseller,
-        go_trendier: baseProduct.go_trendier,
-        // Clear fields that need to be unique or reset
-        sku: '', // Clear SKU to be set by user
-        ean: '', // Clear EAN to be set by user
-        inventory_total: null, // Will be calculated by database
-        inv_egdc: 0,
-        inv_fami: 0,
-        inv_osiel: 0,
-        inv_molly: 0,
-        // Don't include calculated price fields - database will generate them
-        precio_shein: null,
-        precio_shopify: null,
-        precio_meli: null,
-        // Date fields
-        fecha: null, // Will be set by database
-        created_at: null, // Will be set by database
-        updated_at: null // Will be set by database
-      }
-      setEditingProduct(duplicatedProduct)
-      setShowMobileEditor(true)
+    // Add a new empty product row at the top
+    const newProduct: Product = {
+      id: -Date.now(), // Temporary negative ID for new products
+      categoria: '',
+      marca: '',
+      modelo: '',
+      color: '',
+      talla: '',
+      sku: '',
+      ean: '',
+      costo: 0,
+      shein_modifier: 1.5,
+      shopify_modifier: 1.8,
+      meli_modifier: 2.0,
+      google_drive: '',
+      shein: false,
+      meli: false,
+      shopify: false,
+      tiktok: false,
+      upseller: false,
+      go_trendier: false,
+      inv_egdc: 0,
+      inv_fami: 0,
+      inv_osiel: 0,
+      inv_molly: 0,
+      // Database will set these automatically
+      precio_shein: null,
+      precio_shopify: null,
+      precio_meli: null,
+      inventory_total: null,
+      fecha: null,
+      created_at: null,
+      updated_at: null
     }
+
+    // Add the new product to the top of the edited view
+    setEditedView(prev => [newProduct, ...prev])
+    
     setShowMobileFabMenu(false)
   }
 
@@ -1716,32 +1709,26 @@ export default function InventarioPage() {
               {/* Menu Options */}
               {showMobileFabMenu && (
                 <div className="absolute bottom-16 right-0 flex flex-col gap-3 mb-2">
-                  {/* Import/Export */}
-                  <div className="flex items-center gap-3">
+                  {/* Nueva Linea */}
+                  <div className="flex items-center justify-end gap-3">
                     <button
-                      onClick={() => {
-                        setShowMobileImportExport(true)
-                        setShowMobileFabMenu(false)
-                      }}
+                      onClick={handleNuevaLinea}
                       className="bg-black bg-opacity-70 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-opacity-80 transition-all duration-200 active:scale-95 whitespace-nowrap"
                     >
-                      Import / Export
+                      Línea
                     </button>
                     <button
-                      onClick={() => {
-                        setShowMobileImportExport(true)
-                        setShowMobileFabMenu(false)
-                      }}
-                      className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+                      onClick={handleNuevaLinea}
+                      className="w-12 h-12 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                     </button>
                   </div>
                   
                   {/* Nuevo Producto */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-end gap-3">
                     <button
                       onClick={() => {
                         handleMobileAdd()
@@ -1764,20 +1751,26 @@ export default function InventarioPage() {
                     </button>
                   </div>
                   
-                  {/* Nueva Linea */}
-                  <div className="flex items-center gap-3">
+                  {/* Import/Export */}
+                  <div className="flex items-center justify-end gap-3">
                     <button
-                      onClick={handleNuevaLinea}
+                      onClick={() => {
+                        setShowMobileImportExport(true)
+                        setShowMobileFabMenu(false)
+                      }}
                       className="bg-black bg-opacity-70 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-opacity-80 transition-all duration-200 active:scale-95 whitespace-nowrap"
                     >
-                      Línea
+                      Import / Export
                     </button>
                     <button
-                      onClick={handleNuevaLinea}
-                      className="w-12 h-12 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+                      onClick={() => {
+                        setShowMobileImportExport(true)
+                        setShowMobileFabMenu(false)
+                      }}
+                      className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                     </button>
                   </div>
