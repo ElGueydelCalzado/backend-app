@@ -1013,34 +1013,44 @@ export default function InventarioPage() {
 
   const handleMobileDelete = async (product: Product) => {
     console.log('🚨 MOBILE DELETE START - Product:', product.marca, product.modelo, 'ID:', product.id)
-    // No need for confirm here since MobileProductCard now handles confirmation
+    
     try {
-        console.log('🔄 Sending delete request...')
-        const response = await fetch('/api/inventory/delete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ids: [product.id]
-          })
+      // Check if this is a new/temporary product (negative ID)
+      if (product.id < 0) {
+        console.log('🗑️ Deleting temporary product locally (not in database)')
+        // Remove from local state only - it's not in the database yet
+        setEditedView(prev => prev.filter(p => p.id !== product.id))
+        showToast('Línea eliminada', 'success')
+        return
+      }
+
+      // For existing products, delete from database
+      console.log('🔄 Sending delete request to database...')
+      const response = await fetch('/api/inventory/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ids: [product.id]
         })
-        
-        console.log('📡 Delete response status:', response.status, response.ok)
-        
-        if (!response.ok) {
-          throw new Error('Error al eliminar producto')
-        }
-        
-        const result = await response.json()
-        console.log('📊 Delete result:', result)
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Error al eliminar producto')
-        }
-        
-        await loadInventoryData()
-        showToast('Producto eliminado exitosamente', 'success')
+      })
+      
+      console.log('📡 Delete response status:', response.status, response.ok)
+      
+      if (!response.ok) {
+        throw new Error('Error al eliminar producto')
+      }
+      
+      const result = await response.json()
+      console.log('📊 Delete result:', result)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Error al eliminar producto')
+      }
+      
+      await loadInventoryData()
+      showToast('Producto eliminado exitosamente', 'success')
     } catch (error) {
       console.error('❌ Mobile delete error:', error)
       showToast('Error al eliminar producto', 'error')
