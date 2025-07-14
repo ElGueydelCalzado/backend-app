@@ -143,7 +143,9 @@ export default function InventarioPage() {
   // Detect mobile screen size
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+      const mobile = window.innerWidth < 1024 // lg breakpoint
+      console.log('🚨 MOBILE DETECTION - Width:', window.innerWidth, 'isMobile:', mobile)
+      setIsMobile(mobile)
     }
     
     checkMobile()
@@ -1009,9 +1011,9 @@ export default function InventarioPage() {
   }
 
   const handleMobileDelete = async (product: Product) => {
-    console.log('📱 Mobile delete called for product:', product.marca, product.modelo)
-    if (confirm(`¿Está seguro de que desea eliminar ${product.marca} ${product.modelo}?`)) {
-      try {
+    console.log('🚨 MOBILE DELETE START - Product:', product.marca, product.modelo, 'ID:', product.id)
+    // No need for confirm here since MobileProductCard now handles confirmation
+    try {
         console.log('🔄 Sending delete request...')
         const response = await fetch('/api/inventory/delete', {
           method: 'POST',
@@ -1038,14 +1040,14 @@ export default function InventarioPage() {
         
         await loadInventoryData()
         showToast('Producto eliminado exitosamente', 'success')
-      } catch (error) {
-        console.error('❌ Mobile delete error:', error)
-        showToast('Error al eliminar producto', 'error')
-      }
+    } catch (error) {
+      console.error('❌ Mobile delete error:', error)
+      showToast('Error al eliminar producto', 'error')
     }
   }
 
   const handleMobileCreateNew = (afterProduct: Product) => {
+    console.log('🚨 MOBILE CREATE NEW START - After product:', afterProduct.marca, afterProduct.modelo)
     // Create a duplicate product with modified fields for single product line insertion
     const tempId = -Date.now() // Use negative ID for new products
     const duplicatedProduct: Product = {
@@ -1066,6 +1068,7 @@ export default function InventarioPage() {
     }
     
     // Open mobile editor with the duplicated product
+    console.log('🚨 MOBILE CREATE NEW - Setting editing product and showing editor')
     setEditingProduct(duplicatedProduct)
     setShowMobileEditor(true)
   }
@@ -1078,7 +1081,7 @@ export default function InventarioPage() {
   const handleMobileEditorSave = async (product: Product) => {
     const isNewProduct = product.id < 0 || !product.id // Negative IDs or undefined indicate new products
     
-    console.log('📱 Mobile editor save - isNewProduct:', isNewProduct, 'product:', product)
+    console.log('🚨 MOBILE EDITOR SAVE START - isNewProduct:', isNewProduct, 'product ID:', product.id, 'product:', product)
     
     try {
       if (isNewProduct) {
@@ -1646,7 +1649,13 @@ export default function InventarioPage() {
             </div>
 
             {/* Mobile Product Card View */}
-            <div className="flex-1 overflow-y-auto">
+            <div 
+              className="flex-1 overflow-y-auto"
+              style={{ 
+                overscrollBehaviorX: 'contain',
+                overscrollBehaviorY: 'auto'
+              }}
+            >
               <MobileProductCardList
                 products={getFilteredProducts()}
                 onEdit={handleMobileEdit}

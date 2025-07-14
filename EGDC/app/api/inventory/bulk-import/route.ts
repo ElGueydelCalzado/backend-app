@@ -42,36 +42,57 @@ export async function POST(request: NextRequest) {
 
     console.log(`Bulk importing ${products.length} products...`)
 
-    // Check for duplicate SKUs in the import batch
+    // Check for duplicate SKUs and EANs in the import batch
     const skus = products.map(p => p.sku).filter(Boolean)
-    const duplicateSkus = skus.filter((sku, index) => skus.indexOf(sku) !== index)
+    const eans = products.map(p => p.ean).filter(Boolean)
     
-    if (duplicateSkus.length > 0) {
+    const duplicateSkus = skus.filter((sku, index) => skus.indexOf(sku) !== index)
+    const duplicateEans = eans.filter((ean, index) => eans.indexOf(ean) !== index)
+    
+    if (duplicateSkus.length > 0 || duplicateEans.length > 0) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Duplicate SKUs found in import batch',
-          duplicates: duplicateSkus
+          error: 'Duplicate SKUs/EANs found in import batch',
+          duplicateSkus,
+          duplicateEans
         },
         { status: 400 }
       )
     }
 
-    // Check for existing SKUs in database
-    const existingSkusCheck = await PostgresManager.query(`
-      SELECT sku FROM products WHERE sku = ANY($1)
-    `, [skus])
+    // Check for existing SKUs and EANs in database
+    const conditions = []
+    const params = []
+    
+    if (skus.length > 0) {
+      conditions.push('sku = ANY($1)')
+      params.push(skus)
+    }
+    
+    if (eans.length > 0) {
+      conditions.push(`ean = ANY($${params.length + 1})`)
+      params.push(eans)
+    }
+    
+    if (conditions.length > 0) {
+      const existingCheck = await PostgresManager.query(`
+        SELECT id, sku, ean, marca, modelo FROM products WHERE ${conditions.join(' OR ')}
+      `, params)
 
-    if (existingSkusCheck.rows.length > 0) {
-      const existingSkus = existingSkusCheck.rows.map(row => row.sku)
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'SKUs already exist in database',
-          existingSkus
-        },
-        { status: 409 }
-      )
+      if (existingCheck.rows.length > 0) {
+        const existingDetails = existingCheck.rows.map(row => 
+          `ID: ${row.id}, SKU: ${row.sku || 'N/A'}, EAN: ${row.ean || 'N/A'} (${row.marca} ${row.modelo})`
+        )
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'SKUs/EANs already exist in database',
+            existingProducts: existingDetails
+          },
+          { status: 409 }
+        )
+      }
     }
 
     const results = []

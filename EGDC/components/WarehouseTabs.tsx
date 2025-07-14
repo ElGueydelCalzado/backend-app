@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export type WarehouseFilter = 'egdc' | 'fami' | 'osiel' | 'molly'
 
@@ -30,6 +30,21 @@ export default function WarehouseTabs({
   isDemoMode = false
 }: WarehouseTabsProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile and set initial collapse state
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      // Start collapsed on mobile, expanded on desktop
+      setIsCollapsed(mobile)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <div className={`

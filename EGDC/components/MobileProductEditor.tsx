@@ -76,29 +76,33 @@ export default function MobileProductEditor({
   }
 
   const handleSave = () => {
-    try {
-      // Debug: Show current form data
-      alert(`Datos del formulario:\nMarca: ${formData.marca}\nModelo: ${formData.modelo}\nCategoría: ${formData.categoria}\nCosto: ${formData.costo}`)
-      
-      // Validate required fields
-      if (!formData.marca || !formData.modelo || !formData.categoria) {
-        alert('Por favor complete los campos obligatorios: Marca, Modelo y Categoría')
-        return
-      }
-
-      // Validate cost for new products
-      if (isNew && (!formData.costo || formData.costo <= 0)) {
-        alert('Por favor ingrese un costo válido para el producto')
-        return
-      }
-
-      alert('Validación pasada, intentando guardar...')
-      console.log('💾 Saving product data:', formData)
-      onSave(formData as Product)
-    } catch (error) {
-      alert(`Error en handleSave: ${error}`)
-      console.error('Error in handleSave:', error)
+    // Required fields validation
+    if (!formData.categoria || formData.categoria.trim() === '') {
+      alert('La Categoría es requerida')
+      return
     }
+    
+    if (!formData.marca || formData.marca.trim() === '') {
+      alert('La Marca es requerida')
+      return
+    }
+    
+    if (!formData.sku || formData.sku.trim() === '') {
+      alert('El SKU es requerido')
+      return
+    }
+
+    // Set default values if missing for quick save
+    const productToSave = {
+      ...formData,
+      modelo: formData.modelo || 'Sin modelo',
+      costo: formData.costo || 0,
+      color: formData.color || '',
+      talla: formData.talla || '',
+      ean: formData.ean || ''
+    }
+    
+    onSave(productToSave as Product)
   }
 
   const renderBasicInfo = () => (

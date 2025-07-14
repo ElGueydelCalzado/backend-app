@@ -28,6 +28,7 @@ export default function MobileProductCard({
   const [showDeletePanel, setShowDeletePanel] = useState(false)
   const [showCreatePanel, setShowCreatePanel] = useState(false)
   const [showImagePreview, setShowImagePreview] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const startX = useRef(0)
   const currentX = useRef(0)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -125,14 +126,29 @@ export default function MobileProductCard({
   }
 
   const handleDeleteClick = () => {
-    console.log('🗑️ Delete button clicked for product:', product.marca, product.modelo)
-    onDelete?.(product)
+    console.log('🚨 DELETE BUTTON CLICKED - Product:', product.marca, product.modelo, 'ID:', product.id)
+    console.log('🚨 onDelete function exists:', !!onDelete)
+    setShowDeleteConfirm(true)
     // Reset card position
     setSwipeOffset(0)
     setShowDeletePanel(false)
   }
 
+  const handleDeleteConfirm = () => {
+    console.log('🚨 DELETE CONFIRMED - Product:', product.marca, product.modelo, 'ID:', product.id)
+    console.log('🚨 Calling onDelete function...', !!onDelete)
+    onDelete?.(product)
+    setShowDeleteConfirm(false)
+  }
+
+  const handleDeleteCancel = () => {
+    console.log('❌ Delete cancelled for product:', product.marca, product.modelo)
+    setShowDeleteConfirm(false)
+  }
+
   const handleCreateNewClick = () => {
+    console.log('🚨 CREATE NEW CLICKED - Product:', product.marca, product.modelo, 'ID:', product.id)
+    console.log('🚨 onCreateNew function exists:', !!onCreateNew)
     onCreateNew?.(product)
     // Reset card position
     setSwipeOffset(0)
@@ -146,7 +162,13 @@ export default function MobileProductCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div 
+      className="relative overflow-hidden rounded-xl"
+      style={{ 
+        overscrollBehaviorX: 'contain',
+        overscrollBehaviorY: 'auto' 
+      }}
+    >
       {/* Delete Panel - Behind the card (right side) */}
       <div 
         className={`
@@ -157,9 +179,10 @@ export default function MobileProductCard({
       >
         <button
           onClick={handleDeleteClick}
-          className="flex items-center text-white font-medium"
+          className="flex flex-col items-center text-white font-medium"
         >
-          <Trash2 className="w-6 h-6" />
+          <Trash2 className="w-6 h-6 mb-1" />
+          <span className="text-xs">Eliminar</span>
         </button>
       </div>
 
@@ -173,11 +196,12 @@ export default function MobileProductCard({
       >
         <button
           onClick={handleCreateNewClick}
-          className="flex items-center text-white font-medium"
+          className="flex flex-col items-center text-white font-medium"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
+          <span className="text-xs">Nuevo</span>
         </button>
       </div>
 
@@ -192,7 +216,9 @@ export default function MobileProductCard({
         `}
         style={{
           transform: `translateX(${swipeOffset}px)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+          overscrollBehaviorX: 'contain',
+          touchAction: 'pan-x pan-y'
         }}
         onClick={handleCardClick}
         onTouchStart={handleTouchStart}
@@ -404,6 +430,41 @@ export default function MobileProductCard({
         googleDriveUrl={product.google_drive || ''}
         productName={`${product.marca} ${product.modelo}`}
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Eliminar Producto
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                ¿Está seguro de que desea eliminar <strong>{product.marca} {product.modelo}</strong>? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -67,7 +67,13 @@ export default function MobileProductCardList({
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div 
+      className="space-y-4 p-4"
+      style={{ 
+        overscrollBehaviorX: 'contain',
+        overscrollBehaviorY: 'auto'
+      }}
+    >
       {/* Products Header */}
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold text-gray-900">
