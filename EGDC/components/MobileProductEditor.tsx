@@ -76,20 +76,29 @@ export default function MobileProductEditor({
   }
 
   const handleSave = () => {
-    // Validate required fields
-    if (!formData.marca || !formData.modelo || !formData.categoria) {
-      alert('Por favor complete los campos obligatorios: Marca, Modelo y Categoría')
-      return
-    }
+    try {
+      // Debug: Show current form data
+      alert(`Datos del formulario:\nMarca: ${formData.marca}\nModelo: ${formData.modelo}\nCategoría: ${formData.categoria}\nCosto: ${formData.costo}`)
+      
+      // Validate required fields
+      if (!formData.marca || !formData.modelo || !formData.categoria) {
+        alert('Por favor complete los campos obligatorios: Marca, Modelo y Categoría')
+        return
+      }
 
-    // Validate cost for new products
-    if (isNew && (!formData.costo || formData.costo <= 0)) {
-      alert('Por favor ingrese un costo válido para el producto')
-      return
-    }
+      // Validate cost for new products
+      if (isNew && (!formData.costo || formData.costo <= 0)) {
+        alert('Por favor ingrese un costo válido para el producto')
+        return
+      }
 
-    console.log('💾 Saving product data:', formData)
-    onSave(formData as Product)
+      alert('Validación pasada, intentando guardar...')
+      console.log('💾 Saving product data:', formData)
+      onSave(formData as Product)
+    } catch (error) {
+      alert(`Error en handleSave: ${error}`)
+      console.error('Error in handleSave:', error)
+    }
   }
 
   const renderBasicInfo = () => (
