@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Product } from '@/lib/types'
-import { X, Save, DollarSign, Package, Tag, Palette, Hash } from 'lucide-react'
+import { X, Save, DollarSign, Package, Tag, Palette, Hash, ChevronRight } from 'lucide-react'
 
 interface MobileProductEditorProps {
   product: Product | null
@@ -64,6 +64,17 @@ export default function MobileProductEditor({
     }))
   }
 
+  const handleNext = () => {
+    const tabOrder = ['basic', 'pricing', 'inventory', 'platforms']
+    const currentIndex = tabOrder.indexOf(activeTab)
+    
+    if (currentIndex < tabOrder.length - 1) {
+      const nextTab = tabOrder[currentIndex + 1] as typeof activeTab
+      setActiveTab(nextTab)
+      setVisitedTabs(prev => new Set([...prev, nextTab]))
+    }
+  }
+
   const handleSave = () => {
     // Validate required fields
     if (!formData.marca || !formData.modelo || !formData.categoria) {
@@ -74,23 +85,6 @@ export default function MobileProductEditor({
     // Validate cost for new products
     if (isNew && (!formData.costo || formData.costo <= 0)) {
       alert('Por favor ingrese un costo válido para el producto')
-      return
-    }
-
-    // Check if all tabs have been visited for new products
-    const requiredTabs = ['basic', 'pricing', 'inventory', 'platforms']
-    const allTabsVisited = requiredTabs.every(tab => visitedTabs.has(tab))
-    
-    if (isNew && !allTabsVisited) {
-      const missingTabs = requiredTabs.filter(tab => !visitedTabs.has(tab))
-      const tabNames = {
-        basic: 'Básico',
-        pricing: 'Precios', 
-        inventory: 'Stock',
-        platforms: 'Plataformas'
-      }
-      const missingTabNames = missingTabs.map(tab => tabNames[tab as keyof typeof tabNames]).join(', ')
-      alert(`Por favor visite todas las pestañas antes de guardar. Faltan: ${missingTabNames}`)
       return
     }
 
@@ -438,13 +432,25 @@ export default function MobileProductEditor({
             >
               Cancelar
             </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>Guardar</span>
-            </button>
+            
+            {/* Show "Siguiente" button for first 3 tabs, "Guardar" only on platforms tab */}
+            {activeTab !== 'platforms' ? (
+              <button
+                onClick={handleNext}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+              >
+                <span>Siguiente</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSave}
+                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>Guardar</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
