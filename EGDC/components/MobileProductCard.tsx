@@ -10,7 +10,6 @@ interface MobileProductCardProps {
   onEdit?: (product: Product) => void
   onSelect?: (productId: number, selected: boolean) => void
   onDelete?: (product: Product) => void
-  onCreateNew?: (afterProduct: Product) => void
   isSelected?: boolean
 }
 
@@ -19,14 +18,12 @@ export default function MobileProductCard({
   onEdit, 
   onSelect, 
   onDelete,
-  onCreateNew,
   isSelected = false 
 }: MobileProductCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [showDeletePanel, setShowDeletePanel] = useState(false)
-  const [showCreatePanel, setShowCreatePanel] = useState(false)
   const [showImagePreview, setShowImagePreview] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const startX = useRef(0)
@@ -76,23 +73,16 @@ export default function MobileProductCard({
     // Always prevent default to stop screen scrolling
     e.preventDefault()
 
-    // Allow both left and right swipes
+    // Only allow left swipe for delete
     if (deltaX < 0) {
       // Left swipe - show delete panel
       const clampedOffset = Math.max(deltaX, -100) // Limit to 100px
       setSwipeOffset(clampedOffset)
       setShowDeletePanel(true)
-      setShowCreatePanel(false)
-    } else if (deltaX > 0) {
-      // Right swipe - show create new panel
-      const clampedOffset = Math.min(deltaX, 100) // Limit to 100px
-      setSwipeOffset(clampedOffset)
-      setShowCreatePanel(true)
-      setShowDeletePanel(false)
     } else {
+      // No right swipe - reset position
       setSwipeOffset(0)
       setShowDeletePanel(false)
-      setShowCreatePanel(false)
     }
   }
 
@@ -107,19 +97,11 @@ export default function MobileProductCard({
       console.log('⬅️ Left swipe detected - showing delete panel')
       setSwipeOffset(-100)
       setShowDeletePanel(true)
-      setShowCreatePanel(false)
-    } else if (deltaX > 50) {
-      // Right swipe - show create panel
-      console.log('➡️ Right swipe detected - showing create panel')
-      setSwipeOffset(100)
-      setShowCreatePanel(true)
-      setShowDeletePanel(false)
     } else {
       // Reset to original position
       console.log('🔄 Reset swipe position')
       setSwipeOffset(0)
       setShowDeletePanel(false)
-      setShowCreatePanel(false)
     }
 
     setIsDragging(false)
@@ -146,19 +128,9 @@ export default function MobileProductCard({
     setShowDeleteConfirm(false)
   }
 
-  const handleCreateNewClick = () => {
-    console.log('🚨 CREATE NEW CLICKED - Product:', product.marca, product.modelo, 'ID:', product.id)
-    console.log('🚨 onCreateNew function exists:', !!onCreateNew)
-    onCreateNew?.(product)
-    // Reset card position
-    setSwipeOffset(0)
-    setShowCreatePanel(false)
-  }
-
   const resetCardPosition = () => {
     setSwipeOffset(0)
     setShowDeletePanel(false)
-    setShowCreatePanel(false)
   }
 
   return (
@@ -186,24 +158,6 @@ export default function MobileProductCard({
         </button>
       </div>
 
-      {/* Create New Panel - Behind the card (left side) */}
-      <div 
-        className={`
-          absolute inset-0 bg-green-500 flex items-center justify-start pl-6 rounded-xl
-          transition-opacity duration-200
-          ${showCreatePanel ? 'opacity-100' : 'opacity-0'}
-        `}
-      >
-        <button
-          onClick={handleCreateNewClick}
-          className="flex flex-col items-center text-white font-medium"
-        >
-          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="text-xs">Nuevo</span>
-        </button>
-      </div>
 
       {/* Main Card - Slides over the delete panel */}
       <div 

@@ -8,7 +8,6 @@ interface MobileProductCardListProps {
   onEdit?: (product: Product) => void
   onSelect?: (productId: number, selected: boolean) => void
   onDelete?: (product: Product) => void
-  onCreateNew?: (afterProduct: Product) => void
   selectedProducts?: Set<number>
   loading?: boolean
 }
@@ -18,7 +17,6 @@ export default function MobileProductCardList({
   onEdit,
   onSelect,
   onDelete,
-  onCreateNew,
   selectedProducts = new Set(),
   loading = false
 }: MobileProductCardListProps) {
@@ -95,7 +93,6 @@ export default function MobileProductCardList({
             onEdit={onEdit}
             onSelect={onSelect}
             onDelete={onDelete}
-            onCreateNew={onCreateNew}
             isSelected={selectedProducts.has(product.id)}
           />
         ))}

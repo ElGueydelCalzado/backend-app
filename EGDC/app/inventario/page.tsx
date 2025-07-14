@@ -21,6 +21,7 @@ import MobileProductCardList from '@/components/MobileProductCardList'
 import MobileFilters from '@/components/MobileFilters'
 import MobileProductEditor from '@/components/MobileProductEditor'
 import MobileSort from '@/components/MobileSort'
+import MobileImportExportModal from '@/components/MobileImportExportModal'
 import WarehouseTabs, { WarehouseFilter } from '@/components/WarehouseTabs'
 import { getWarehouseData } from '@/lib/dummy-warehouse-data'
 
@@ -1046,36 +1047,38 @@ export default function InventarioPage() {
     }
   }
 
-  const handleMobileCreateNew = (afterProduct: Product) => {
-    console.log('🚨 MOBILE CREATE NEW START - After product:', afterProduct.marca, afterProduct.modelo)
-    // Create a duplicate product with modified fields for single product line insertion
-    const tempId = -Date.now() // Use negative ID for new products
-    const duplicatedProduct: Product = {
-      ...afterProduct,
-      id: tempId,
-      sku: '', // Clear SKU to be set by user
-      ean: '', // Clear EAN to be set by user
-      inventory_total: 0, // Start with 0 inventory
-      inv_egdc: 0,
-      inv_fami: 0,
-      inv_osiel: 0,
-      inv_molly: 0,
-      // Keep pricing and modifiers from original
-      // Keep categoria, marca, modelo, color from original
-      // User can modify these in the editor
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-    
-    // Open mobile editor with the duplicated product
-    console.log('🚨 MOBILE CREATE NEW - Setting editing product and showing editor')
-    setEditingProduct(duplicatedProduct)
-    setShowMobileEditor(true)
-  }
+  // Mobile FAB menu state
+  const [showMobileFabMenu, setShowMobileFabMenu] = useState(false)
+  const [showMobileImportExport, setShowMobileImportExport] = useState(false)
 
   const handleMobileAdd = () => {
     // Use the same desktop modal for consistency
     setShowNewProductModal(true)
+  }
+
+  const handleNuevaLinea = () => {
+    // For "Nueva Linea" we'll need to ask user to select which product to duplicate
+    // For now, we'll use the first product as a base or show a selection modal
+    const products = getFilteredProducts()
+    if (products.length > 0) {
+      const tempId = -Date.now()
+      const duplicatedProduct: Product = {
+        ...products[0], // Use first product as template
+        id: tempId,
+        sku: '', // Clear SKU to be set by user
+        ean: '', // Clear EAN to be set by user
+        inventory_total: 0,
+        inv_egdc: 0,
+        inv_fami: 0,
+        inv_osiel: 0,
+        inv_molly: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      setEditingProduct(duplicatedProduct)
+      setShowMobileEditor(true)
+    }
+    setShowMobileFabMenu(false)
   }
 
   const handleMobileEditorSave = async (product: Product) => {
@@ -1661,20 +1664,84 @@ export default function InventarioPage() {
                 onEdit={handleMobileEdit}
                 onSelect={handleProductSelect}
                 onDelete={handleMobileDelete}
-                onCreateNew={handleMobileCreateNew}
                 selectedProducts={selectedProducts}
                 loading={loading}
               />
             </div>
 
-            {/* Floating Action Button - Nuevo Producto */}
+            {/* Floating Action Button Menu */}
             <div className="fixed bottom-6 right-6 z-40">
+              {/* Backdrop */}
+              {showMobileFabMenu && (
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-20 z-[-1]"
+                  onClick={() => setShowMobileFabMenu(false)}
+                />
+              )}
+              
+              {/* Menu Options */}
+              {showMobileFabMenu && (
+                <div className="absolute bottom-16 right-0 flex flex-col gap-3 mb-2">
+                  {/* Import/Export */}
+                  <div className="flex items-center gap-3">
+                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Import / Export
+                    </span>
+                    <button
+                      onClick={() => {
+                        setShowMobileImportExport(true)
+                        setShowMobileFabMenu(false)
+                      }}
+                      className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {/* Nuevo Producto */}
+                  <div className="flex items-center gap-3">
+                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Nuevo Producto
+                    </span>
+                    <button
+                      onClick={() => {
+                        handleMobileAdd()
+                        setShowMobileFabMenu(false)
+                      }}
+                      className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {/* Nueva Linea */}
+                  <div className="flex items-center gap-3">
+                    <span className="bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Nueva Línea
+                    </span>
+                    <button
+                      onClick={handleNuevaLinea}
+                      className="w-12 h-12 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Main FAB */}
               <button
-                onClick={handleMobileAdd}
-                className="w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95"
-                title="Crear nuevo producto"
+                onClick={() => setShowMobileFabMenu(!showMobileFabMenu)}
+                className={`w-14 h-14 ${showMobileFabMenu ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'} text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95`}
+                title={showMobileFabMenu ? "Cerrar menú" : "Abrir menú"}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-6 h-6 transition-transform duration-200 ${showMobileFabMenu ? 'rotate-45' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
@@ -1716,6 +1783,16 @@ export default function InventarioPage() {
                   min: Math.min(...allData.map(p => p.precio_shopify || p.costo || 0)),
                   max: Math.max(...allData.map(p => p.precio_shopify || p.costo || 0))
                 }}
+              />
+            )}
+            
+            {/* Mobile Import/Export Modal */}
+            {showMobileImportExport && (
+              <MobileImportExportModal
+                isOpen={showMobileImportExport}
+                onClose={() => setShowMobileImportExport(false)}
+                onImport={() => setShowBulkImportModal(true)}
+                onExport={handleExportData}
               />
             )}
           </div>
