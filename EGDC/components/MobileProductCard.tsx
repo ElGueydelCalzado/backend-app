@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Product } from '@/lib/types'
 import { ChevronDown, ChevronUp, Package, MapPin, DollarSign, Trash2 } from 'lucide-react'
 import ImagePreviewModal from './ImagePreviewModal'
@@ -73,9 +73,15 @@ export default function MobileProductCard({
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
 
-    // Prevent default browser behavior and stop event propagation
+    // Prevent all default browser behavior
     e.preventDefault()
     e.stopPropagation()
+    
+    // Also prevent on native event for better mobile support
+    if (e.nativeEvent) {
+      e.nativeEvent.preventDefault()
+      e.nativeEvent.stopPropagation()
+    }
 
     // Only allow left swipe for delete
     if (deltaX < 0) {
@@ -140,13 +146,41 @@ export default function MobileProductCard({
     setShowDeletePanel(false)
   }
 
+  // Add aggressive document-level touch prevention during swipe
+  useEffect(() => {
+    const handleDocumentTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+
+    const handleDocumentTouchStart = (e: TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+
+    if (isDragging) {
+      document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false })
+      document.addEventListener('touchstart', handleDocumentTouchStart, { passive: false })
+    }
+
+    return () => {
+      document.removeEventListener('touchmove', handleDocumentTouchMove)
+      document.removeEventListener('touchstart', handleDocumentTouchStart)
+    }
+  }, [isDragging])
+
   return (
     <div 
       className="relative overflow-hidden rounded-xl"
       style={{ 
-        overscrollBehaviorX: 'contain',
+        overscrollBehaviorX: 'none',
         overscrollBehaviorY: 'auto',
-        touchAction: 'pan-y'
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       {/* Delete Panel - Behind the card (right side) */}
@@ -179,10 +213,12 @@ export default function MobileProductCard({
         style={{
           transform: `translateX(${swipeOffset}px)`,
           transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-          overscrollBehaviorX: 'contain',
+          overscrollBehaviorX: 'none',
           touchAction: 'pan-x',
           userSelect: 'none',
-          WebkitUserSelect: 'none'
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent'
         }}
         onClick={handleCardClick}
         onTouchStart={handleTouchStart}
