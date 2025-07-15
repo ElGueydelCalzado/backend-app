@@ -107,7 +107,8 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
       }
 
       headers.forEach((header, index) => {
-        const value = row[index] ? String(row[index]).trim() : ''
+        const rawValue = row[index]
+        const value = rawValue !== null && rawValue !== undefined ? String(rawValue).trim() : ''
         
         switch (header) {
           case 'costo':
@@ -153,15 +154,34 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
         }
       })
 
+      // Debug parsed product for problematic rows
+      if (i >= 70 && i <= 80) {
+        console.log(`📋 Row ${i + 1} product:`, {
+          categoria: product.categoria,
+          marca: product.marca,
+          modelo: product.modelo,
+          color: product.color,
+          talla: product.talla,
+          sku: product.sku
+        })
+      }
+
       // Validate required fields
       const requiredFields = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
       requiredFields.forEach(field => {
-        if (!product[field] || product[field].trim() === '') {
+        const fieldValue = product[field]
+        const isValid = fieldValue !== null && fieldValue !== undefined && fieldValue !== '' && String(fieldValue).trim() !== ''
+        
+        if (!isValid) {
+          // Debug logging for problematic rows
+          if (i >= 70 && i <= 80) {
+            console.log(`❌ Row ${i + 1}, Field "${field}": "${fieldValue}" (type: ${typeof fieldValue})`)
+          }
           newErrors.push({
             row: i + 1, // Add 1 to show correct Excel row number
             field,
             message: 'Campo requerido',
-            value: product[field]
+            value: fieldValue
           })
         }
       })
