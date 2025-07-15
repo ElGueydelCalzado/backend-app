@@ -59,6 +59,9 @@ export default function MobileProductCard({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isExpanded) return // Don't allow swiping when expanded
     
+    e.preventDefault()
+    e.stopPropagation()
+    
     startX.current = e.touches[0].clientX
     currentX.current = e.touches[0].clientX
     setIsDragging(true)
@@ -70,8 +73,9 @@ export default function MobileProductCard({
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
 
-    // Always prevent default to stop screen scrolling
+    // Prevent default browser behavior and stop event propagation
     e.preventDefault()
+    e.stopPropagation()
 
     // Only allow left swipe for delete
     if (deltaX < 0) {
@@ -86,8 +90,11 @@ export default function MobileProductCard({
     }
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging || isExpanded) return
+
+    e.preventDefault()
+    e.stopPropagation()
 
     const deltaX = currentX.current - startX.current
     console.log('👆 Touch end - deltaX:', deltaX, 'product:', product.marca)
@@ -138,7 +145,8 @@ export default function MobileProductCard({
       className="relative overflow-hidden rounded-xl"
       style={{ 
         overscrollBehaviorX: 'contain',
-        overscrollBehaviorY: 'auto' 
+        overscrollBehaviorY: 'auto',
+        touchAction: 'pan-y'
       }}
     >
       {/* Delete Panel - Behind the card (right side) */}
@@ -172,7 +180,9 @@ export default function MobileProductCard({
           transform: `translateX(${swipeOffset}px)`,
           transition: isDragging ? 'none' : 'transform 0.2s ease-out',
           overscrollBehaviorX: 'contain',
-          touchAction: 'pan-x pan-y'
+          touchAction: 'pan-x',
+          userSelect: 'none',
+          WebkitUserSelect: 'none'
         }}
         onClick={handleCardClick}
         onTouchStart={handleTouchStart}
