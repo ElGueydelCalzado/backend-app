@@ -79,6 +79,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
     if (!data || data.length < 2) return []
 
     const headers = data[0].map((h: any) => String(h).trim().toLowerCase())
+    console.log('📊 Headers found:', headers)
     const products: ParsedProduct[] = []
     const newErrors: ImportError[] = []
 
@@ -92,7 +93,18 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
 
     for (let i = 1; i < data.length; i++) {
       const row = data[i]
+      
+      // Skip empty rows
+      if (!row || row.every(cell => !cell || String(cell).trim() === '')) {
+        continue
+      }
+      
       const product: any = {}
+      
+      // Debug problematic rows
+      if (i >= 70 && i <= 80) {
+        console.log(`🔍 Row ${i + 1}:`, row)
+      }
 
       headers.forEach((header, index) => {
         const value = row[index] ? String(row[index]).trim() : ''
@@ -142,11 +154,11 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
       })
 
       // Validate required fields
-      const requiredFields = ['categoria', 'marca', 'modelo', 'sku']
+      const requiredFields = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
       requiredFields.forEach(field => {
-        if (!product[field]) {
+        if (!product[field] || product[field].trim() === '') {
           newErrors.push({
-            row: i,
+            row: i + 1, // Add 1 to show correct Excel row number
             field,
             message: 'Campo requerido',
             value: product[field]
@@ -155,17 +167,17 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
       })
 
       // Check for duplicate SKUs
-      if (product.sku) {
+      if (product.sku && product.sku.trim() !== '') {
         if (existingSKUs.has(product.sku)) {
           newErrors.push({
-            row: i,
+            row: i + 1, // Add 1 to show correct Excel row number
             field: 'sku',
             message: 'SKU ya existe en la base de datos',
             value: product.sku
           })
         } else if (skuSet.has(product.sku)) {
           newErrors.push({
-            row: i,
+            row: i + 1, // Add 1 to show correct Excel row number
             field: 'sku',
             message: 'SKU duplicado en el archivo',
             value: product.sku
@@ -176,17 +188,17 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
       }
 
       // Check for duplicate EANs
-      if (product.ean) {
+      if (product.ean && product.ean.trim() !== '') {
         if (existingEANs.has(product.ean)) {
           newErrors.push({
-            row: i,
+            row: i + 1, // Add 1 to show correct Excel row number
             field: 'ean',
             message: 'EAN ya existe en la base de datos',
             value: product.ean
           })
         } else if (eanSet.has(product.ean)) {
           newErrors.push({
-            row: i,
+            row: i + 1, // Add 1 to show correct Excel row number
             field: 'ean',
             message: 'EAN duplicado en el archivo',
             value: product.ean
