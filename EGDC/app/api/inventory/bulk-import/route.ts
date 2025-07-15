@@ -12,6 +12,11 @@ interface BulkImportRequest {
     ean?: string | null
     costo?: number | null
     google_drive?: string | null
+    // Physical dimensions and weight
+    height_cm?: number | null
+    length_cm?: number | null
+    thickness_cm?: number | null
+    weight_grams?: number | null
     shein_modifier?: number | null
     shopify_modifier?: number | null
     meli_modifier?: number | null
@@ -113,6 +118,11 @@ export async function POST(request: NextRequest) {
           ean: product.ean || null,
           costo: product.costo || null,
           google_drive: product.google_drive || null,
+          // Physical dimensions and weight
+          height_cm: product.height_cm || null,
+          length_cm: product.length_cm || null,
+          thickness_cm: product.thickness_cm || null,
+          weight_grams: product.weight_grams || null,
           shein_modifier: product.shein_modifier || 1.5,
           shopify_modifier: product.shopify_modifier || 2.0,
           meli_modifier: product.meli_modifier || 2.5,

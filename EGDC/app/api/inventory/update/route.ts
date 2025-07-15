@@ -11,6 +11,11 @@ interface UpdateChange {
   sku?: string | null
   ean?: string | null
   google_drive?: string | null
+  // Physical dimensions and weight
+  height_cm?: number | null
+  length_cm?: number | null
+  thickness_cm?: number | null
+  weight_grams?: number | null
   costo?: number | null
   shein_modifier?: number | null
   shopify_modifier?: number | null
