@@ -25,12 +25,9 @@ CREATE TABLE products (
   precio_meli DECIMAL(10,2) GENERATED ALWAYS AS (CEILING(((costo * meli_modifier + 100) * 1.395) / 5) * 5) STORED,
   inv_egdc INTEGER DEFAULT 0,
   inv_fami INTEGER DEFAULT 0,
-  inv_bodega_principal INTEGER DEFAULT 0,
-  inv_tienda_centro INTEGER DEFAULT 0,
-  inv_tienda_norte INTEGER DEFAULT 0,
-  inv_tienda_sur INTEGER DEFAULT 0,
-  inv_online INTEGER DEFAULT 0,
-  inventory_total INTEGER GENERATED ALWAYS AS (inv_egdc + inv_fami + inv_bodega_principal + inv_tienda_centro + inv_tienda_norte + inv_tienda_sur + inv_online) STORED,
+  inv_osiel INTEGER DEFAULT 0,
+  inv_molly INTEGER DEFAULT 0,
+  inventory_total INTEGER GENERATED ALWAYS AS (inv_egdc + inv_fami + inv_osiel + inv_molly) STORED,
   shein BOOLEAN DEFAULT false,
   meli BOOLEAN DEFAULT false,
   shopify BOOLEAN DEFAULT false,
@@ -84,16 +81,15 @@ ALTER TABLE products ADD CONSTRAINT check_weight_positive
 INSERT INTO products (
   categoria, marca, modelo, color, talla, sku, ean, costo,
   shein_modifier, shopify_modifier, meli_modifier,
-  inv_egdc, inv_fami, inv_bodega_principal, inv_tienda_centro,
-  inv_tienda_norte, inv_tienda_sur, inv_online,
+  inv_egdc, inv_fami, inv_osiel, inv_molly,
   shein, meli, shopify, tiktok, upseller, go_trendier, google_drive,
   height_cm, length_cm, thickness_cm, weight_grams
 ) VALUES 
-('Deportivos', 'Nike', 'Air Max 90', 'Blanco/Negro', '42', 'NIKE-AM90-WB-42', '1234567890123', 250.00, 2.0, 1.8, 1.6, 5, 3, 10, 2, 1, 0, 4, true, true, true, false, false, false, false, 12.50, 30.20, 11.80, 650),
-('Casual', 'Adidas', 'Stan Smith', 'Blanco/Verde', '41', 'ADIDAS-SS-WG-41', '1234567890124', 200.00, 2.2, 1.9, 1.7, 8, 2, 15, 3, 2, 1, 6, false, true, true, true, false, true, true, 10.75, 29.50, 10.20, 580),
-('Botas', 'Timberland', 'Classic 6-inch', 'Miel', '43', 'TIMB-C6-H-43', '1234567890125', 400.00, 1.5, 1.4, 1.3, 2, 1, 5, 1, 0, 0, 2, false, true, true, false, true, false, false, 15.80, 31.75, 12.60, 890),
-('Sandalias', 'Birkenstock', 'Arizona', 'Negro', '40', 'BIRK-AZ-B-40', '1234567890126', 150.00, 2.5, 2.0, 1.8, 12, 8, 20, 4, 3, 2, 10, true, true, true, true, false, true, true, 4.20, 26.80, 9.50, 320),
-('Deportivos', 'Puma', 'Suede Classic', 'Azul', '42', 'PUMA-SC-B-42', '1234567890127', 180.00, 2.1, 1.7, 1.5, 7, 4, 12, 2, 1, 0, 5, true, false, true, false, false, false, false, 9.80, 28.90, 10.10, 520);
+('Deportivos', 'Nike', 'Air Max 90', 'Blanco/Negro', '42', 'NIKE-AM90-WB-42', '1234567890123', 250.00, 2.0, 1.8, 1.6, 5, 3, 10, 2, true, true, true, false, false, false, false, 12.50, 30.20, 11.80, 650),
+('Casual', 'Adidas', 'Stan Smith', 'Blanco/Verde', '41', 'ADIDAS-SS-WG-41', '1234567890124', 200.00, 2.2, 1.9, 1.7, 8, 2, 15, 3, false, true, true, true, false, true, true, 10.75, 29.50, 10.20, 580),
+('Botas', 'Timberland', 'Classic 6-inch', 'Miel', '43', 'TIMB-C6-H-43', '1234567890125', 400.00, 1.5, 1.4, 1.3, 2, 1, 5, 1, false, true, true, false, true, false, false, 15.80, 31.75, 12.60, 890),
+('Sandalias', 'Birkenstock', 'Arizona', 'Negro', '40', 'BIRK-AZ-B-40', '1234567890126', 150.00, 2.5, 2.0, 1.8, 12, 8, 20, 4, true, true, true, true, false, true, true, 4.20, 26.80, 9.50, 320),
+('Deportivos', 'Puma', 'Suede Classic', 'Azul', '42', 'PUMA-SC-B-42', '1234567890127', 180.00, 2.1, 1.7, 1.5, 7, 4, 12, 2, true, false, true, false, false, false, false, 9.80, 28.90, 10.10, 520);
 
 -- Insert mock change logs
 INSERT INTO change_logs (product_id, field_name, old_value, new_value, change_type) VALUES 
