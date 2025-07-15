@@ -1511,37 +1511,30 @@ export default function InventarioPage() {
       
       <div className={`min-h-screen bg-gray-50 ${loading ? 'hidden' : ''}`} role="main" aria-label="EGDC Inventory Management System">
         {/* Header with Tab Navigation */}
-        <header className="bg-white shadow-lg border-b border-gray-200" role="banner">
-          <div className="max-w-7xl mx-auto px-4 py-2">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-1"></div>
-            </div>
-            
-            {/* Tab Navigation */}
-            <TabNavigation currentTab="inventario" />
-            
-            {/* Search Results Info */}
-            {isSearchActive && (
-              <div className="mt-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-800">
-                    🔍 Mostrando resultados de búsqueda ({originalView.length} productos)
-                  </span>
-                  <button
-                    onClick={handleClearSearch}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    ✕ Limpiar búsqueda
-                  </button>
-                </div>
+        <header className="bg-white shadow-sm" role="banner">
+          <TabNavigation currentTab="inventario" />
+          
+          {/* Search Results Info */}
+          {isSearchActive && (
+            <div className="px-6 py-3 bg-blue-50 border-b border-blue-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-blue-800">
+                  🔍 Mostrando resultados de búsqueda ({originalView.length} productos)
+                </span>
+                <button
+                  onClick={handleClearSearch}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ✕ Limpiar búsqueda
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </header>
 
         {/* Main Content - Desktop Layout with Sidebar */}
         {!isMobile ? (
-          <div className="flex h-[calc(100vh-120px)]">
+          <div className="flex h-[calc(100vh-60px)]">
             {/* Sidebar */}
             <Sidebar 
               state={sidebarState} 
@@ -1658,8 +1651,8 @@ export default function InventarioPage() {
               {/* Message Area */}
               {/* Message area removed - now using toast notifications */}
               
-              {/* Table Section */}
-              <div className="flex-1 px-6 pb-1 overflow-hidden">
+              {/* Table Section - Adjusted to leave space for pagination */}
+              <div className="flex-1 px-6 pb-1 overflow-hidden min-h-0">
                 <ErrorBoundary
                   level="section"
                   onError={(error, errorInfo) => {
@@ -1710,10 +1703,10 @@ export default function InventarioPage() {
                 </ErrorBoundary>
               </div>
               
-              {/* Pagination Controls - Outside table container */}
-              <div className="px-6 pb-4 bg-white border-t">
+              {/* Pagination Controls - Fixed at bottom */}
+              <div className="flex-shrink-0 px-6 py-4 bg-white border-t shadow-sm">
                 {/* Debug info */}
-                <div className="p-2 text-xs bg-gray-100 border-b">
+                <div className="p-2 text-xs bg-gray-100 border-b mb-2 rounded">
                   Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
                 </div>
                 <Pagination

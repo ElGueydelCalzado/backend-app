@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import React from 'react'
 
 interface TabNavigationProps {
   currentTab?: string
@@ -10,94 +10,85 @@ interface TabNavigationProps {
 
 export default function TabNavigation({ currentTab }: TabNavigationProps) {
   const pathname = usePathname()
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   
   const tabs = [
     {
       id: 'resumen',
       label: 'Resumen',
-      icon: '📊',
       href: '/',
       active: pathname === '/',
       disabled: false
     },
     {
-      id: 'inventario', 
-      label: 'Inventario',
-      icon: '📦',
-      href: '/inventario',
-      active: pathname === '/inventario',
-      disabled: false
-    },
-    {
-      id: 'buscar',
-      label: 'Buscar',
-      icon: '🔍',
-      href: '/escanear',
-      active: pathname === '/escanear',
-      disabled: false
+      id: 'productos',
+      label: 'Productos',
+      href: '/productos',
+      active: pathname === '/productos',
+      disabled: true
     },
     {
       id: 'ventas',
       label: 'Ventas',
-      icon: '💰',
       href: '/ventas',
       active: pathname === '/ventas',
       disabled: true
     },
     {
+      id: 'inventario',
+      label: 'Inventario',
+      href: '/inventario',
+      active: pathname === '/inventario',
+      disabled: false
+    },
+    {
+      id: 'compras',
+      label: 'Compras',
+      href: '/compras',
+      active: pathname === '/compras',
+      disabled: true
+    },
+    {
+      id: 'clientes',
+      label: 'Clientes',
+      href: '/clientes',
+      active: pathname === '/clientes',
+      disabled: true
+    },
+    {
       id: 'analiticas',
-      label: 'Analíticas',
-      icon: '📈',
+      label: 'Analiticas',
       href: '/analiticas',
       active: pathname === '/analiticas',
       disabled: true
     },
     {
-      id: 'tbd2',
-      label: 'TBD 2',
-      icon: '⚙️',
-      href: '/tbd2',
-      active: pathname === '/tbd2',
+      id: 'finanzas',
+      label: 'Finanzas',
+      href: '/finanzas',
+      active: pathname === '/finanzas',
       disabled: true
     }
   ]
 
-  // Auto-scroll active tab into view
-  useEffect(() => {
-    const activeTabIndex = tabs.findIndex(tab => tab.active)
-    if (activeTabIndex !== -1 && scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const activeTab = container.children[activeTabIndex] as HTMLElement
-      if (activeTab) {
-        const containerRect = container.getBoundingClientRect()
-        const tabRect = activeTab.getBoundingClientRect()
-        
-        if (tabRect.left < containerRect.left || tabRect.right > containerRect.right) {
-          activeTab.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
-          })
-        }
-      }
-    }
-  }, [pathname])
 
   return (
-    <nav className="mt-3" role="tablist" aria-label="Navegación principal">
-      {/* Desktop: Original layout */}
-      <div className="hidden md:flex flex-wrap gap-2">
+    <div className="flex items-center justify-between h-12 px-6 bg-white border-b border-gray-200">
+      {/* Logo Section */}
+      <div className="flex items-center space-x-4">
+        <div className="text-xl font-bold text-orange-600">EGDC</div>
+      </div>
+
+      {/* Navigation Tabs - Desktop only */}
+      <nav className="hidden md:flex items-center space-x-6" role="tablist" aria-label="Navegación principal">
         {tabs.map((tab) => {
           if (tab.disabled) {
             return (
               <div
                 key={tab.id}
-                className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-400 bg-gray-100 cursor-not-allowed border border-gray-200"
+                className="px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
                 aria-disabled="true"
                 title="Próximamente disponible"
               >
-                <span className="mr-2">{tab.icon}</span>
                 {tab.label}
               </div>
             )
@@ -111,86 +102,45 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
               aria-selected={tab.active}
               aria-controls={`${tab.id}-panel`}
               className={`
-                inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border-2
+                px-3 py-2 text-sm font-medium transition-colors duration-200 border-b-2 border-transparent
                 ${tab.active 
-                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-600 shadow-lg transform scale-105' 
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 shadow-md hover:shadow-lg'
+                  ? 'text-orange-600 border-orange-600' 
+                  : 'text-gray-700 hover:text-orange-600 hover:border-orange-300'
                 }
               `}
             >
-              <span className="mr-2">{tab.icon}</span>
               {tab.label}
             </Link>
           )
         })}
-      </div>
+      </nav>
 
-      {/* Mobile: Horizontal slider */}
-      <div className="md:hidden relative">
-        {/* Gradient overlays for scroll indicators - positioned to not overlap content */}
-        <div className="absolute -left-2 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute -right-2 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-        
-        {/* Scrollable tab container */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-6 -mx-6 py-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {tabs.map((tab) => {
-            if (tab.disabled) {
-              return (
-                <div
-                  key={tab.id}
-                  className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl bg-gray-50 border border-gray-200 cursor-not-allowed"
-                  aria-disabled="true"
-                  title={`${tab.label} - Próximamente disponible`}
-                >
-                  <span className="text-xl opacity-50">{tab.icon}</span>
-                </div>
-              )
-            }
-
-            return (
-              <Link
-                key={tab.id}
-                href={tab.href}
-                role="tab"
-                aria-selected={tab.active}
-                aria-controls={`${tab.id}-panel`}
-                title={tab.label}
-                className={`
-                  flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 transform active:scale-95
-                  ${tab.active 
-                    ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 scale-105' 
-                    : 'bg-white text-gray-600 border border-gray-200 shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600'
-                  }
-                `}
-              >
-                <span className={`text-xl ${tab.active ? 'animate-pulse' : ''}`}>
-                  {tab.icon}
-                </span>
-              </Link>
-            )
-          })}
-        </div>
-        
-        {/* Active tab indicator dots */}
-        <div className="flex justify-center mt-3">
-          <div className="flex space-x-1.5">
-            {tabs.filter(tab => !tab.disabled).map((tab) => (
-              <div
-                key={`indicator-${tab.id}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  tab.active 
-                    ? 'w-6 bg-orange-500 shadow-sm' 
-                    : 'w-1.5 bg-gray-300'
-                }`}
-              />
-            ))}
+      {/* Account & Notifications Section */}
+      <div className="flex items-center space-x-4">
+        <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors" title="Ayuda">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+        <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors relative" title="Notificaciones">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5 5-5h-5m-6 10l-5-5 5-5" />
+          </svg>
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
+        </button>
+        <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors" title="Configuración">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-sm font-medium">A</span>
           </div>
+          <span className="text-sm text-gray-700">Admin</span>
         </div>
       </div>
-    </nav>
+    </div>
   )
 }

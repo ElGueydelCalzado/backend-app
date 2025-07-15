@@ -15,9 +15,9 @@ export default function Sidebar({ children, state, onStateChange, className = ''
   const [isHovering, setIsHovering] = useState(false)
   
   const sidebarWidths = {
-    collapsed: 'w-16',
-    open: 'w-80',
-    hover: 'w-80'
+    collapsed: 'w-12',
+    open: 'w-64',
+    hover: 'w-64'
   }
 
   const toggleState = () => {
@@ -53,8 +53,8 @@ export default function Sidebar({ children, state, onStateChange, className = ''
         ${sidebarWidths[state]} 
         ${state === 'hover' ? 'transition-all duration-200 ease-out' : 'transition-all duration-300 ease-in-out'}
         bg-white 
-        border-r-2 border-gray-200/70 
-        ${state === 'hover' ? 'shadow-2xl border-orange-200/50' : 'shadow-lg'}
+        border-r border-gray-200 
+        ${state === 'hover' ? 'shadow-lg' : ''}
         relative
         ${state === 'hover' ? 'z-30' : ''}
         ${className}
@@ -66,20 +66,17 @@ export default function Sidebar({ children, state, onStateChange, className = ''
       <button
         onClick={toggleState}
         className="
-          absolute -right-3 top-6 z-20
-          w-6 h-6 
-          bg-gradient-to-r from-orange-500 to-orange-600 
+          absolute -right-2 top-4 z-20
+          w-4 h-4 
+          bg-gray-600 
           text-white 
-          rounded-full 
-          shadow-lg 
-          hover:from-orange-600 hover:to-orange-700
-          transition-all duration-200
+          rounded-sm 
+          hover:bg-gray-700
+          transition-colors duration-200
           flex items-center justify-center
-          text-xs font-bold
+          text-xs
         "
-        title={state === 'collapsed' ? 'Expandir filtros (o hover para vista temporal)' : 
-               state === 'hover' ? 'Fijar filtros expandidos' : 
-               'Contraer filtros'}
+        title={state === 'collapsed' ? 'Expandir filtros' : 'Contraer filtros'}
       >
         {state === 'collapsed' ? '→' : '←'}
       </button>
@@ -87,23 +84,23 @@ export default function Sidebar({ children, state, onStateChange, className = ''
       {/* Sidebar Content */}
       <div className="h-full overflow-hidden">
         {!showFullContent ? (
-          /* Collapsed State - Icons Only */
-          <div className="p-2 space-y-3">
-            <div className="flex flex-col items-center space-y-2">
+          /* Collapsed State - Minimal Icons */
+          <div className="p-2 space-y-4 pt-12">
+            <div className="flex flex-col items-center space-y-3">
               <div 
-                className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-lg cursor-pointer hover:scale-110 transition-transform"
+                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
                 title="Filtros"
               >
-                🔍
+                ⚡
               </div>
               <div 
-                className="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center text-white text-lg cursor-pointer hover:scale-110 transition-transform"
+                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
                 title="Estadísticas"
               >
                 📊
               </div>
               <div 
-                className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg cursor-pointer hover:scale-110 transition-transform"
+                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
                 title="Columnas"
               >
                 👁
