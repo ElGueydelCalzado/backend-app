@@ -24,6 +24,7 @@ import MobileSort from '@/components/MobileSort'
 import MobileImportExportModal from '@/components/MobileImportExportModal'
 import WarehouseTabs, { WarehouseFilter } from '@/components/WarehouseTabs'
 import { getWarehouseData } from '@/lib/dummy-warehouse-data'
+import Pagination from '@/components/Pagination'
 
 interface Filters {
   categories: Set<string>
@@ -128,6 +129,12 @@ export default function InventarioPage() {
   const [activeWarehouse, setActiveWarehouse] = useState<WarehouseFilter>('egdc')
   const [useDummyData, setUseDummyData] = useState(false) // Switch between real and dummy data
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(100)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  
   const [uniqueValues, setUniqueValues] = useState<UniqueValues>({
     categories: new Set(),
     brands: new Set(),
@@ -138,7 +145,7 @@ export default function InventarioPage() {
 
   // Load initial data
   useEffect(() => {
-    loadInventoryData()
+    loadInventoryData(1)
   }, [])
   
   // Detect mobile screen size
@@ -162,12 +169,42 @@ export default function InventarioPage() {
     }
   }, [filters, allData, activeWarehouse])
 
-  const loadInventoryData = async () => {
+  // Reload data when filters change (for server-side filtering)
+  useEffect(() => {
+    if (currentPage > 1) {
+      setCurrentPage(1)
+    }
+    loadInventoryData(1)
+  }, [filters, itemsPerPage])
+
+  const loadInventoryData = async (page: number = currentPage, search: string = '') => {
     try {
       setLoading(true)
       setLoadingText('Cargando datos del inventario...')
       
-      const response = await fetch('/api/inventory')
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        ...(search.trim() && { search: search.trim() }),
+      })
+      
+      // Add filter parameters
+      const selectedCategories = Array.from(filters.categories)
+      const selectedBrands = Array.from(filters.brands)
+      const selectedModels = Array.from(filters.models)
+      
+      if (selectedCategories.length > 0) {
+        params.append('categoria', selectedCategories[0]) // API supports single filter for now
+      }
+      if (selectedBrands.length > 0) {
+        params.append('marca', selectedBrands[0])
+      }
+      if (selectedModels.length > 0) {
+        params.append('modelo', selectedModels[0])
+      }
+      
+      const response = await fetch(`/api/inventory?${params}`)
       const result = await response.json()
       
       if (!response.ok || !result.success) {
@@ -175,21 +212,31 @@ export default function InventarioPage() {
       }
       
       const data: Product[] = result.data
+      const pagination = result.pagination
       
-      if (!data || data.length === 0) {
-        throw new Error('No se encontraron datos de inventario')
-      }
-
       setAllData(data)
+      setCurrentPage(pagination.page)
+      setTotalPages(pagination.totalPages)
+      setTotalItems(pagination.totalItems)
       
-      // Extract unique values for filters
-      const categories = new Set(data.map(item => item.categoria).filter(Boolean) as string[])
-      const brands = new Set(data.map(item => item.marca).filter(Boolean) as string[])
-      const models = new Set(data.map(item => item.modelo).filter(Boolean) as string[])
-      const colors = new Set(data.map(item => item.color).filter(Boolean) as string[])
-      const sizes = new Set(data.map(item => item.talla).filter(Boolean) as string[])
-      
-      setUniqueValues({ categories, brands, models, colors, sizes })
+      // For pagination, we need to fetch all data once to get filter options
+      // This is a temporary solution - ideally we'd have separate endpoints for this
+      if (page === 1) {
+        const allDataResponse = await fetch('/api/inventory?limit=10000')
+        const allDataResult = await allDataResponse.json()
+        
+        if (allDataResult.success) {
+          const allData = allDataResult.data
+          // Extract unique values for filters
+          const categories = new Set(allData.map((item: Product) => item.categoria).filter(Boolean) as string[])
+          const brands = new Set(allData.map((item: Product) => item.marca).filter(Boolean) as string[])
+          const models = new Set(allData.map((item: Product) => item.modelo).filter(Boolean) as string[])
+          const colors = new Set(allData.map((item: Product) => item.color).filter(Boolean) as string[])
+          const sizes = new Set(allData.map((item: Product) => item.talla).filter(Boolean) as string[])
+          
+          setUniqueValues({ categories, brands, models, colors, sizes })
+        }
+      }
       
       // Apply initial filters (show all data)
       applyFilters(data, filters)
@@ -803,6 +850,18 @@ export default function InventarioPage() {
   // Get selected products for bulk operations
   const getSelectedProducts = () => {
     return editedView.filter(product => selectedProducts.has(product.id))
+  }
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    loadInventoryData(page, mobileSearchTerm)
+  }
+
+  const handleItemsPerPageChange = (limit: number) => {
+    setItemsPerPage(limit)
+    setCurrentPage(1) // Reset to first page when changing page size
+    loadInventoryData(1, mobileSearchTerm)
   }
 
   // Bulk update handler
@@ -1648,6 +1707,16 @@ export default function InventarioPage() {
                                  activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
                     onBuyProduct={handleBuyProduct}
                   />
+                  
+                  {/* Pagination Controls */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={totalItems}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                  />
                 </ErrorBoundary>
               </div>
             </div>
@@ -1719,6 +1788,18 @@ export default function InventarioPage() {
                 selectedProducts={selectedProducts}
                 loading={loading}
               />
+              
+              {/* Mobile Pagination Controls */}
+              <div className="mt-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
+              </div>
             </div>
 
             {/* Floating Action Button Menu */}

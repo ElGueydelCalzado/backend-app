@@ -41,6 +41,89 @@ export class PostgresManager {
     return result.rows
   }
 
+  static async getProductsPaginated(options: {
+    page?: number
+    limit?: number
+    search?: string
+    filters?: {
+      categoria?: string
+      marca?: string
+      modelo?: string
+    }
+  } = {}) {
+    const {
+      page = 1,
+      limit = 100,
+      search = '',
+      filters = {}
+    } = options
+
+    const offset = (page - 1) * limit
+    const whereConditions = []
+    const params = []
+    let paramIndex = 1
+
+    // Add search condition
+    if (search.trim()) {
+      whereConditions.push(`(
+        LOWER(categoria) LIKE $${paramIndex} OR
+        LOWER(marca) LIKE $${paramIndex} OR
+        LOWER(modelo) LIKE $${paramIndex} OR
+        LOWER(color) LIKE $${paramIndex} OR
+        LOWER(sku) LIKE $${paramIndex}
+      )`)
+      params.push(`%${search.toLowerCase()}%`)
+      paramIndex++
+    }
+
+    // Add filter conditions
+    if (filters.categoria) {
+      whereConditions.push(`categoria = $${paramIndex}`)
+      params.push(filters.categoria)
+      paramIndex++
+    }
+
+    if (filters.marca) {
+      whereConditions.push(`marca = $${paramIndex}`)
+      params.push(filters.marca)
+      paramIndex++
+    }
+
+    if (filters.modelo) {
+      whereConditions.push(`modelo = $${paramIndex}`)
+      params.push(filters.modelo)
+      paramIndex++
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : ''
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) FROM products ${whereClause}`
+    const countResult = await this.query(countQuery, params)
+    const totalItems = parseInt(countResult.rows[0].count)
+
+    // Get paginated data
+    const dataQuery = `
+      SELECT * FROM products 
+      ${whereClause}
+      ORDER BY categoria, marca, modelo
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `
+    const dataResult = await this.query(dataQuery, [...params, limit, offset])
+
+    return {
+      data: dataResult.rows,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        hasNextPage: page < Math.ceil(totalItems / limit),
+        hasPreviousPage: page > 1
+      }
+    }
+  }
+
   static async getProductById(id: number) {
     const query = 'SELECT * FROM products WHERE id = $1'
     const result = await this.query(query, [id])
