@@ -1659,7 +1659,7 @@ export default function InventarioPage() {
               {/* Message area removed - now using toast notifications */}
               
               {/* Table Section */}
-              <div className="flex-1 px-6 pb-1 flex flex-col">
+              <div className="flex-1 px-6 pb-1 overflow-hidden">
                 <ErrorBoundary
                   level="section"
                   onError={(error, errorInfo) => {
@@ -1687,47 +1687,43 @@ export default function InventarioPage() {
                     </div>
                   }
                 >
-                  <div className="flex flex-col h-full">
-                    <div className="flex-1 overflow-hidden">
-                      <InventoryTable
-                        editedView={editedView}
-                        onCellEdit={handleCellEdit}
-                        onSave={saveChanges}
-                        onCancel={cancelChanges}
-                        saving={saving}
-                        columnConfig={columnConfig}
-                        onAddRow={handleAddRow}
-                        onRemoveRow={handleRemoveRow}
-                        selectedProducts={selectedProducts}
-                        onProductSelect={handleProductSelect}
-                        onSelectAll={handleSelectAll}
-                        autoSave={true}
-                        onAutoSave={handleAutoSave}
-                        isSupplierView={useDummyData} // True when viewing supplier catalogs
-                        supplierName={activeWarehouse === 'fami' ? 'FAMI' : 
-                                     activeWarehouse === 'osiel' ? 'Osiel' : 
-                                     activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
-                        onBuyProduct={handleBuyProduct}
-                      />
-                    </div>
-                    
-                    {/* Pagination Controls */}
-                    <div className="flex-shrink-0 bg-white border-t">
-                      {/* Debug info */}
-                      <div className="p-2 text-xs bg-gray-100 border-b">
-                        Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
-                      </div>
-                      <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                        totalItems={totalItems}
-                        itemsPerPage={itemsPerPage}
-                        onItemsPerPageChange={handleItemsPerPageChange}
-                      />
-                    </div>
-                  </div>
+                  <InventoryTable
+                    editedView={editedView}
+                    onCellEdit={handleCellEdit}
+                    onSave={saveChanges}
+                    onCancel={cancelChanges}
+                    saving={saving}
+                    columnConfig={columnConfig}
+                    onAddRow={handleAddRow}
+                    onRemoveRow={handleRemoveRow}
+                    selectedProducts={selectedProducts}
+                    onProductSelect={handleProductSelect}
+                    onSelectAll={handleSelectAll}
+                    autoSave={true}
+                    onAutoSave={handleAutoSave}
+                    isSupplierView={useDummyData} // True when viewing supplier catalogs
+                    supplierName={activeWarehouse === 'fami' ? 'FAMI' : 
+                                 activeWarehouse === 'osiel' ? 'Osiel' : 
+                                 activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
+                    onBuyProduct={handleBuyProduct}
+                  />
                 </ErrorBoundary>
+              </div>
+              
+              {/* Pagination Controls - Outside table container */}
+              <div className="px-6 pb-4 bg-white border-t">
+                {/* Debug info */}
+                <div className="p-2 text-xs bg-gray-100 border-b">
+                  Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
+                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
               </div>
             </div>
           </div>
