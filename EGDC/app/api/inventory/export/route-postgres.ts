@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
       { key: 'talla', label: 'Talla' },
       { key: 'sku', label: 'SKU' },
       { key: 'ean', label: 'EAN' },
+      // Physical dimensions and weight
+      { key: 'height_cm', label: 'Alto (cm)' },
+      { key: 'length_cm', label: 'Largo (cm)' },
+      { key: 'thickness_cm', label: 'Grosor (cm)' },
+      { key: 'weight_grams', label: 'Peso (g)' },
       { key: 'costo', label: 'Costo' },
       { key: 'shein_modifier', label: 'Mod. SHEIN' },
       { key: 'shopify_modifier', label: 'Mod. Shopify' },

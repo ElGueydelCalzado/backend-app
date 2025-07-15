@@ -167,9 +167,17 @@ export function validateProductChange(change: any): void {
   validateNumber(change.shopify_modifier, 'shopify_modifier', { min: 0, max: 10 })
   validateNumber(change.meli_modifier, 'meli_modifier', { min: 0, max: 10 })
 
+  // Validate dimension fields (must be positive if provided)
+  validateNumber(change.height_cm, 'height_cm', { min: 0.1, max: 100 })
+  validateNumber(change.length_cm, 'length_cm', { min: 0.1, max: 150 })
+  validateNumber(change.thickness_cm, 'thickness_cm', { min: 0.1, max: 50 })
+  validateNumber(change.weight_grams, 'weight_grams', { min: 1, max: 10000, integer: true })
+
   // Validate inventory fields (must be non-negative integers)
   validateNumber(change.inv_egdc, 'inv_egdc', { min: 0, max: 999999, integer: true })
   validateNumber(change.inv_fami, 'inv_fami', { min: 0, max: 999999, integer: true })
+  validateNumber(change.inv_osiel, 'inv_osiel', { min: 0, max: 999999, integer: true })
+  validateNumber(change.inv_molly, 'inv_molly', { min: 0, max: 999999, integer: true })
 }
 
 export function sanitizeString(value: string | null | undefined): string | null {

@@ -404,6 +404,11 @@ export default function InventarioPage() {
             talla: editedItem.talla,
             sku: editedItem.sku,
             ean: editedItem.ean,
+            // Physical dimensions and weight
+            height_cm: editedItem.height_cm,
+            length_cm: editedItem.length_cm,
+            thickness_cm: editedItem.thickness_cm,
+            weight_grams: editedItem.weight_grams,
             costo: editedItem.costo,
             google_drive: editedItem.google_drive,
             shein_modifier: editedItem.shein_modifier,
@@ -651,6 +656,11 @@ export default function InventarioPage() {
       talla: null,
       sku: null,
       ean: null,
+      // Physical dimensions and weight
+      height_cm: null,
+      length_cm: null,
+      thickness_cm: null,
+      weight_grams: null,
       costo: null,
       google_drive: null,
       shein_modifier: 1.2,
@@ -1077,6 +1087,11 @@ export default function InventarioPage() {
       talla: '',
       sku: '',
       ean: '',
+      // Physical dimensions and weight
+      height_cm: null,
+      length_cm: null,
+      thickness_cm: null,
+      weight_grams: null,
       costo: 0,
       shein_modifier: 1.5,
       shopify_modifier: 1.8,
@@ -1844,7 +1859,7 @@ export default function InventarioPage() {
                 isOpen={showMobileImportExport}
                 onClose={() => setShowMobileImportExport(false)}
                 onImport={() => setShowBulkImportModal(true)}
-                onExport={handleExportData}
+                onExport={handleExport}
               />
             )}
           </div>

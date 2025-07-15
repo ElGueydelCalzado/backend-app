@@ -281,6 +281,42 @@ export default function MobileProductCard({
             </div>
           </div>
 
+          {/* Physical Dimensions */}
+          {(product.height_cm || product.length_cm || product.thickness_cm || product.weight_grams) && (
+            <div>
+              <h4 className="font-medium text-gray-800 mb-1 flex items-center gap-1 text-sm">
+                <span className="text-sm">📐</span>
+                Dimensiones
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {product.height_cm && (
+                  <div>
+                    <span className="text-gray-500">Alto:</span>
+                    <p className="font-medium">{product.height_cm} cm</p>
+                  </div>
+                )}
+                {product.length_cm && (
+                  <div>
+                    <span className="text-gray-500">Largo:</span>
+                    <p className="font-medium">{product.length_cm} cm</p>
+                  </div>
+                )}
+                {product.thickness_cm && (
+                  <div>
+                    <span className="text-gray-500">Grosor:</span>
+                    <p className="font-medium">{product.thickness_cm} cm</p>
+                  </div>
+                )}
+                {product.weight_grams && (
+                  <div>
+                    <span className="text-gray-500">Peso:</span>
+                    <p className="font-medium">{product.weight_grams}g</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Multi-Location Inventory */}
           <div>
             <h4 className="font-medium text-gray-800 mb-1 flex items-center gap-1 text-sm">

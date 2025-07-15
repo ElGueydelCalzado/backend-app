@@ -26,6 +26,11 @@ export default function DesktopProductEditor({
       talla: '',
       sku: '',
       ean: '',
+      // Physical dimensions and weight
+      height_cm: null,
+      length_cm: null,
+      thickness_cm: null,
+      weight_grams: null,
       costo: 0,
       shein_modifier: 1.5,
       shopify_modifier: 1.8,
@@ -52,7 +57,7 @@ export default function DesktopProductEditor({
     }
   )
 
-  const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'inventory' | 'platforms'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'dimensions' | 'pricing' | 'inventory' | 'platforms'>('basic')
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -178,6 +183,90 @@ export default function DesktopProductEditor({
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-base transition-colors"
           placeholder="https://drive.google.com/..."
         />
+      </div>
+    </div>
+  )
+
+  const renderDimensions = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl">
+        <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
+          <span className="text-xl mr-2">📐</span>
+          Dimensiones Físicas
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Alto (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.height_cm || ''}
+              onChange={(e) => handleInputChange('height_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-colors"
+              placeholder="12.5"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Largo (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.length_cm || ''}
+              onChange={(e) => handleInputChange('length_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-colors"
+              placeholder="30.0"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Grosor (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.thickness_cm || ''}
+              onChange={(e) => handleInputChange('thickness_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-colors"
+              placeholder="11.0"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl">
+        <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
+          <span className="text-xl mr-2">⚖️</span>
+          Peso
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Peso (gramos)
+            </label>
+            <input
+              type="number"
+              step="1"
+              value={formData.weight_grams || ''}
+              onChange={(e) => handleInputChange('weight_grams', parseInt(e.target.value) || null)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-colors"
+              placeholder="650"
+            />
+          </div>
+          <div className="flex items-end">
+            <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
+              <p className="font-medium">Peso para envíos</p>
+              <p>Usado para calcular costos de shipping</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -316,6 +405,7 @@ export default function DesktopProductEditor({
 
   const tabs = [
     { id: 'basic', label: 'Básico', icon: <Package className="h-5 w-5" /> },
+    { id: 'dimensions', label: 'Dimensiones', icon: <span className="text-lg">📐</span> },
     { id: 'pricing', label: 'Precios', icon: <DollarSign className="h-5 w-5" /> },
     { id: 'inventory', label: 'Stock', icon: <Hash className="h-5 w-5" /> },
     { id: 'platforms', label: 'Plataformas', icon: <Tag className="h-5 w-5" /> }
@@ -358,6 +448,7 @@ export default function DesktopProductEditor({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'basic' && renderBasicInfo()}
+          {activeTab === 'dimensions' && renderDimensions()}
           {activeTab === 'pricing' && renderPricing()}
           {activeTab === 'inventory' && renderInventory()}
           {activeTab === 'platforms' && renderPlatforms()}

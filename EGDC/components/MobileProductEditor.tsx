@@ -28,6 +28,11 @@ export default function MobileProductEditor({
       talla: '',
       sku: '',
       ean: '',
+      // Physical dimensions and weight
+      height_cm: null,
+      length_cm: null,
+      thickness_cm: null,
+      weight_grams: null,
       costo: 0,
       shein_modifier: 1.5,
       shopify_modifier: 1.8,
@@ -54,7 +59,7 @@ export default function MobileProductEditor({
     }
   )
 
-  const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'inventory' | 'platforms'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'dimensions' | 'pricing' | 'inventory' | 'platforms'>('basic')
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(['basic']))
 
   const handleInputChange = (field: string, value: any) => {
@@ -65,7 +70,7 @@ export default function MobileProductEditor({
   }
 
   const handleNext = () => {
-    const tabOrder = ['basic', 'pricing', 'inventory', 'platforms']
+    const tabOrder = ['basic', 'dimensions', 'pricing', 'inventory', 'platforms']
     const currentIndex = tabOrder.indexOf(activeTab)
     
     if (currentIndex < tabOrder.length - 1) {
@@ -208,6 +213,82 @@ export default function MobileProductEditor({
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
           placeholder="Código de barras"
         />
+      </div>
+    </div>
+  )
+
+  const renderDimensions = () => (
+    <div className="space-y-4">
+      <div className="bg-indigo-50 p-4 rounded-lg">
+        <h4 className="font-medium text-indigo-900 mb-3 flex items-center">
+          <span className="text-lg mr-2">📐</span>
+          Dimensiones Físicas
+        </h4>
+        
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alto (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.height_cm || ''}
+              onChange={(e) => handleInputChange('height_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
+              placeholder="Ej: 12.5"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Largo (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.length_cm || ''}
+              onChange={(e) => handleInputChange('length_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
+              placeholder="Ej: 30.0"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Grosor (cm)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.thickness_cm || ''}
+              onChange={(e) => handleInputChange('thickness_cm', parseFloat(e.target.value) || null)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
+              placeholder="Ej: 11.0"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-indigo-50 p-4 rounded-lg">
+        <h4 className="font-medium text-indigo-900 mb-3 flex items-center">
+          <span className="text-lg mr-2">⚖️</span>
+          Peso
+        </h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Peso (gramos)
+          </label>
+          <input
+            type="number"
+            step="1"
+            value={formData.weight_grams || ''}
+            onChange={(e) => handleInputChange('weight_grams', parseInt(e.target.value) || null)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
+            placeholder="Ej: 650"
+          />
+        </div>
       </div>
     </div>
   )
@@ -376,6 +457,7 @@ export default function MobileProductEditor({
 
   const tabs = [
     { id: 'basic', label: 'Básico', icon: <Package className="h-4 w-4" /> },
+    { id: 'dimensions', label: 'Dimensiones', icon: <span className="text-sm">📐</span> },
     { id: 'pricing', label: 'Precios', icon: <DollarSign className="h-4 w-4" /> },
     { id: 'inventory', label: 'Stock', icon: <Hash className="h-4 w-4" /> },
     { id: 'platforms', label: 'Plataformas', icon: <Tag className="h-4 w-4" /> }
@@ -431,6 +513,7 @@ export default function MobileProductEditor({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'basic' && renderBasicInfo()}
+          {activeTab === 'dimensions' && renderDimensions()}
           {activeTab === 'pricing' && renderPricing()}
           {activeTab === 'inventory' && renderInventory()}
           {activeTab === 'platforms' && renderPlatforms()}

@@ -33,6 +33,11 @@ const FIELD_CONFIG: Record<string, { label: string, icon: string, type: string, 
   talla: { label: 'Talla', icon: '📏', type: 'text', category: 'basic' },
   sku: { label: 'SKU', icon: '🆔', type: 'text', category: 'basic' },
   ean: { label: 'EAN', icon: '📱', type: 'text', category: 'basic' },
+  // Physical dimensions and weight
+  height_cm: { label: 'Alto (cm)', icon: '📐', type: 'number', category: 'dimensions' },
+  length_cm: { label: 'Largo (cm)', icon: '📐', type: 'number', category: 'dimensions' },
+  thickness_cm: { label: 'Grosor (cm)', icon: '📐', type: 'number', category: 'dimensions' },
+  weight_grams: { label: 'Peso (g)', icon: '⚖️', type: 'number', category: 'dimensions' },
   costo: { label: 'Costo', icon: '💰', type: 'number', category: 'pricing' },
   shein_modifier: { label: 'Mod. SHEIN', icon: '⚙️', type: 'number', category: 'pricing' },
   shopify_modifier: { label: 'Mod. Shopify', icon: '⚙️', type: 'number', category: 'pricing' },
@@ -83,6 +88,7 @@ export default function InventoryTable({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'basic': return 'bg-blue-50 border-blue-200'
+      case 'dimensions': return 'bg-indigo-50 border-indigo-200'
       case 'pricing': return 'bg-orange-50 border-orange-200'
       case 'inventory': return 'bg-purple-50 border-purple-200'
       case 'platforms': return 'bg-green-50 border-green-200'

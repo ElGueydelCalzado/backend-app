@@ -11,6 +11,11 @@ export const EGDC_WAREHOUSE_DATA: Product[] = [
     talla: '42',
     sku: 'NIK-AM90-WHT-42',
     ean: '123456789012',
+    // Physical dimensions and weight
+    height_cm: 12.5,
+    length_cm: 30.0,
+    thickness_cm: 11.0,
+    weight_grams: 650,
     costo: 150.00,
     shein_modifier: 1.5,
     shopify_modifier: 1.8,
@@ -42,6 +47,11 @@ export const EGDC_WAREHOUSE_DATA: Product[] = [
     talla: '40',
     sku: 'ADI-UB22-BLK-40',
     ean: '123456789013',
+    // Physical dimensions and weight
+    height_cm: 13.0,
+    length_cm: 32.5,
+    thickness_cm: 10.5,
+    weight_grams: 580,
     costo: 180.00,
     shein_modifier: 1.4,
     shopify_modifier: 1.7,
@@ -77,6 +87,11 @@ export const FAMI_WAREHOUSE_DATA: Product[] = [
     talla: '38',
     sku: 'FAMI-VAN-OS-BW-38',
     ean: '123456789014',
+    // Physical dimensions and weight
+    height_cm: 11.5,
+    length_cm: 28.0,
+    thickness_cm: 12.0,
+    weight_grams: 720,
     costo: 45.00, // FAMI's internal cost
     shein_modifier: 1.6,
     shopify_modifier: 1.9,
@@ -108,6 +123,11 @@ export const FAMI_WAREHOUSE_DATA: Product[] = [
     talla: '41',
     sku: 'FAMI-CON-CT-RED-41',
     ean: '123456789015',
+    // Physical dimensions and weight
+    height_cm: 10.5,
+    length_cm: 27.5,
+    thickness_cm: 11.5,
+    weight_grams: 680,
     costo: 38.00, // FAMI's internal cost
     shein_modifier: 1.7,
     shopify_modifier: 2.0,
@@ -143,6 +163,11 @@ export const OSIEL_WAREHOUSE_DATA: Product[] = [
     talla: '43',
     sku: 'OSIEL-CLA-DB-BRN-43',
     ean: '123456789016',
+    // Physical dimensions and weight
+    height_cm: 14.0,
+    length_cm: 31.0,
+    thickness_cm: 10.0,
+    weight_grams: 750,
     costo: 65.00, // Osiel's internal cost
     shein_modifier: 1.3,
     shopify_modifier: 1.6,
@@ -174,6 +199,11 @@ export const OSIEL_WAREHOUSE_DATA: Product[] = [
     talla: '42',
     sku: 'OSIEL-CH-OX-BLK-42',
     ean: '123456789019',
+    // Physical dimensions and weight
+    height_cm: 13.5,
+    length_cm: 30.5,
+    thickness_cm: 9.5,
+    weight_grams: 780,
     costo: 85.00, // Osiel's internal cost
     shein_modifier: 1.4,
     shopify_modifier: 1.7,
@@ -209,6 +239,11 @@ export const MOLLY_WAREHOUSE_DATA: Product[] = [
     talla: '28',
     sku: 'MOLLY-STR-M2P-PNK-28',
     ean: '123456789017',
+    // Physical dimensions and weight
+    height_cm: 8.5,
+    length_cm: 22.0,
+    thickness_cm: 8.0,
+    weight_grams: 320,
     costo: 32.00, // Molly's internal cost
     shein_modifier: 1.8,
     shopify_modifier: 2.1,
@@ -240,6 +275,11 @@ export const MOLLY_WAREHOUSE_DATA: Product[] = [
     talla: '32',
     sku: 'MOLLY-NB-574K-BLU-32',
     ean: '123456789018',
+    // Physical dimensions and weight
+    height_cm: 9.5,
+    length_cm: 24.5,
+    thickness_cm: 9.0,
+    weight_grams: 420,
     costo: 42.00, // Molly's internal cost
     shein_modifier: 1.5,
     shopify_modifier: 1.8,
@@ -271,6 +311,11 @@ export const MOLLY_WAREHOUSE_DATA: Product[] = [
     talla: '30',
     sku: 'MOLLY-SKE-LU-MC-30',
     ean: '123456789020',
+    // Physical dimensions and weight
+    height_cm: 8.0,
+    length_cm: 23.0,
+    thickness_cm: 10.5,
+    weight_grams: 380,
     costo: 28.00, // Molly's internal cost
     shein_modifier: 1.6,
     shopify_modifier: 1.9,

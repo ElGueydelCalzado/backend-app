@@ -18,6 +18,11 @@ interface ParsedProduct {
   talla: string | null
   sku: string | null
   ean?: string | null
+  // Physical dimensions and weight
+  height_cm?: number | null
+  length_cm?: number | null
+  thickness_cm?: number | null
+  weight_grams?: number | null
   costo?: number | null
   google_drive?: string | null
   shein_modifier?: number | null
@@ -53,13 +58,13 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
 
   const downloadTemplate = () => {
     const headers = [
-      'categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'ean', 'costo', 'google_drive', 'shein_modifier', 'shopify_modifier', 'meli_modifier', 'inv_egdc', 'inv_fami', 'shein', 'meli', 'shopify', 'tiktok', 'upseller', 'go_trendier'
+      'categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'ean', 'height_cm', 'length_cm', 'thickness_cm', 'weight_grams', 'costo', 'google_drive', 'shein_modifier', 'shopify_modifier', 'meli_modifier', 'inv_egdc', 'inv_fami', 'shein', 'meli', 'shopify', 'tiktok', 'upseller', 'go_trendier'
     ]
     
     const csvContent = headers.join(',') + '\n' +
-      'Alpargatas,Nike,Air Max 90,Negro,25,NIKE-AM90-001,1234567890123,150.00,https://drive.google.com/file/123,1.5,2.0,2.5,10,5,true,false,true,false,false,false' + '\n' +
-      'Botas,Adidas,Stan Smith,Blanco,26,ADIDAS-SS-002,1234567890124,120.00,,1.6,2.1,2.6,8,3,false,true,true,true,false,false' + '\n' +
-      'Tenis,Puma,RS-X,Azul,27,PUMA-RSX-003,1234567890125,95.00,,1.4,1.9,2.4,15,7,true,true,false,false,true,true'
+      'Alpargatas,Nike,Air Max 90,Negro,25,NIKE-AM90-001,1234567890123,12.5,30.0,11.0,650,150.00,https://drive.google.com/file/123,1.5,2.0,2.5,10,5,true,false,true,false,false,false' + '\n' +
+      'Botas,Adidas,Stan Smith,Blanco,26,ADIDAS-SS-002,1234567890124,13.0,32.5,10.5,580,120.00,,1.6,2.1,2.6,8,3,false,true,true,true,false,false' + '\n' +
+      'Tenis,Puma,RS-X,Azul,27,PUMA-RSX-003,1234567890125,11.5,28.0,12.0,720,95.00,,1.4,1.9,2.4,15,7,true,true,false,false,true,true'
     
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
@@ -97,6 +102,9 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
           case 'shein_modifier':
           case 'shopify_modifier':
           case 'meli_modifier':
+          case 'height_cm':
+          case 'length_cm':
+          case 'thickness_cm':
             product[header] = value ? parseFloat(value) : null
             if (value && isNaN(parseFloat(value))) {
               newErrors.push({
@@ -109,7 +117,8 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
             break
           case 'inv_egdc':
           case 'inv_fami':
-            product[header] = value ? parseInt(value) : 0
+          case 'weight_grams':
+            product[header] = value ? parseInt(value) : (header === 'weight_grams' ? null : 0)
             if (value && isNaN(parseInt(value))) {
               newErrors.push({
                 row: i,

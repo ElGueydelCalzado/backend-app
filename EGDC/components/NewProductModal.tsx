@@ -16,6 +16,11 @@ interface ProductForm {
   talla: string
   sku: string
   ean: string
+  // Physical dimensions and weight
+  height_cm: number | null
+  length_cm: number | null
+  thickness_cm: number | null
+  weight_grams: number | null
   costo: number | null
   shein_modifier: number | null
   shopify_modifier: number | null
@@ -32,6 +37,11 @@ const initialForm: ProductForm = {
   talla: '',
   sku: '',
   ean: '',
+  // Physical dimensions and weight
+  height_cm: null,
+  length_cm: null,
+  thickness_cm: null,
+  weight_grams: null,
   costo: null,
   shein_modifier: 1.5,
   shopify_modifier: 2.0,
@@ -247,6 +257,60 @@ export default function NewProductModal({ isOpen, onClose, onSuccess }: NewProdu
                   onChange={(e) => handleInputChange('meli_modifier', e.target.value ? parseFloat(e.target.value) : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
                   placeholder="2.5"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Physical Dimensions */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <span className="mr-2">📐</span>
+              Dimensiones y Peso
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Alto (cm)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={form.height_cm || ''}
+                  onChange={(e) => handleInputChange('height_cm', e.target.value ? parseFloat(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  placeholder="12.5"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Largo (cm)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={form.length_cm || ''}
+                  onChange={(e) => handleInputChange('length_cm', e.target.value ? parseFloat(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  placeholder="30.0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Grosor (cm)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={form.thickness_cm || ''}
+                  onChange={(e) => handleInputChange('thickness_cm', e.target.value ? parseFloat(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  placeholder="11.0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Peso (g)</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={form.weight_grams || ''}
+                  onChange={(e) => handleInputChange('weight_grams', e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  placeholder="650"
                 />
               </div>
             </div>
