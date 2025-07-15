@@ -100,64 +100,67 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Process in batches to avoid timeout
+    const BATCH_SIZE = 100
     const results = []
     const errors = []
 
-    for (let i = 0; i < products.length; i++) {
-      const product = products[i]
-      
+    for (let batchStart = 0; batchStart < products.length; batchStart += BATCH_SIZE) {
+      const batch = products.slice(batchStart, batchStart + BATCH_SIZE)
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)}`)
+
+      // Prepare batch data
+      const batchData = batch.map(product => ({
+        categoria: product.categoria || null,
+        marca: product.marca || null,
+        modelo: product.modelo || null,
+        color: product.color || null,
+        talla: product.talla || null,
+        sku: product.sku || null,
+        ean: product.ean || null,
+        costo: product.costo || null,
+        google_drive: product.google_drive || null,
+        // Physical dimensions and weight
+        height_cm: product.height_cm || null,
+        length_cm: product.length_cm || null,
+        thickness_cm: product.thickness_cm || null,
+        weight_grams: product.weight_grams || null,
+        shein_modifier: product.shein_modifier || 1.5,
+        shopify_modifier: product.shopify_modifier || 2.0,
+        meli_modifier: product.meli_modifier || 2.5,
+        inv_egdc: product.inv_egdc || 0,
+        inv_fami: product.inv_fami || 0,
+        inv_osiel: product.inv_osiel || 0,
+        inv_molly: product.inv_molly || 0,
+        shein: product.shein || false,
+        meli: product.meli || false,
+        shopify: product.shopify || false,
+        tiktok: product.tiktok || false,
+        upseller: product.upseller || false,
+        go_trendier: product.go_trendier || false
+      }))
+
       try {
-        // Set default values
-        const productData = {
-          categoria: product.categoria || null,
-          marca: product.marca || null,
-          modelo: product.modelo || null,
-          color: product.color || null,
-          talla: product.talla || null,
-          sku: product.sku || null,
-          ean: product.ean || null,
-          costo: product.costo || null,
-          google_drive: product.google_drive || null,
-          // Physical dimensions and weight
-          height_cm: product.height_cm || null,
-          length_cm: product.length_cm || null,
-          thickness_cm: product.thickness_cm || null,
-          weight_grams: product.weight_grams || null,
-          shein_modifier: product.shein_modifier || 1.5,
-          shopify_modifier: product.shopify_modifier || 2.0,
-          meli_modifier: product.meli_modifier || 2.5,
-          inv_egdc: product.inv_egdc || 0,
-          inv_fami: product.inv_fami || 0,
-          inv_osiel: product.inv_osiel || 0,
-          inv_molly: product.inv_molly || 0,
-          shein: product.shein || false,
-          meli: product.meli || false,
-          shopify: product.shopify || false,
-          tiktok: product.tiktok || false,
-          upseller: product.upseller || false,
-          go_trendier: product.go_trendier || false
-        }
-
-        // Create the product
-        const createdProduct = await PostgresManager.createProduct(productData)
-
-        // Log the creation
-        await PostgresManager.logChange(
-          createdProduct.id,
-          'created',
-          null,
-          `Bulk import - ${productData.categoria} - ${productData.marca} ${productData.modelo}`,
-          'bulk_import'
-        )
-
-        results.push(createdProduct)
+        // Use batch insert for better performance
+        const batchResults = await PostgresManager.batchCreateProducts(batchData)
+        results.push(...batchResults)
       } catch (error) {
-        console.error(`Error importing product ${i + 1}:`, error)
-        errors.push({ 
-          error: error instanceof Error ? error.message : 'Unknown error', 
-          product,
-          index: i + 1
-        })
+        console.error(`Error importing batch starting at ${batchStart}:`, error)
+        // Fall back to individual processing for this batch
+        for (let i = 0; i < batch.length; i++) {
+          const product = batch[i]
+          try {
+            const createdProduct = await PostgresManager.createProduct(batchData[i])
+            results.push(createdProduct)
+          } catch (individualError) {
+            console.error(`Error importing product ${batchStart + i + 1}:`, individualError)
+            errors.push({ 
+              error: individualError instanceof Error ? individualError.message : 'Unknown error', 
+              product,
+              index: batchStart + i + 1
+            })
+          }
+        }
       }
     }
 

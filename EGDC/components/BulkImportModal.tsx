@@ -350,7 +350,9 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, existingPr
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ products: parsedData })
+        body: JSON.stringify({ products: parsedData }),
+        // Increase timeout for large imports
+        signal: AbortSignal.timeout(300000) // 5 minutes
       })
 
       const result = await response.json()

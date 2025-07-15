@@ -109,6 +109,35 @@ export class PostgresManager {
     return result.rows[0]
   }
 
+  static async batchCreateProducts(products: any[]) {
+    if (products.length === 0) return []
+    
+    // Get field names from the first product
+    const fields = Object.keys(products[0]).filter(key => key !== 'id')
+    
+    // Build batch insert query
+    const valueRows = []
+    const allValues = []
+    
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i]
+      const productValues = fields.map(field => product[field])
+      const placeholders = fields.map((_, fieldIndex) => `$${allValues.length + fieldIndex + 1}`)
+      
+      valueRows.push(`(${placeholders.join(', ')})`)
+      allValues.push(...productValues)
+    }
+    
+    const query = `
+      INSERT INTO products (${fields.join(', ')})
+      VALUES ${valueRows.join(', ')}
+      RETURNING *
+    `
+    
+    const result = await this.query(query, allValues)
+    return result.rows
+  }
+
   static async updateProduct(id: number, updates: any) {
     // Check for duplicates if SKU or EAN are being updated
     if (updates.sku !== undefined || updates.ean !== undefined) {
