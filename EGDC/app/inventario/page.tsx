@@ -172,6 +172,13 @@ export default function InventarioPage() {
     }
   }, [filters, allData, activeWarehouse])
 
+  // Apply sorting when sortConfig changes
+  useEffect(() => {
+    if (allData.length > 0) {
+      applyFilters()
+    }
+  }, [sortConfig])
+
   // Reload data when filters change (for server-side filtering)
   useEffect(() => {
     if (currentPage > 1) {
