@@ -20,11 +20,11 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       disabled: false
     },
     {
-      id: 'productos',
-      label: 'Productos',
-      href: '/productos',
-      active: pathname === '/productos',
-      disabled: true
+      id: 'inventario',
+      label: 'Inventario',
+      href: '/inventario',
+      active: pathname === '/inventario',
+      disabled: false
     },
     {
       id: 'ventas',
@@ -32,13 +32,6 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       href: '/ventas',
       active: pathname === '/ventas',
       disabled: true
-    },
-    {
-      id: 'inventario',
-      label: 'Inventario',
-      href: '/inventario',
-      active: pathname === '/inventario',
-      disabled: false
     },
     {
       id: 'compras',
