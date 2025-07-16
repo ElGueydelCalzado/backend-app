@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X, RotateCcw } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { X, RotateCcw, ChevronDown } from 'lucide-react'
 import { Product } from '@/lib/types'
 
 interface Filters {
@@ -38,6 +38,103 @@ const FILTER_TABS = [
   { id: 'ordenar' as FilterTab, label: 'ORDENAR', icon: '🔄' }
 ]
 
+interface CompactDropdownProps {
+  label: string
+  icon: string
+  options: string[]
+  selectedValues: Set<string>
+  onSelectionChange: (value: string, checked: boolean) => void
+  disabled?: boolean
+}
+
+function CompactDropdown({ 
+  label, 
+  icon, 
+  options, 
+  selectedValues, 
+  onSelectionChange, 
+  disabled = false 
+}: CompactDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const selectedCount = selectedValues.size
+  const hasSelection = selectedCount > 0
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled || options.length === 0}
+        className={`
+          w-full px-3 py-2 text-left text-sm border rounded-lg transition-colors
+          flex items-center justify-between
+          ${disabled || options.length === 0
+            ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+            : hasSelection
+              ? 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
+              : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+          }
+        `}
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span>{icon}</span>
+          <span className="truncate">{label}</span>
+          {hasSelection && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-orange-200 text-orange-800 rounded-full flex-shrink-0">
+              {selectedCount}
+            </span>
+          )}
+        </div>
+        <ChevronDown 
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-500 text-center">
+              No {label.toLowerCase()} disponibles
+            </div>
+          ) : (
+            <div className="py-1">
+              {options.map((option) => (
+                <label
+                  key={option}
+                  className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedValues.has(option)}
+                    onChange={(e) => onSelectionChange(option, e.target.checked)}
+                    className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 mr-3"
+                  />
+                  <span className="text-sm text-gray-700 truncate">{option}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FilterPopupModal({
   isOpen,
   onClose,
@@ -51,81 +148,129 @@ export default function FilterPopupModal({
 
   if (!isOpen) return null
 
-  // Calculate available options based on current filters for a specific filter type
-  const getAvailableOptions = (filterType: keyof Filters) => {
-    const hasOtherFilters = Object.keys(filters).some(key => 
-      key !== filterType && (filters[key as keyof Filters] as Set<string>).size > 0
-    )
-    
-    if (!hasOtherFilters) {
-      return Array.from(uniqueValues[filterType]).sort()
-    }
+  // Create filter keys for memoization dependencies
+  const filterKeys = useMemo(() => ({
+    categoriesArray: Array.from(filters.categories).sort(),
+    brandsArray: Array.from(filters.brands).sort(),
+    modelsArray: Array.from(filters.models).sort(),
+    colorsArray: Array.from(filters.colors).sort(),
+    sizesArray: Array.from(filters.sizes).sort()
+  }), [filters])
 
-    const availableOptions = new Set<string>()
+  // Memoized available brands calculation
+  const availableBrands = useMemo(() => {
+    if (filterKeys.categoriesArray.length === 0) return Array.from(uniqueValues.brands).sort()
     
+    const brands = new Set<string>()
     allData.forEach(item => {
-      // Check if item matches all other active filters
-      const matchesOtherFilters = Object.keys(filters).every(key => {
-        if (key === filterType) return true
-        const filterSet = filters[key as keyof Filters] as Set<string>
-        if (filterSet.size === 0) return true
-        const itemValue = item[key as keyof Product] as string
-        return itemValue && filterSet.has(itemValue)
-      })
-
-      if (matchesOtherFilters) {
-        const value = item[filterType as keyof Product] as string
-        if (value) availableOptions.add(value)
+      if (item.categoria && filters.categories.has(item.categoria) && item.marca) {
+        brands.add(item.marca)
       }
     })
+    return Array.from(brands).sort()
+  }, [allData, filterKeys.categoriesArray, filters.categories, uniqueValues.brands])
+
+  // Memoized available models calculation
+  const availableModels = useMemo(() => {
+    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0) {
+      return Array.from(uniqueValues.models).sort()
+    }
     
-    return Array.from(availableOptions).sort()
-  }
+    const models = new Set<string>()
+    allData.forEach(item => {
+      const categoryMatch = filters.categories.size === 0 || (item.categoria && filters.categories.has(item.categoria))
+      const brandMatch = filters.brands.size === 0 || (item.marca && filters.brands.has(item.marca))
+      
+      if (categoryMatch && brandMatch && item.modelo) {
+        models.add(item.modelo)
+      }
+    })
+    return Array.from(models).sort()
+  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filters.categories, filters.brands, uniqueValues.models])
 
-  const renderFilterGroup = (filterType: keyof Filters, title: string) => {
-    const options = getAvailableOptions(filterType)
-    const activeFilters = filters[filterType]
+  // Memoized available colors calculation
+  const availableColors = useMemo(() => {
+    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0 && filterKeys.modelsArray.length === 0) {
+      return Array.from(uniqueValues.colors).sort()
+    }
+    
+    const colors = new Set<string>()
+    allData.forEach(item => {
+      const categoryMatch = filters.categories.size === 0 || (item.categoria && filters.categories.has(item.categoria))
+      const brandMatch = filters.brands.size === 0 || (item.marca && filters.brands.has(item.marca))
+      const modelMatch = filters.models.size === 0 || (item.modelo && filters.models.has(item.modelo))
+      
+      if (categoryMatch && brandMatch && modelMatch && item.color) {
+        colors.add(item.color)
+      }
+    })
+    return Array.from(colors).sort()
+  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filterKeys.modelsArray, filters.categories, filters.brands, filters.models, uniqueValues.colors])
 
-    return (
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-900 mb-3">{title}</h4>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
-          {options.map((option) => (
-            <label
-              key={option}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer group"
-            >
-              <input
-                type="checkbox"
-                checked={activeFilters.has(option)}
-                onChange={(e) => onFilterChange(filterType, option, e.target.checked)}
-                className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
-              />
-              <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                {option}
-              </span>
-            </label>
-          ))}
-          {options.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">
-              No {title.toLowerCase()} available
-            </p>
-          )}
-        </div>
-      </div>
-    )
-  }
+  // Memoized available sizes calculation
+  const availableSizes = useMemo(() => {
+    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0 && filterKeys.modelsArray.length === 0 && filterKeys.colorsArray.length === 0) {
+      return Array.from(uniqueValues.sizes).sort()
+    }
+    
+    const sizes = new Set<string>()
+    allData.forEach(item => {
+      const categoryMatch = filters.categories.size === 0 || (item.categoria && filters.categories.has(item.categoria))
+      const brandMatch = filters.brands.size === 0 || (item.marca && filters.brands.has(item.marca))
+      const modelMatch = filters.models.size === 0 || (item.modelo && filters.models.has(item.modelo))
+      const colorMatch = filters.colors.size === 0 || (item.color && filters.colors.has(item.color))
+      
+      if (categoryMatch && brandMatch && modelMatch && colorMatch && item.talla) {
+        sizes.add(item.talla)
+      }
+    })
+    return Array.from(sizes).sort()
+  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filterKeys.modelsArray, filterKeys.colorsArray, filters.categories, filters.brands, filters.models, filters.colors, uniqueValues.sizes])
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'filtros':
         return (
-          <div className="space-y-6 max-h-96 overflow-y-auto">
-            {renderFilterGroup('categories', 'Categories')}
-            {renderFilterGroup('brands', 'Brands')}
-            {renderFilterGroup('models', 'Models')}
-            {renderFilterGroup('colors', 'Colors')}
-            {renderFilterGroup('sizes', 'Sizes')}
+          <div className="space-y-4">
+            <CompactDropdown
+              label="Categorías"
+              icon="📂"
+              options={Array.from(uniqueValues.categories).sort()}
+              selectedValues={filters.categories}
+              onSelectionChange={(value, checked) => onFilterChange('categories', value, checked)}
+            />
+            <CompactDropdown
+              label="Marcas"
+              icon="🏷️"
+              options={availableBrands}
+              selectedValues={filters.brands}
+              onSelectionChange={(value, checked) => onFilterChange('brands', value, checked)}
+              disabled={filters.categories.size === 0}
+            />
+            <CompactDropdown
+              label="Modelos"
+              icon="📦"
+              options={availableModels}
+              selectedValues={filters.models}
+              onSelectionChange={(value, checked) => onFilterChange('models', value, checked)}
+              disabled={filters.categories.size === 0 && filters.brands.size === 0}
+            />
+            <CompactDropdown
+              label="Colores"
+              icon="🎨"
+              options={availableColors}
+              selectedValues={filters.colors}
+              onSelectionChange={(value, checked) => onFilterChange('colors', value, checked)}
+              disabled={filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0}
+            />
+            <CompactDropdown
+              label="Tallas"
+              icon="📏"
+              options={availableSizes}
+              selectedValues={filters.sizes}
+              onSelectionChange={(value, checked) => onFilterChange('sizes', value, checked)}
+              disabled={filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0 && filters.colors.size === 0}
+            />
           </div>
         )
       case 'columnas':
