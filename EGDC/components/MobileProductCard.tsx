@@ -176,9 +176,6 @@ export default function MobileProductCard({
           transition: isDragging ? 'none' : 'transform 0.2s ease-out'
         }}
         onClick={handleCardClick}
-        onTouchStart={handleSwipeStart}
-        onTouchMove={handleSwipeMove}
-        onTouchEnd={handleSwipeEnd}
       >
       
       {/* Compact Card Content */}
