@@ -148,18 +148,9 @@ export default function FilterPopupModal({
 
   if (!isOpen) return null
 
-  // Create filter keys for memoization dependencies
-  const filterKeys = useMemo(() => ({
-    categoriesArray: Array.from(filters.categories).sort(),
-    brandsArray: Array.from(filters.brands).sort(),
-    modelsArray: Array.from(filters.models).sort(),
-    colorsArray: Array.from(filters.colors).sort(),
-    sizesArray: Array.from(filters.sizes).sort()
-  }), [filters])
-
-  // Memoized available brands calculation
-  const availableBrands = useMemo(() => {
-    if (filterKeys.categoriesArray.length === 0) return Array.from(uniqueValues.brands).sort()
+  // Simple calculations without complex memoization to avoid React errors
+  const getAvailableBrands = () => {
+    if (filters.categories.size === 0) return Array.from(uniqueValues.brands).sort()
     
     const brands = new Set<string>()
     allData.forEach(item => {
@@ -168,11 +159,10 @@ export default function FilterPopupModal({
       }
     })
     return Array.from(brands).sort()
-  }, [allData, filterKeys.categoriesArray, filters.categories, uniqueValues.brands])
+  }
 
-  // Memoized available models calculation
-  const availableModels = useMemo(() => {
-    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0) {
+  const getAvailableModels = () => {
+    if (filters.categories.size === 0 && filters.brands.size === 0) {
       return Array.from(uniqueValues.models).sort()
     }
     
@@ -186,11 +176,10 @@ export default function FilterPopupModal({
       }
     })
     return Array.from(models).sort()
-  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filters.categories, filters.brands, uniqueValues.models])
+  }
 
-  // Memoized available colors calculation
-  const availableColors = useMemo(() => {
-    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0 && filterKeys.modelsArray.length === 0) {
+  const getAvailableColors = () => {
+    if (filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0) {
       return Array.from(uniqueValues.colors).sort()
     }
     
@@ -205,11 +194,10 @@ export default function FilterPopupModal({
       }
     })
     return Array.from(colors).sort()
-  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filterKeys.modelsArray, filters.categories, filters.brands, filters.models, uniqueValues.colors])
+  }
 
-  // Memoized available sizes calculation
-  const availableSizes = useMemo(() => {
-    if (filterKeys.categoriesArray.length === 0 && filterKeys.brandsArray.length === 0 && filterKeys.modelsArray.length === 0 && filterKeys.colorsArray.length === 0) {
+  const getAvailableSizes = () => {
+    if (filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0 && filters.colors.size === 0) {
       return Array.from(uniqueValues.sizes).sort()
     }
     
@@ -225,7 +213,7 @@ export default function FilterPopupModal({
       }
     })
     return Array.from(sizes).sort()
-  }, [allData, filterKeys.categoriesArray, filterKeys.brandsArray, filterKeys.modelsArray, filterKeys.colorsArray, filters.categories, filters.brands, filters.models, filters.colors, uniqueValues.sizes])
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -242,7 +230,7 @@ export default function FilterPopupModal({
             <CompactDropdown
               label="Marcas"
               icon="🏷️"
-              options={availableBrands}
+              options={getAvailableBrands()}
               selectedValues={filters.brands}
               onSelectionChange={(value, checked) => onFilterChange('brands', value, checked)}
               disabled={filters.categories.size === 0}
@@ -250,7 +238,7 @@ export default function FilterPopupModal({
             <CompactDropdown
               label="Modelos"
               icon="📦"
-              options={availableModels}
+              options={getAvailableModels()}
               selectedValues={filters.models}
               onSelectionChange={(value, checked) => onFilterChange('models', value, checked)}
               disabled={filters.categories.size === 0 && filters.brands.size === 0}
@@ -258,7 +246,7 @@ export default function FilterPopupModal({
             <CompactDropdown
               label="Colores"
               icon="🎨"
-              options={availableColors}
+              options={getAvailableColors()}
               selectedValues={filters.colors}
               onSelectionChange={(value, checked) => onFilterChange('colors', value, checked)}
               disabled={filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0}
@@ -266,7 +254,7 @@ export default function FilterPopupModal({
             <CompactDropdown
               label="Tallas"
               icon="📏"
-              options={availableSizes}
+              options={getAvailableSizes()}
               selectedValues={filters.sizes}
               onSelectionChange={(value, checked) => onFilterChange('sizes', value, checked)}
               disabled={filters.categories.size === 0 && filters.brands.size === 0 && filters.models.size === 0 && filters.colors.size === 0}
