@@ -30,14 +30,12 @@ interface FilterPopupModalProps {
   onClearFilters: () => void
 }
 
-type FilterTab = 'categories' | 'brands' | 'models' | 'colors' | 'sizes'
+type FilterTab = 'filtros' | 'columnas' | 'ordenar'
 
 const FILTER_TABS = [
-  { id: 'categories' as FilterTab, label: 'Categories', icon: '📂' },
-  { id: 'brands' as FilterTab, label: 'Brands', icon: '🏷️' },
-  { id: 'models' as FilterTab, label: 'Models', icon: '📦' },
-  { id: 'colors' as FilterTab, label: 'Colors', icon: '🎨' },
-  { id: 'sizes' as FilterTab, label: 'Sizes', icon: '📏' }
+  { id: 'filtros' as FilterTab, label: 'FILTROS', icon: '⚗️' },
+  { id: 'columnas' as FilterTab, label: 'COLUMNAS', icon: '📊' },
+  { id: 'ordenar' as FilterTab, label: 'ORDENAR', icon: '🔄' }
 ]
 
 export default function FilterPopupModal({
@@ -49,12 +47,12 @@ export default function FilterPopupModal({
   onFilterChange,
   onClearFilters
 }: FilterPopupModalProps) {
-  const [activeTab, setActiveTab] = useState<FilterTab>('categories')
+  const [activeTab, setActiveTab] = useState<FilterTab>('filtros')
 
   if (!isOpen) return null
 
-  // Calculate available options based on current filters
-  const getAvailableOptions = (filterType: FilterTab) => {
+  // Calculate available options based on current filters for a specific filter type
+  const getAvailableOptions = (filterType: keyof Filters) => {
     const hasOtherFilters = Object.keys(filters).some(key => 
       key !== filterType && (filters[key as keyof Filters] as Set<string>).size > 0
     )
@@ -84,35 +82,67 @@ export default function FilterPopupModal({
     return Array.from(availableOptions).sort()
   }
 
-  const renderFilterOptions = (filterType: FilterTab) => {
+  const renderFilterGroup = (filterType: keyof Filters, title: string) => {
     const options = getAvailableOptions(filterType)
     const activeFilters = filters[filterType]
 
     return (
-      <div className="space-y-2 max-h-80 overflow-y-auto">
-        {options.map((option) => (
-          <label
-            key={option}
-            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer group"
-          >
-            <input
-              type="checkbox"
-              checked={activeFilters.has(option)}
-              onChange={(e) => onFilterChange(filterType, option, e.target.checked)}
-              className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
-            />
-            <span className="text-sm text-gray-700 group-hover:text-gray-900">
-              {option}
-            </span>
-          </label>
-        ))}
-        {options.length === 0 && (
-          <p className="text-sm text-gray-500 text-center py-8">
-            No {filterType} available
-          </p>
-        )}
+      <div className="mb-6">
+        <h4 className="text-sm font-medium text-gray-900 mb-3">{title}</h4>
+        <div className="space-y-2 max-h-40 overflow-y-auto">
+          {options.map((option) => (
+            <label
+              key={option}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer group"
+            >
+              <input
+                type="checkbox"
+                checked={activeFilters.has(option)}
+                onChange={(e) => onFilterChange(filterType, option, e.target.checked)}
+                className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                {option}
+              </span>
+            </label>
+          ))}
+          {options.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4">
+              No {title.toLowerCase()} available
+            </p>
+          )}
+        </div>
       </div>
     )
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'filtros':
+        return (
+          <div className="space-y-6 max-h-96 overflow-y-auto">
+            {renderFilterGroup('categories', 'Categories')}
+            {renderFilterGroup('brands', 'Brands')}
+            {renderFilterGroup('models', 'Models')}
+            {renderFilterGroup('colors', 'Colors')}
+            {renderFilterGroup('sizes', 'Sizes')}
+          </div>
+        )
+      case 'columnas':
+        return (
+          <div className="text-center py-8 text-gray-500">
+            <p>Column controls coming soon</p>
+          </div>
+        )
+      case 'ordenar':
+        return (
+          <div className="text-center py-8 text-gray-500">
+            <p>Sort controls coming soon</p>
+          </div>
+        )
+      default:
+        return null
+    }
   }
 
   const getTotalActiveFilters = () => {
@@ -169,9 +199,9 @@ export default function FilterPopupModal({
               >
                 <span className="text-xs">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-                {filters[tab.id].size > 0 && (
+                {tab.id === 'filtros' && getTotalActiveFilters() > 0 && (
                   <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-orange-100 text-orange-700 rounded-full">
-                    {filters[tab.id].size}
+                    {getTotalActiveFilters()}
                   </span>
                 )}
               </button>
@@ -181,7 +211,7 @@ export default function FilterPopupModal({
           {/* Tab Content */}
           <div className="flex-1 p-4 overflow-hidden">
             <div className="h-full">
-              {renderFilterOptions(activeTab)}
+              {renderTabContent()}
             </div>
           </div>
 
