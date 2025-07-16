@@ -60,22 +60,27 @@ export default function MobileProductCard({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isExpanded) return // Don't allow swiping when expanded
     
-    // Don't prevent default on touch start - allow natural scrolling to begin
+    // Just record the initial touch position - don't set dragging yet
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     currentX.current = e.touches[0].clientX
-    setIsDragging(true)
+    // Don't setIsDragging(true) here - wait for actual movement
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isExpanded) return
+    if (isExpanded) return
 
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
     const deltaY = e.touches[0].clientY - startY.current
 
-    // Only prevent default if horizontal movement is dominant AND significant
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+    // Only start dragging mode when there's clear horizontal movement
+    if (!isDragging && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) {
+      setIsDragging(true)
+    }
+
+    // Only prevent default if we're in dragging mode (horizontal movement confirmed)
+    if (isDragging) {
       e.preventDefault()
       e.stopPropagation()
       
@@ -86,14 +91,14 @@ export default function MobileProductCard({
       }
     }
 
-    // Only allow left swipe for delete (and only when horizontal movement is significant)
-    if (deltaX < 0 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    // Only allow left swipe for delete (and only when we're in dragging mode)
+    if (isDragging && deltaX < 0) {
       // Left swipe - show delete panel
       const clampedOffset = Math.max(deltaX, -100) // Limit to 100px
       setSwipeOffset(clampedOffset)
       setShowDeletePanel(true)
-    } else {
-      // No right swipe or vertical movement - reset position
+    } else if (isDragging) {
+      // No right swipe - reset position
       setSwipeOffset(0)
       setShowDeletePanel(false)
     }
@@ -148,19 +153,13 @@ export default function MobileProductCard({
     setShowDeletePanel(false)
   }
 
-  // Add selective document-level touch prevention during swipe (only horizontal)
+  // Add selective document-level touch prevention during swipe (only when actually dragging)
   useEffect(() => {
     const handleDocumentTouchMove = (e: TouchEvent) => {
       if (isDragging) {
-        const touch = e.touches[0]
-        const deltaX = Math.abs(touch.clientX - startX.current)
-        const deltaY = Math.abs(touch.clientY - startY.current)
-        
-        // Only prevent if horizontal movement is dominant AND significant
-        if (deltaX > deltaY && deltaX > 10) {
-          e.preventDefault()
-          e.stopPropagation()
-        }
+        // Since we're already in dragging mode, prevent all document movement
+        e.preventDefault()
+        e.stopPropagation()
       }
     }
 
