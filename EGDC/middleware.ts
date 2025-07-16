@@ -4,6 +4,12 @@ import { getToken } from 'next-auth/jwt'
 
 export default async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
+  
+  // Skip authentication in preview environment
+  if (process.env.SKIP_AUTH === 'true') {
+    return NextResponse.next()
+  }
+  
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
   const isAuthenticated = !!token
   
