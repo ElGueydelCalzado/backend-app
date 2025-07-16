@@ -11,6 +11,7 @@ import TabNavigation from '@/components/TabNavigation'
 import Sidebar, { SidebarState } from '@/components/Sidebar'
 import SidebarTabs from '@/components/SidebarTabs'
 import SearchBar from '@/components/SearchBar'
+import UnifiedSearchAndFilters from '@/components/UnifiedSearchAndFilters'
 import ProductCollectionWizard from '@/components/ProductCollectionWizard'
 import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
@@ -124,6 +125,9 @@ export default function InventarioPage() {
   })
   
   const [showMobileSort, setShowMobileSort] = useState(false)
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('')
   
   // Warehouse filtering state
   const [activeWarehouse, setActiveWarehouse] = useState<WarehouseFilter>('egdc')
@@ -313,6 +317,17 @@ export default function InventarioPage() {
     }
     
     setFilters(newFilters)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({
+      categories: new Set(),
+      brands: new Set(),
+      models: new Set(),
+      colors: new Set(),
+      sizes: new Set(),
+      priceRange: { min: 0, max: 10000 }
+    })
   }
 
   // Warehouse filtering functions
@@ -1565,15 +1580,20 @@ export default function InventarioPage() {
                 isDemoMode={useDummyData}
               />
 
-              {/* Search Bar and Actions */}
-              <div className="px-6 py-2 bg-white border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  <SearchBar
-                    allData={allData}
-                    onSearchResults={handleSearchResults}
-                    onClearSearch={handleClearSearch}
-                    className="flex-1 max-w-lg"
-                  />
+              {/* Unified Search Bar and Actions */}
+              <div className="px-6 py-4 bg-white border-b border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 max-w-2xl">
+                    <UnifiedSearchAndFilters
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      filters={filters}
+                      uniqueValues={uniqueValues}
+                      allData={allData}
+                      onFilterChange={handleFilterChange}
+                      onClearFilters={handleClearFilters}
+                    />
+                  </div>
                   
                   <button
                     onClick={() => setShowNewProductModal(true)}
