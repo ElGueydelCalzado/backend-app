@@ -5,10 +5,69 @@ import { useState } from 'react'
 export type SidebarState = 'collapsed' | 'open' | 'hover'
 
 interface SidebarProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   state: SidebarState
   onStateChange: (state: SidebarState) => void
   className?: string
+}
+
+// Simple sidebar tabs component
+function SimpleSidebarTabs() {
+  const [activeTab, setActiveTab] = useState('tab1')
+  
+  const tabs = [
+    { id: 'tab1', label: 'Tab 1', icon: '📋' },
+    { id: 'tab2', label: 'Tab 2', icon: '📊' },
+    { id: 'tab3', label: 'Tab 3', icon: '⚙️' }
+  ]
+  
+  return (
+    <div className="h-full flex flex-col">
+      {/* Tab Headers */}
+      <div className="flex border-b border-gray-200 bg-gray-50">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`
+              flex-1 px-2 py-3 text-sm font-medium transition-colors
+              ${activeTab === tab.id
+                ? 'bg-white text-orange-700 border-b-2 border-orange-500'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }
+            `}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg">{tab.icon}</span>
+              <span className="text-xs">{tab.label}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {activeTab === 'tab1' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Tab 1 Content</h3>
+            <p className="text-sm text-gray-600">This is the content for Tab 1.</p>
+          </div>
+        )}
+        {activeTab === 'tab2' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Tab 2 Content</h3>
+            <p className="text-sm text-gray-600">This is the content for Tab 2.</p>
+          </div>
+        )}
+        {activeTab === 'tab3' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Tab 3 Content</h3>
+            <p className="text-sm text-gray-600">This is the content for Tab 3.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function Sidebar({ children, state, onStateChange, className = '' }: SidebarProps) {
@@ -76,7 +135,7 @@ export default function Sidebar({ children, state, onStateChange, className = ''
           flex items-center justify-center
           text-xs
         "
-        title={state === 'collapsed' ? 'Expandir filtros' : 'Contraer filtros'}
+        title={state === 'collapsed' ? 'Expandir panel' : 'Contraer panel'}
       >
         {state === 'collapsed' ? '→' : '←'}
       </button>
@@ -89,28 +148,28 @@ export default function Sidebar({ children, state, onStateChange, className = ''
             <div className="flex flex-col items-center space-y-3">
               <div 
                 className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Filtros"
+                title="Tab 1"
               >
-                ⚡
+                1
               </div>
               <div 
                 className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Estadísticas"
+                title="Tab 2"
               >
-                📊
+                2
               </div>
               <div 
                 className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Columnas"
+                title="Tab 3"
               >
-                👁
+                3
               </div>
             </div>
           </div>
         ) : (
-          /* Expanded States - Full Content (Open or Hover) */
-          <div className={`h-full overflow-y-auto ${state === 'hover' ? 'opacity-95' : 'opacity-100'}`}>
-            {children}
+          /* Expanded State - Full Content */
+          <div className="h-full flex flex-col pt-12">
+            <SimpleSidebarTabs />
           </div>
         )}
       </div>

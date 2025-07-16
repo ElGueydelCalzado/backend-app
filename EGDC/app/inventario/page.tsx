@@ -9,7 +9,6 @@ import ToastNotification, { useToast } from '@/components/ToastNotification'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import TabNavigation from '@/components/TabNavigation'
 import Sidebar, { SidebarState } from '@/components/Sidebar'
-import SidebarTabs from '@/components/SidebarTabs'
 import SearchBar from '@/components/SearchBar'
 import UnifiedSearchAndFilters from '@/components/UnifiedSearchAndFilters'
 import ProductCollectionWizard from '@/components/ProductCollectionWizard'
@@ -92,7 +91,7 @@ export default function InventarioPage() {
   const { toasts, showToast, removeToast } = useToast()
   
   // Sidebar and column state
-  const [sidebarState, setSidebarState] = useState<SidebarState>('open')
+  const [sidebarState, setSidebarState] = useState<SidebarState>('collapsed')
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
@@ -1555,20 +1554,7 @@ export default function InventarioPage() {
               state={sidebarState} 
               onStateChange={setSidebarState}
               className="flex-shrink-0"
-            >
-              <SidebarTabs
-                filters={filters}
-                uniqueValues={uniqueValues}
-                allData={allData}
-                onFilterChange={handleFilterChange}
-                columnConfig={columnConfig}
-                onColumnToggle={handleColumnToggle}
-                onPresetSelect={handlePresetSelect}
-                sortConfig={sortConfig}
-                onSortChange={setSortConfig}
-                compact={false}
-              />
-            </Sidebar>
+            />
             
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
