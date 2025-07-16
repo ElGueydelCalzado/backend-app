@@ -47,7 +47,7 @@ export default function SidebarTabs({
     {
       id: 'filtros' as const,
       label: 'Filtros',
-      icon: '🔍',
+      icon: '⚗️',
       count: filters.categories.size + filters.brands.size + filters.models.size + filters.colors.size + filters.sizes.size
     },
     {
