@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Product } from '@/lib/types'
 import UnifiedSearchBar from './UnifiedSearchBar'
 import FilterPopupModal from './FilterPopupModal'
+import { ColumnConfig } from './ColumnControls'
 
 interface Filters {
   categories: Set<string>
@@ -11,6 +12,12 @@ interface Filters {
   models: Set<string>
   colors: Set<string>
   sizes: Set<string>
+}
+
+interface SortConfig {
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
+  direction: 'asc' | 'desc'
+  priceFields?: ('precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo')[]
 }
 
 interface UniqueValues {
@@ -29,6 +36,15 @@ interface UnifiedSearchAndFiltersProps {
   allData: Product[]
   onFilterChange: (filterType: keyof Filters, value: string, checked: boolean) => void
   onClearFilters: () => void
+  
+  // Column props
+  columnConfig: ColumnConfig[]
+  onColumnToggle: (key: string, visible: boolean) => void
+  onPresetSelect: (preset: string) => void
+  
+  // Sort props
+  sortConfig?: SortConfig
+  onSortChange?: (config: SortConfig) => void
 }
 
 export default function UnifiedSearchAndFilters({
@@ -38,7 +54,12 @@ export default function UnifiedSearchAndFilters({
   uniqueValues,
   allData,
   onFilterChange,
-  onClearFilters
+  onClearFilters,
+  columnConfig,
+  onColumnToggle,
+  onPresetSelect,
+  sortConfig,
+  onSortChange
 }: UnifiedSearchAndFiltersProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
@@ -71,6 +92,11 @@ export default function UnifiedSearchAndFilters({
         allData={allData}
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
+        columnConfig={columnConfig}
+        onColumnToggle={onColumnToggle}
+        onPresetSelect={onPresetSelect}
+        sortConfig={sortConfig}
+        onSortChange={onSortChange}
       />
     </div>
   )

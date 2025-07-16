@@ -1592,6 +1592,11 @@ export default function InventarioPage() {
                       allData={allData}
                       onFilterChange={handleFilterChange}
                       onClearFilters={handleClearFilters}
+                      columnConfig={columnConfig}
+                      onColumnToggle={handleColumnToggle}
+                      onPresetSelect={handlePresetSelect}
+                      sortConfig={sortConfig}
+                      onSortChange={setSortConfig}
                     />
                   </div>
                   

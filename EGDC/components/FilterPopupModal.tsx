@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { X, RotateCcw, ChevronDown } from 'lucide-react'
 import { Product } from '@/lib/types'
+import ColumnControls, { ColumnConfig } from './ColumnControls'
 
 interface Filters {
   categories: Set<string>
@@ -10,6 +11,12 @@ interface Filters {
   models: Set<string>
   colors: Set<string>
   sizes: Set<string>
+}
+
+interface SortConfig {
+  field: 'alphabetical' | 'price' | 'stock' | 'date'
+  direction: 'asc' | 'desc'
+  priceFields?: ('precio_shein' | 'precio_shopify' | 'precio_meli' | 'costo')[]
 }
 
 interface UniqueValues {
@@ -28,6 +35,15 @@ interface FilterPopupModalProps {
   allData: Product[]
   onFilterChange: (filterType: keyof Filters, value: string, checked: boolean) => void
   onClearFilters: () => void
+  
+  // Column props
+  columnConfig: ColumnConfig[]
+  onColumnToggle: (key: string, visible: boolean) => void
+  onPresetSelect: (preset: string) => void
+  
+  // Sort props
+  sortConfig?: SortConfig
+  onSortChange?: (config: SortConfig) => void
 }
 
 type FilterTab = 'filtros' | 'columnas' | 'ordenar'
@@ -142,7 +158,12 @@ export default function FilterPopupModal({
   uniqueValues,
   allData,
   onFilterChange,
-  onClearFilters
+  onClearFilters,
+  columnConfig,
+  onColumnToggle,
+  onPresetSelect,
+  sortConfig,
+  onSortChange
 }: FilterPopupModalProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('filtros')
 
@@ -263,14 +284,85 @@ export default function FilterPopupModal({
         )
       case 'columnas':
         return (
-          <div className="text-center py-8 text-gray-500">
-            <p>Column controls coming soon</p>
+          <div className="h-full">
+            <ColumnControls
+              columns={columnConfig}
+              onColumnToggle={onColumnToggle}
+              onPresetSelect={onPresetSelect}
+              compact={false}
+            />
           </div>
         )
       case 'ordenar':
-        return (
+        return sortConfig && onSortChange ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">🔄</span>
+                Ordenar
+              </h3>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-orange-800">
+                  <strong>Ordenando por:</strong> {(() => {
+                    const sortOptions = [
+                      { field: 'alphabetical', direction: 'asc', label: 'A-Z (Alfabético)' },
+                      { field: 'alphabetical', direction: 'desc', label: 'Z-A (Alfabético)' },
+                      { field: 'price', direction: 'asc', label: 'Precio: Menor a Mayor' },
+                      { field: 'price', direction: 'desc', label: 'Precio: Mayor a Menor' },
+                      { field: 'stock', direction: 'desc', label: 'Stock: Mayor a Menor' },
+                      { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor' },
+                      { field: 'date', direction: 'desc', label: 'Más Recientes' },
+                      { field: 'date', direction: 'asc', label: 'Más Antiguos' },
+                    ]
+                    const current = sortOptions.find(
+                      option => option.field === sortConfig.field && option.direction === sortConfig.direction
+                    )
+                    return current?.label || 'Personalizado'
+                  })()}
+                </p>
+              </div>
+              
+              {/* Sort Options */}
+              <div className="space-y-2">
+                {[
+                  { field: 'alphabetical', direction: 'asc', label: 'A-Z (Alfabético)', icon: '🔤' },
+                  { field: 'alphabetical', direction: 'desc', label: 'Z-A (Alfabético)', icon: '🔤' },
+                  { field: 'price', direction: 'asc', label: 'Precio: Menor a Mayor', icon: '💰' },
+                  { field: 'price', direction: 'desc', label: 'Precio: Mayor a Menor', icon: '💰' },
+                  { field: 'stock', direction: 'desc', label: 'Stock: Mayor a Menor', icon: '📦' },
+                  { field: 'stock', direction: 'asc', label: 'Stock: Menor a Mayor', icon: '📦' },
+                  { field: 'date', direction: 'desc', label: 'Más Recientes', icon: '📅' },
+                  { field: 'date', direction: 'asc', label: 'Más Antiguos', icon: '📅' },
+                ].map((option) => (
+                  <button
+                    key={`${option.field}-${option.direction}`}
+                    onClick={() => onSortChange({
+                      field: option.field as SortConfig['field'],
+                      direction: option.direction as SortConfig['direction'],
+                      priceFields: sortConfig.priceFields
+                    })}
+                    className={`
+                      w-full px-3 py-2 text-left text-sm border rounded-lg transition-colors
+                      flex items-center gap-3
+                      ${sortConfig.field === option.field && sortConfig.direction === option.direction
+                        ? 'bg-orange-50 text-orange-800 border-orange-200'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <span>{option.icon}</span>
+                    <span>{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
           <div className="text-center py-8 text-gray-500">
-            <p>Sort controls coming soon</p>
+            <p>Sort functionality not available</p>
           </div>
         )
       default:
@@ -279,7 +371,17 @@ export default function FilterPopupModal({
   }
 
   const getTotalActiveFilters = () => {
-    return Object.values(filters).reduce((total, filterSet) => total + filterSet.size, 0)
+    try {
+      return Object.values(filters).reduce((total, filterSet) => {
+        if (filterSet && typeof filterSet.size === 'number') {
+          return total + filterSet.size
+        }
+        return total
+      }, 0)
+    } catch (error) {
+      console.warn('Error calculating active filters:', error)
+      return 0
+    }
   }
 
   return (
