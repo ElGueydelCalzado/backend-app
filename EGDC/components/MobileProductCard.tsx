@@ -27,6 +27,7 @@ export default function MobileProductCard({
   const [showImagePreview, setShowImagePreview] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const startX = useRef(0)
+  const startY = useRef(0)
   const currentX = useRef(0)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -63,6 +64,7 @@ export default function MobileProductCard({
     e.stopPropagation()
     
     startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
     currentX.current = e.touches[0].clientX
     setIsDragging(true)
   }
@@ -72,15 +74,18 @@ export default function MobileProductCard({
 
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
+    const deltaY = e.touches[0].clientY - startY.current
 
-    // Prevent all default browser behavior
-    e.preventDefault()
-    e.stopPropagation()
-    
-    // Also prevent on native event for better mobile support
-    if (e.nativeEvent) {
-      e.nativeEvent.preventDefault()
-      e.nativeEvent.stopPropagation()
+    // Only prevent default if horizontal movement is dominant
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      // Also prevent on native event for better mobile support
+      if (e.nativeEvent) {
+        e.nativeEvent.preventDefault()
+        e.nativeEvent.stopPropagation()
+      }
     }
 
     // Only allow left swipe for delete
@@ -146,30 +151,28 @@ export default function MobileProductCard({
     setShowDeletePanel(false)
   }
 
-  // Add aggressive document-level touch prevention during swipe
+  // Add selective document-level touch prevention during swipe (only horizontal)
   useEffect(() => {
     const handleDocumentTouchMove = (e: TouchEvent) => {
       if (isDragging) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-
-    const handleDocumentTouchStart = (e: TouchEvent) => {
-      if (isDragging) {
-        e.preventDefault()
-        e.stopPropagation()
+        const touch = e.touches[0]
+        const deltaX = Math.abs(touch.clientX - startX.current)
+        const deltaY = Math.abs(touch.clientY - startY.current)
+        
+        // Only prevent if horizontal movement is dominant
+        if (deltaX > deltaY) {
+          e.preventDefault()
+          e.stopPropagation()
+        }
       }
     }
 
     if (isDragging) {
       document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false })
-      document.addEventListener('touchstart', handleDocumentTouchStart, { passive: false })
     }
 
     return () => {
       document.removeEventListener('touchmove', handleDocumentTouchMove)
-      document.removeEventListener('touchstart', handleDocumentTouchStart)
     }
   }, [isDragging])
 
