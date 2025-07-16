@@ -17,10 +17,10 @@ interface WarehouseTabsProps {
 }
 
 const WAREHOUSE_TABS = [
-  { id: 'egdc' as WarehouseFilter, label: 'EGDC', icon: '🏪', color: 'bg-orange-500 hover:bg-orange-600', type: 'own' },
-  { id: 'fami' as WarehouseFilter, label: 'FAMI', icon: '🏭', color: 'bg-green-500 hover:bg-green-600', type: 'supplier' },
-  { id: 'osiel' as WarehouseFilter, label: 'Osiel', icon: '📦', color: 'bg-purple-500 hover:bg-purple-600', type: 'supplier' },
-  { id: 'molly' as WarehouseFilter, label: 'Molly', icon: '🛍️', color: 'bg-pink-500 hover:bg-pink-600', type: 'supplier' }
+  { id: 'egdc' as WarehouseFilter, label: 'EGDC', icon: '🏪', type: 'own' },
+  { id: 'fami' as WarehouseFilter, label: 'FAMI', icon: '🏭', type: 'supplier' },
+  { id: 'osiel' as WarehouseFilter, label: 'Osiel', icon: '📦', type: 'supplier' },
+  { id: 'molly' as WarehouseFilter, label: 'Molly', icon: '🛍️', type: 'supplier' }
 ]
 
 export default function WarehouseTabs({ 
@@ -50,7 +50,7 @@ export default function WarehouseTabs({
     <div className={`
       bg-white border-b border-gray-200 px-6 relative
       transition-all duration-300 ease-in-out
-      ${isCollapsed ? 'py-1' : 'py-3'}
+      ${isCollapsed ? 'py-1' : 'py-2'}
     `}>
       {/* Collapse Button */}
       <button
@@ -93,11 +93,11 @@ export default function WarehouseTabs({
               key={tab.id}
               onClick={() => onWarehouseChange(tab.id)}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
-                transition-all duration-200 flex-shrink-0
+                flex items-center gap-2 px-3 py-2 text-sm font-medium 
+                transition-colors duration-200 border-b-2 border-transparent flex-shrink-0
                 ${isActive 
-                  ? `${tab.color} text-white shadow-md` 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'text-orange-600 border-orange-600' 
+                  : 'text-gray-700 hover:text-orange-600 hover:border-orange-300'
                 }
               `}
             >
@@ -105,9 +105,9 @@ export default function WarehouseTabs({
               <span>{tab.label}</span>
               {productCounts && (
                 <span className={`
-                  px-2 py-0.5 rounded-full text-xs font-bold
+                  px-2 py-0.5 rounded-full text-xs font-bold ml-1
                   ${isActive 
-                    ? 'bg-white bg-opacity-20 text-white' 
+                    ? 'bg-orange-100 text-orange-700' 
                     : 'bg-gray-200 text-gray-600'
                   }
                 `}>
