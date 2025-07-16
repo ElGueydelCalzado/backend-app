@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PostgresManager } from '@/lib/postgres'
+import { mockInventoryAPI } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
+    // Use mock data in preview environment
+    if (process.env.USE_MOCK_DATA === 'true') {
+      console.log('Using mock data for preview...')
+      const mockResult = await mockInventoryAPI.getProducts()
+      return NextResponse.json({
+        success: true,
+        data: mockResult.data,
+        pagination: {
+          page: 1,
+          limit: 100,
+          totalItems: mockResult.data.length,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false
+        },
+        message: `Mock data: ${mockResult.data.length} products`
+      })
+    }
+
     console.log('Fetching inventory data from PostgreSQL...')
     
     const { searchParams } = new URL(request.url)
