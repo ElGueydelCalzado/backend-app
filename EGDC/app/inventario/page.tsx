@@ -278,8 +278,10 @@ export default function InventarioPage() {
       return catMatch && brandMatch && modelMatch && colorMatch && sizeMatch
     })
 
-    setOriginalView([...filtered])
-    setEditedView([...filtered])
+    // Apply sorting before setting state
+    const sorted = applySorting(filtered)
+    setOriginalView([...sorted])
+    setEditedView([...sorted])
   }
 
   const handleFilterChange = (filterType: keyof Filters, value: string, checked: boolean) => {
@@ -1396,8 +1398,7 @@ export default function InventarioPage() {
       return price >= filters.priceRange.min && price <= filters.priceRange.max
     })
 
-    // Apply sorting
-    return applySorting(filtered)
+    // Sorting is now applied above before setting state
   }
 
   const applySorting = (products: Product[]): Product[] => {
