@@ -72,6 +72,7 @@ function SimpleSidebarTabs() {
 
 export default function Sidebar({ children, state, onStateChange, className = '' }: SidebarProps) {
   const [isHovering, setIsHovering] = useState(false)
+  const [isHoveringToggleButton, setIsHoveringToggleButton] = useState(false)
   
   const sidebarWidths = {
     collapsed: 'w-12',
@@ -90,16 +91,32 @@ export default function Sidebar({ children, state, onStateChange, className = ''
   }
 
   const handleMouseEnter = () => {
-    if (state === 'collapsed') {
+    if (state === 'collapsed' && !isHoveringToggleButton) {
       setIsHovering(true)
       onStateChange('hover')
     }
   }
 
   const handleMouseLeave = () => {
-    if (state === 'hover') {
+    if (state === 'hover' && !isHoveringToggleButton) {
       setIsHovering(false)
       onStateChange('collapsed')
+    }
+  }
+
+  const handleToggleButtonMouseEnter = () => {
+    setIsHoveringToggleButton(true)
+  }
+
+  const handleToggleButtonMouseLeave = () => {
+    setIsHoveringToggleButton(false)
+    // If we were in hover state and leaving the toggle button, collapse
+    if (state === 'hover') {
+      setTimeout(() => {
+        if (!isHovering) {
+          onStateChange('collapsed')
+        }
+      }, 100) // Small delay to prevent flicker
     }
   }
 
@@ -124,6 +141,8 @@ export default function Sidebar({ children, state, onStateChange, className = ''
       {/* Toggle Button */}
       <button
         onClick={toggleState}
+        onMouseEnter={handleToggleButtonMouseEnter}
+        onMouseLeave={handleToggleButtonMouseLeave}
         className="
           absolute -right-2 top-4 z-20
           w-4 h-4 
