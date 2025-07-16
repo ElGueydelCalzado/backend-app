@@ -22,6 +22,7 @@ const getUserRole = (email: string): 'admin' | 'manager' | 'employee' => {
 }
 
 export const authConfig: NextAuthOptions = {
+  debug: true, // 🔍 Enable debug mode
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -31,12 +32,25 @@ export const authConfig: NextAuthOptions = {
   
   callbacks: {
     async signIn({ user, account, profile }) {
+      // 🔍 DEBUG: Log all OAuth data
+      console.log('🔍 OAuth SignIn Debug:', {
+        user: user,
+        account: account,
+        profile: profile,
+        userEmail: user?.email,
+        isEmailAuthorized: user?.email ? AUTHORIZED_EMAILS.includes(user.email) : false,
+        authorizedEmails: AUTHORIZED_EMAILS,
+        timestamp: new Date().toISOString()
+      })
+      
       // Check if user email is in authorized list
       if (!user.email || !AUTHORIZED_EMAILS.includes(user.email)) {
-        console.log(`Unauthorized access attempt: ${user.email}`)
+        console.log(`❌ Unauthorized access attempt: ${user.email}`)
+        console.log(`📧 Authorized emails:`, AUTHORIZED_EMAILS)
         return false // Deny access
       }
       
+      console.log(`✅ Authorized access granted: ${user.email}`)
       return true // Allow access
     },
     
