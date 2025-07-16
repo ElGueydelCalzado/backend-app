@@ -56,70 +56,49 @@ export default function MobileProductCard({
 
   const stockStatus = getStockStatus()
 
-  // Touch event handlers for swipe functionality
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isExpanded) return // Don't allow swiping when expanded
+  // Simplified swipe detection using CSS and manual implementation
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    if (isExpanded) return
     
-    // Just record the initial touch position - don't set dragging yet
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     currentX.current = e.touches[0].clientX
-    // Don't setIsDragging(true) here - wait for actual movement
   }
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleSwipeMove = (e: React.TouchEvent) => {
     if (isExpanded) return
 
     currentX.current = e.touches[0].clientX
     const deltaX = currentX.current - startX.current
     const deltaY = e.touches[0].clientY - startY.current
 
-    // Only start dragging mode when there's clear horizontal movement
-    if (!isDragging && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) {
+    // Only engage swipe mode for clear horizontal movement
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) {
       setIsDragging(true)
-    }
-
-    // Only prevent default if we're in dragging mode (horizontal movement confirmed)
-    if (isDragging) {
       e.preventDefault()
       e.stopPropagation()
       
-      // Also prevent on native event for better mobile support
-      if (e.nativeEvent) {
-        e.nativeEvent.preventDefault()
-        e.nativeEvent.stopPropagation()
+      // Only allow left swipe for delete
+      if (deltaX < 0) {
+        const clampedOffset = Math.max(deltaX, -100)
+        setSwipeOffset(clampedOffset)
+        setShowDeletePanel(true)
+      } else {
+        setSwipeOffset(0)
+        setShowDeletePanel(false)
       }
-    }
-
-    // Only allow left swipe for delete (and only when we're in dragging mode)
-    if (isDragging && deltaX < 0) {
-      // Left swipe - show delete panel
-      const clampedOffset = Math.max(deltaX, -100) // Limit to 100px
-      setSwipeOffset(clampedOffset)
-      setShowDeletePanel(true)
-    } else if (isDragging) {
-      // No right swipe - reset position
-      setSwipeOffset(0)
-      setShowDeletePanel(false)
     }
   }
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleSwipeEnd = (e: React.TouchEvent) => {
     if (!isDragging || isExpanded) return
 
     const deltaX = currentX.current - startX.current
-    const deltaY = e.touches[0]?.clientY - startY.current || 0
-    console.log('👆 Touch end - deltaX:', deltaX, 'deltaY:', deltaY, 'product:', product.marca)
-
-    // Only trigger swipe if horizontal movement was dominant and significant
-    if (deltaX < -50 && Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Left swipe - show delete panel
-      console.log('⬅️ Left swipe detected - showing delete panel')
+    
+    if (deltaX < -50) {
       setSwipeOffset(-100)
       setShowDeletePanel(true)
     } else {
-      // Reset to original position
-      console.log('🔄 Reset swipe position')
       setSwipeOffset(0)
       setShowDeletePanel(false)
     }
@@ -153,24 +132,7 @@ export default function MobileProductCard({
     setShowDeletePanel(false)
   }
 
-  // Add selective document-level touch prevention during swipe (only when actually dragging)
-  useEffect(() => {
-    const handleDocumentTouchMove = (e: TouchEvent) => {
-      if (isDragging) {
-        // Since we're already in dragging mode, prevent all document movement
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-
-    if (isDragging) {
-      document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false })
-    }
-
-    return () => {
-      document.removeEventListener('touchmove', handleDocumentTouchMove)
-    }
-  }, [isDragging])
+  // Remove document-level touch prevention - let natural scrolling work
 
   return (
     <div 
@@ -211,19 +173,14 @@ export default function MobileProductCard({
         `}
         style={{
           transform: `translateX(${swipeOffset}px)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-          overscrollBehaviorX: 'none',
-          touchAction: 'pan-x',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          WebkitTapHighlightColor: 'transparent'
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
         }}
         onClick={handleCardClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={handleSwipeStart}
+        onTouchMove={handleSwipeMove}
+        onTouchEnd={handleSwipeEnd}
       >
+      
       {/* Compact Card Content */}
       <div className="p-2">
         {/* Basic Product Info */}
