@@ -60,9 +60,7 @@ export default function MobileProductCard({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isExpanded) return // Don't allow swiping when expanded
     
-    e.preventDefault()
-    e.stopPropagation()
-    
+    // Don't prevent default on touch start - allow natural scrolling to begin
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     currentX.current = e.touches[0].clientX
@@ -76,8 +74,8 @@ export default function MobileProductCard({
     const deltaX = currentX.current - startX.current
     const deltaY = e.touches[0].clientY - startY.current
 
-    // Only prevent default if horizontal movement is dominant
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    // Only prevent default if horizontal movement is dominant AND significant
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       e.preventDefault()
       e.stopPropagation()
       
@@ -88,14 +86,14 @@ export default function MobileProductCard({
       }
     }
 
-    // Only allow left swipe for delete
-    if (deltaX < 0) {
+    // Only allow left swipe for delete (and only when horizontal movement is significant)
+    if (deltaX < 0 && Math.abs(deltaX) > Math.abs(deltaY)) {
       // Left swipe - show delete panel
       const clampedOffset = Math.max(deltaX, -100) // Limit to 100px
       setSwipeOffset(clampedOffset)
       setShowDeletePanel(true)
     } else {
-      // No right swipe - reset position
+      // No right swipe or vertical movement - reset position
       setSwipeOffset(0)
       setShowDeletePanel(false)
     }
@@ -104,13 +102,12 @@ export default function MobileProductCard({
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDragging || isExpanded) return
 
-    e.preventDefault()
-    e.stopPropagation()
-
     const deltaX = currentX.current - startX.current
-    console.log('👆 Touch end - deltaX:', deltaX, 'product:', product.marca)
+    const deltaY = e.touches[0]?.clientY - startY.current || 0
+    console.log('👆 Touch end - deltaX:', deltaX, 'deltaY:', deltaY, 'product:', product.marca)
 
-    if (deltaX < -50) {
+    // Only trigger swipe if horizontal movement was dominant and significant
+    if (deltaX < -50 && Math.abs(deltaX) > Math.abs(deltaY)) {
       // Left swipe - show delete panel
       console.log('⬅️ Left swipe detected - showing delete panel')
       setSwipeOffset(-100)
@@ -159,8 +156,8 @@ export default function MobileProductCard({
         const deltaX = Math.abs(touch.clientX - startX.current)
         const deltaY = Math.abs(touch.clientY - startY.current)
         
-        // Only prevent if horizontal movement is dominant
-        if (deltaX > deltaY) {
+        // Only prevent if horizontal movement is dominant AND significant
+        if (deltaX > deltaY && deltaX > 10) {
           e.preventDefault()
           e.stopPropagation()
         }
