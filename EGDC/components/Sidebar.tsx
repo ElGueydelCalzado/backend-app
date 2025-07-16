@@ -22,24 +22,24 @@ function SimpleSidebarTabs() {
   ]
   
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex">
       {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 bg-gray-50">
+      <div className="flex flex-col w-20 border-r border-gray-200 bg-gray-50">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`
-              flex-1 px-2 py-3 text-sm font-medium transition-colors
+              px-2 py-4 text-sm font-medium transition-colors border-b border-gray-200
               ${activeTab === tab.id
-                ? 'bg-white text-orange-700 border-b-2 border-orange-500'
+                ? 'bg-white text-orange-700 border-r-2 border-r-orange-500'
                 : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }
             `}
           >
             <div className="flex flex-col items-center gap-1">
               <span className="text-lg">{tab.icon}</span>
-              <span className="text-xs">{tab.label}</span>
+              <span className="text-xs font-medium text-center">{tab.label}</span>
             </div>
           </button>
         ))}
