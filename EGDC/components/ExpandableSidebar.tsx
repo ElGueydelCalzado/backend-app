@@ -105,7 +105,7 @@ export default function ExpandableSidebar({
       {/* Collapse/Expand Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 w-8 h-8 bg-white border-2 border-gray-400 rounded-full shadow-xl hover:shadow-2xl flex items-center justify-center text-gray-700 hover:text-gray-900 hover:border-gray-500 transition-all duration-200"
+        className="absolute top-4 w-8 h-8 bg-white border-2 border-gray-400 rounded-full shadow-xl hover:shadow-2xl flex items-center justify-center text-gray-700 hover:text-gray-900 hover:border-gray-500 transition-all duration-200"
         style={{ 
           left: isCollapsed ? '48px' : '312px',
           zIndex: 9999 
