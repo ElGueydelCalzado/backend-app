@@ -100,12 +100,16 @@ export default function ExpandableSidebar({
   }
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out relative ${className}`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out relative z-40 ${className}`}>
       
       {/* Collapse/Expand Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-4 z-10 w-6 h-6 bg-white border border-gray-300 rounded-full shadow-md hover:shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
+        className="fixed top-4 w-8 h-8 bg-white border-2 border-gray-400 rounded-full shadow-xl hover:shadow-2xl flex items-center justify-center text-gray-700 hover:text-gray-900 hover:border-gray-500 transition-all duration-200"
+        style={{ 
+          left: isCollapsed ? '48px' : '312px',
+          zIndex: 9999 
+        }}
         title={isCollapsed ? 'Expandir panel' : 'Contraer panel'}
       >
         {isCollapsed ? (
