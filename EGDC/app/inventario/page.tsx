@@ -15,6 +15,7 @@ import ProductCollectionWizard from '@/components/ProductCollectionWizard'
 import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import BulkDeleteConfirmModal from '@/components/BulkDeleteConfirmModal'
+import ImportExportModal from '@/components/ImportExportModal'
 import { ColumnConfig } from '@/components/ColumnControls'
 import MobileInventoryView from '@/components/MobileInventoryView'
 import MobileProductCardList from '@/components/MobileProductCardList'
@@ -99,8 +100,8 @@ export default function InventarioPage() {
   const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false)
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
+  const [showImportExportModal, setShowImportExportModal] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set())
-  const [showExportMenu, setShowExportMenu] = useState(false)
   
   // Mobile-specific state
   const [mobileSearchTerm, setMobileSearchTerm] = useState('')
@@ -1489,20 +1490,6 @@ export default function InventarioPage() {
     })
   }
 
-  // Close export menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showExportMenu) {
-        setShowExportMenu(false)
-      }
-    }
-
-    if (showExportMenu) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [showExportMenu])
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1576,7 +1563,7 @@ export default function InventarioPage() {
 
               {/* Unified Search Bar and Actions */}
               <div className="px-6 py-4 bg-white border-b border-gray-200">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 max-w-2xl">
                     <UnifiedSearchAndFilters
                       searchTerm={searchTerm}
@@ -1594,74 +1581,39 @@ export default function InventarioPage() {
                     />
                   </div>
                   
-                  <button
-                    onClick={() => setShowNewProductModal(true)}
-                    className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <span>➕</span>
-                    Nuevo Producto
-                  </button>
-                  <button
-                    onClick={() => setShowBulkImportModal(true)}
-                    className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <span>📤</span>
-                    Importar CSV
-                  </button>
-                  {selectedProducts.size > 0 && (
-                    <>
-                      <button
-                        onClick={() => setShowBulkUpdateModal(true)}
-                        className="px-2 py-1.5 md:px-3 md:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-xs md:text-sm lg:text-base"
-                      >
-                        <span className="text-sm md:text-base">📝</span>
-                        <span className="hidden sm:inline">Editar {selectedProducts.size}</span>
-                        <span className="sm:hidden">Editar</span>
-                      </button>
-                      <button
-                        onClick={handleBulkDelete}
-                        className="px-2 py-1.5 md:px-3 md:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap text-xs md:text-sm lg:text-base"
-                        disabled={saving}
-                      >
-                        <span className="text-sm md:text-base">🗑️</span>
-                        <span className="hidden sm:inline">Eliminar {selectedProducts.size}</span>
-                        <span className="sm:hidden">Eliminar</span>
-                      </button>
-                    </>
-                  )}
-                  <div className="relative">
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => setShowExportMenu(!showExportMenu)}
-                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                      onClick={() => setShowNewProductModal(true)}
+                      className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                     >
-                      <span>📥</span>
-                      Exportar {selectedProducts.size > 0 ? `(${selectedProducts.size})` : 'Todo'}
-                      <span className="text-xs">▼</span>
+                      <span>➕</span>
+                      Nuevo Producto
                     </button>
-                    
-                    {showExportMenu && (
-                      <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
+                    <button
+                      onClick={() => setShowImportExportModal(true)}
+                      className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <span>🔄</span>
+                      Importar / Exportar
+                    </button>
+                    {selectedProducts.size > 0 && (
+                      <>
                         <button
-                          onClick={() => {
-                            handleExport('csv')
-                            setShowExportMenu(false)
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center gap-2"
+                          onClick={() => setShowBulkUpdateModal(true)}
+                          className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                         >
-                          <span>📄</span>
-                          CSV
+                          <span>📝</span>
+                          Editar {selectedProducts.size}
                         </button>
                         <button
-                          onClick={() => {
-                            handleExport('xlsx')
-                            setShowExportMenu(false)
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg flex items-center gap-2"
+                          onClick={handleBulkDelete}
+                          className="px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                          disabled={saving}
                         >
-                          <span>📊</span>
-                          Excel
+                          <span>🗑️</span>
+                          Eliminar {selectedProducts.size}
                         </button>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -1984,6 +1936,15 @@ export default function InventarioPage() {
             loadInventoryData() // Reload data to show new products
           }}
           existingProducts={allData}
+        />
+
+        {/* Import/Export Modal */}
+        <ImportExportModal
+          isOpen={showImportExportModal}
+          onClose={() => setShowImportExportModal(false)}
+          onImport={() => setShowBulkImportModal(true)}
+          onExport={handleExport}
+          selectedProductsCount={selectedProducts.size}
         />
 
         {/* Bulk Update Modal */}
