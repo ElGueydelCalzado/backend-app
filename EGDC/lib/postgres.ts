@@ -20,6 +20,11 @@ pool.on('error', (err, client) => {
 
 export { pool }
 
+// Connection function for API routes
+export async function connectToDatabase() {
+  return pool
+}
+
 // Database utilities for direct access
 export class PostgresManager {
   static async query(text: string, params?: any[]) {
