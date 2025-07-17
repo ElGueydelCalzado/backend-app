@@ -59,6 +59,35 @@ export default function ImportExportModal({
               </div>
             </div>
 
+            {/* Template Download Button */}
+            <button
+              onClick={() => {
+                // Create CSV template with proper headers and example data
+                const headers = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'costo']
+                const exampleRows = [
+                  'Zapatos,Nike,Air Max 90,Blanco,42,NIKE-AM90-WHT-42,150.00',
+                  'Sandalias,Adidas,Cloudfoam,Negro,40,ADIDAS-CF-BLK-40,80.00',
+                  'Botas,Timberland,6-inch Premium,Marrón,43,TIMB-6P-BRN-43,220.00'
+                ]
+                const csvContent = headers.join(',') + '\n' + exampleRows.join('\n')
+                
+                // Create and download file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = url
+                link.download = 'plantilla-productos.csv'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+              }}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+            >
+              <FileText className="w-5 h-5" />
+              Descargar Plantilla CSV
+            </button>
+
             <button
               onClick={() => {
                 onImport()
