@@ -105,10 +105,10 @@ export default function ExpandableSidebar({
       {/* Collapse/Expand Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute top-4 w-8 h-8 bg-orange-500 hover:bg-orange-600 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center text-white transition-all duration-200"
+        className="fixed top-4 w-8 h-8 bg-orange-500 hover:bg-orange-600 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center text-white transition-all duration-200"
         style={{ 
           left: isCollapsed ? '48px' : '312px',
-          zIndex: 9999 
+          zIndex: 10000 
         }}
         title={isCollapsed ? 'Expandir panel' : 'Contraer panel'}
       >

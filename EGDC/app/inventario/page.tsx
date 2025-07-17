@@ -96,8 +96,8 @@ export default function InventarioPage() {
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('collapsed')
-  const [activeTab, setActiveTab] = useState<SidebarTab>('bodegas')
-  const [activeSubPage, setActiveSubPage] = useState<string>('fami')
+  const [activeTab, setActiveTab] = useState<SidebarTab>('productos')
+  const [activeSubPage, setActiveSubPage] = useState<string>('catalogo')
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
