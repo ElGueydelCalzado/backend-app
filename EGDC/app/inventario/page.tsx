@@ -1535,7 +1535,7 @@ export default function InventarioPage() {
               />
 
               {/* Unified Search Bar and Actions */}
-              <div className="px-6 py-4 bg-white border-b border-gray-200">
+              <div className="px-6 py-3 bg-white border-b border-gray-200">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 max-w-2xl">
                     <UnifiedSearchAndFilters
@@ -1641,9 +1641,6 @@ export default function InventarioPage() {
               
               {/* Pagination Controls - Fixed at bottom */}
               <div className="flex-shrink-0 px-6 py-4 bg-white border-t shadow-sm">
-                <div className="p-2 text-xs bg-gray-100 border-b mb-2 rounded">
-                  Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
-                </div>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -50,7 +50,7 @@ export default function WarehouseTabs({
     <div className={`
       bg-white border-b border-gray-200 px-6 relative
       transition-all duration-300 ease-in-out
-      ${isCollapsed ? 'py-1' : 'py-2'}
+      ${isCollapsed ? 'py-0.5' : 'py-1'}
     `}>
       {/* Collapse Button */}
       <button
@@ -93,7 +93,7 @@ export default function WarehouseTabs({
               key={tab.id}
               onClick={() => onWarehouseChange(tab.id)}
               className={`
-                flex items-center gap-2 px-3 py-2 text-sm font-medium 
+                flex items-center gap-2 px-3 py-1 text-sm font-medium 
                 transition-colors duration-200 border-b-2 border-transparent flex-shrink-0
                 ${isActive 
                   ? 'text-orange-600 border-orange-600' 
