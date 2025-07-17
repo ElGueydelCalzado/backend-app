@@ -8,7 +8,7 @@ import LoadingScreen from '@/components/LoadingScreen'
 import ToastNotification, { useToast } from '@/components/ToastNotification'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import TabNavigation from '@/components/TabNavigation'
-import Sidebar, { SidebarState } from '@/components/Sidebar'
+import Sidebar, { SidebarState, SidebarTab } from '@/components/Sidebar'
 import SearchBar from '@/components/SearchBar'
 import UnifiedSearchAndFilters from '@/components/UnifiedSearchAndFilters'
 import ProductCollectionWizard from '@/components/ProductCollectionWizard'
@@ -93,6 +93,7 @@ export default function InventarioPage() {
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('collapsed')
+  const [activeTab, setActiveTab] = useState<SidebarTab>('productos')
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
@@ -1514,6 +1515,183 @@ export default function InventarioPage() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [saving, editedView, originalView])
 
+  // Render content based on active tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'productos':
+        return (
+          <>
+            {/* Warehouse Tabs - positioned above search bar */}
+            <WarehouseTabs
+              activeWarehouse={activeWarehouse}
+              onWarehouseChange={handleWarehouseChange}
+              productCounts={calculateProductCounts()}
+              isDemoMode={useDummyData}
+            />
+
+            {/* Unified Search Bar and Actions */}
+            <div className="px-6 py-4 bg-white border-b border-gray-200">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 max-w-2xl">
+                  <UnifiedSearchAndFilters
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    filters={filters}
+                    uniqueValues={uniqueValues}
+                    allData={allData}
+                    onFilterChange={handleFilterChange}
+                    onClearFilters={handleClearFilters}
+                    columnConfig={columnConfig}
+                    onColumnToggle={handleColumnToggle}
+                    onPresetSelect={handlePresetSelect}
+                    sortConfig={sortConfig}
+                    onSortChange={setSortConfig}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowNewProductModal(true)}
+                    className="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span>➕</span>
+                    Nuevo Producto
+                  </button>
+                  <button
+                    onClick={() => setShowImportExportModal(true)}
+                    className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span>🔄</span>
+                    Importar / Exportar
+                  </button>
+                  {selectedProducts.size > 0 && (
+                    <>
+                      <button
+                        onClick={() => setShowBulkUpdateModal(true)}
+                        className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <span>📝</span>
+                        Editar {selectedProducts.size}
+                      </button>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                        disabled={saving}
+                      >
+                        <span>🗑️</span>
+                        Eliminar {selectedProducts.size}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Table Section - Adjusted to leave space for pagination */}
+            <div className="flex-1 px-6 pb-1 overflow-hidden min-h-0">
+              <ErrorBoundary
+                level="section"
+                onError={(error, errorInfo) => {
+                  console.error('Inventory table error:', error, errorInfo)
+                }}
+                resetKeys={[editedView.length]}
+                fallback={
+                  <div className="bg-white rounded-xl shadow-lg border border-red-200 p-8 text-center h-full flex flex-col justify-center">
+                    <div className="text-red-600 text-6xl mb-4">⚠️</div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Error en la tabla</h3>
+                    <p className="text-gray-600 mb-4">
+                      Hubo un problema mostrando la tabla de inventario. 
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors inline-block mx-auto"
+                    >
+                      Recargar página
+                    </button>
+                  </div>
+                }
+              >
+                <InventoryTable
+                  editedView={editedView}
+                  onCellEdit={handleCellEdit}
+                  onSave={saveChanges}
+                  onCancel={cancelChanges}
+                  saving={saving}
+                  columnConfig={columnConfig}
+                  onAddRow={handleAddRow}
+                  onRemoveRow={handleRemoveRow}
+                  selectedProducts={selectedProducts}
+                  onProductSelect={handleProductSelect}
+                  onSelectAll={handleSelectAll}
+                  autoSave={true}
+                  onAutoSave={handleAutoSave}
+                  isSupplierView={useDummyData}
+                  supplierName={activeWarehouse === 'fami' ? 'FAMI' : 
+                               activeWarehouse === 'osiel' ? 'Osiel' : 
+                               activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
+                  onBuyProduct={handleBuyProduct}
+                />
+              </ErrorBoundary>
+            </div>
+            
+            {/* Pagination Controls - Fixed at bottom */}
+            <div className="flex-shrink-0 px-6 py-4 bg-white border-t shadow-sm">
+              <div className="p-2 text-xs bg-gray-100 border-b mb-2 rounded">
+                Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          </>
+        )
+      
+      case 'inventario':
+        return (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📊</div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Inventario</h2>
+              <p className="text-gray-600">Gestión de stock y movimientos de inventario</p>
+              <p className="text-sm text-gray-500 mt-4">Próximamente disponible</p>
+            </div>
+          </div>
+        )
+      
+      case 'bodegas':
+        return (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🏪</div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Bodegas</h2>
+              <p className="text-gray-600">Gestión de almacenes y ubicaciones</p>
+              <p className="text-sm text-gray-500 mt-4">Próximamente disponible</p>
+            </div>
+          </div>
+        )
+      
+      case 'tiendas':
+        return (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🏬</div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Tiendas</h2>
+              <p className="text-gray-600">Gestión de puntos de venta</p>
+              <p className="text-sm text-gray-500 mt-4">Próximamente disponible</p>
+            </div>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
   return (
     <>
       {loading && <LoadingScreen text={loadingText} />}
@@ -1548,147 +1726,14 @@ export default function InventarioPage() {
             <Sidebar 
               state={sidebarState} 
               onStateChange={setSidebarState}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
               className="flex-shrink-0"
             />
             
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Warehouse Tabs - positioned above search bar */}
-              <WarehouseTabs
-                activeWarehouse={activeWarehouse}
-                onWarehouseChange={handleWarehouseChange}
-                productCounts={calculateProductCounts()}
-                isDemoMode={useDummyData}
-              />
-
-              {/* Unified Search Bar and Actions */}
-              <div className="px-6 py-4 bg-white border-b border-gray-200">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 max-w-2xl">
-                    <UnifiedSearchAndFilters
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      filters={filters}
-                      uniqueValues={uniqueValues}
-                      allData={allData}
-                      onFilterChange={handleFilterChange}
-                      onClearFilters={handleClearFilters}
-                      columnConfig={columnConfig}
-                      onColumnToggle={handleColumnToggle}
-                      onPresetSelect={handlePresetSelect}
-                      sortConfig={sortConfig}
-                      onSortChange={setSortConfig}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShowNewProductModal(true)}
-                      className="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <span>➕</span>
-                      Nuevo Producto
-                    </button>
-                    <button
-                      onClick={() => setShowImportExportModal(true)}
-                      className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <span>🔄</span>
-                      Importar / Exportar
-                    </button>
-                    {selectedProducts.size > 0 && (
-                      <>
-                        <button
-                          onClick={() => setShowBulkUpdateModal(true)}
-                          className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <span>📝</span>
-                          Editar {selectedProducts.size}
-                        </button>
-                        <button
-                          onClick={handleBulkDelete}
-                          className="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
-                          disabled={saving}
-                        >
-                          <span>🗑️</span>
-                          Eliminar {selectedProducts.size}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Message Area */}
-              {/* Message area removed - now using toast notifications */}
-              
-              {/* Table Section - Adjusted to leave space for pagination */}
-              <div className="flex-1 px-6 pb-1 overflow-hidden min-h-0">
-                <ErrorBoundary
-                  level="section"
-                  onError={(error, errorInfo) => {
-                    console.error('Inventory table error:', error, errorInfo)
-                  }}
-                  resetKeys={[editedView.length]}
-                  fallback={
-                    <div className="bg-white rounded-xl shadow-lg border border-red-200 p-8 text-center h-full flex flex-col justify-center">
-                      <div className="text-4xl mb-4">📊</div>
-                      <h3 className="text-xl font-semibold text-red-800 mb-4">
-                        Error en la tabla de inventario
-                      </h3>
-                      <p className="text-red-700 mb-6">
-                        La tabla de inventario encontró un error. Los datos están seguros, 
-                        pero la tabla no puede mostrarse correctamente en este momento.
-                      </p>
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => window.location.reload()}
-                          className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                          🔄 Recargar Página
-                        </button>
-                      </div>
-                    </div>
-                  }
-                >
-                  <InventoryTable
-                    editedView={editedView}
-                    onCellEdit={handleCellEdit}
-                    onSave={saveChanges}
-                    onCancel={cancelChanges}
-                    saving={saving}
-                    columnConfig={columnConfig}
-                    onAddRow={handleAddRow}
-                    onRemoveRow={handleRemoveRow}
-                    selectedProducts={selectedProducts}
-                    onProductSelect={handleProductSelect}
-                    onSelectAll={handleSelectAll}
-                    autoSave={true}
-                    onAutoSave={handleAutoSave}
-                    isSupplierView={useDummyData} // True when viewing supplier catalogs
-                    supplierName={activeWarehouse === 'fami' ? 'FAMI' : 
-                                 activeWarehouse === 'osiel' ? 'Osiel' : 
-                                 activeWarehouse === 'molly' ? 'Molly' : 'EGDC'}
-                    onBuyProduct={handleBuyProduct}
-                  />
-                </ErrorBoundary>
-              </div>
-              
-              {/* Pagination Controls - Fixed at bottom */}
-              <div className="flex-shrink-0 px-6 py-4 bg-white border-t shadow-sm">
-                {/* Debug info */}
-                <div className="p-2 text-xs bg-gray-100 border-b mb-2 rounded">
-                  Debug: Page {currentPage}/{totalPages}, Items: {totalItems}, PerPage: {itemsPerPage}
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  totalItems={totalItems}
-                  itemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                />
-              </div>
+              {renderTabContent()}
             </div>
           </div>
         ) : (

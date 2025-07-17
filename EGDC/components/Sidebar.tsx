@@ -3,22 +3,29 @@
 import { useState } from 'react'
 
 export type SidebarState = 'collapsed' | 'open' | 'hover'
+export type SidebarTab = 'productos' | 'inventario' | 'bodegas' | 'tiendas'
 
 interface SidebarProps {
   children?: React.ReactNode
   state: SidebarState
   onStateChange: (state: SidebarState) => void
+  activeTab: SidebarTab
+  onTabChange: (tab: SidebarTab) => void
   className?: string
 }
 
 // Simple sidebar tabs component
-function SimpleSidebarTabs() {
-  const [activeTab, setActiveTab] = useState('tab1')
-  
+interface SimpleSidebarTabsProps {
+  activeTab: SidebarTab
+  onTabChange: (tab: SidebarTab) => void
+}
+
+function SimpleSidebarTabs({ activeTab, onTabChange }: SimpleSidebarTabsProps) {
   const tabs = [
-    { id: 'tab1', label: 'Tab 1', icon: '📋' },
-    { id: 'tab2', label: 'Tab 2', icon: '📊' },
-    { id: 'tab3', label: 'Tab 3', icon: '⚙️' }
+    { id: 'productos' as SidebarTab, label: 'Productos', icon: '📦' },
+    { id: 'inventario' as SidebarTab, label: 'Inventario', icon: '📊' },
+    { id: 'bodegas' as SidebarTab, label: 'Bodegas', icon: '🏪' },
+    { id: 'tiendas' as SidebarTab, label: 'Tiendas', icon: '🏬' }
   ]
   
   return (
@@ -28,7 +35,7 @@ function SimpleSidebarTabs() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => onTabChange(tab.id)}
             className={`
               px-2 py-4 text-sm font-medium transition-colors border-b border-gray-200
               ${activeTab === tab.id
@@ -45,32 +52,17 @@ function SimpleSidebarTabs() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - now controlled by parent */}
       <div className="flex-1 p-4 overflow-y-auto">
-        {activeTab === 'tab1' && (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Tab 1 Content</h3>
-            <p className="text-sm text-gray-600">This is the content for Tab 1.</p>
-          </div>
-        )}
-        {activeTab === 'tab2' && (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Tab 2 Content</h3>
-            <p className="text-sm text-gray-600">This is the content for Tab 2.</p>
-          </div>
-        )}
-        {activeTab === 'tab3' && (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Tab 3 Content</h3>
-            <p className="text-sm text-gray-600">This is the content for Tab 3.</p>
-          </div>
-        )}
+        <div className="text-sm text-gray-500 text-center py-8">
+          Content controlled by parent component
+        </div>
       </div>
     </div>
   )
 }
 
-export default function Sidebar({ children, state, onStateChange, className = '' }: SidebarProps) {
+export default function Sidebar({ children, state, onStateChange, activeTab, onTabChange, className = '' }: SidebarProps) {
   const [isHovering, setIsHovering] = useState(false)
   const [isHoveringToggleButton, setIsHoveringToggleButton] = useState(false)
   
@@ -163,32 +155,61 @@ export default function Sidebar({ children, state, onStateChange, className = ''
       <div className="h-full overflow-hidden">
         {!showFullContent ? (
           /* Collapsed State - Minimal Icons */
-          <div className="p-2 space-y-4 pt-12">
-            <div className="flex flex-col items-center space-y-3">
-              <div 
-                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Tab 1"
+          <div className="p-2 space-y-2 pt-12">
+            <div className="flex flex-col items-center space-y-2">
+              <button 
+                onClick={() => onTabChange('productos')}
+                className={`w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-colors ${
+                  activeTab === 'productos' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Productos"
               >
-                1
-              </div>
-              <div 
-                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Tab 2"
+                📦
+              </button>
+              <button 
+                onClick={() => onTabChange('inventario')}
+                className={`w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-colors ${
+                  activeTab === 'inventario' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Inventario"
               >
-                2
-              </div>
-              <div 
-                className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                title="Tab 3"
+                📊
+              </button>
+              <button 
+                onClick={() => onTabChange('bodegas')}
+                className={`w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-colors ${
+                  activeTab === 'bodegas' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Bodegas"
               >
-                3
-              </div>
+                🏪
+              </button>
+              <button 
+                onClick={() => onTabChange('tiendas')}
+                className={`w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-colors ${
+                  activeTab === 'tiendas' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Tiendas"
+              >
+                🏬
+              </button>
             </div>
           </div>
         ) : (
           /* Expanded State - Full Content */
           <div className="h-full flex flex-col pt-12">
-            <SimpleSidebarTabs />
+            <SimpleSidebarTabs 
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+            />
           </div>
         )}
       </div>
