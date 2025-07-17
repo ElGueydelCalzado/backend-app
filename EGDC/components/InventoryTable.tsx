@@ -404,7 +404,7 @@ export default function InventoryTable({
                         <div className="group relative flex items-center hover:bg-gradient-to-r hover:from-orange-25 hover:to-orange-50 rounded-lg transition-all duration-200 min-h-[1.67rem]">
                           <div className="flex-1 px-3 py-1 text-sm">
                             {fieldKey === 'google_drive' && value ? (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-center">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -417,7 +417,6 @@ export default function InventoryTable({
                                   <span>🔗</span>
                                   Ver
                                 </button>
-                                <span className="flex-1 truncate font-medium text-gray-700">{value.toString()}</span>
                               </div>
                             ) : (
                               <span className="truncate font-medium text-gray-800">
