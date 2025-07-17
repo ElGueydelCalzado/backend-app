@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Warehouse, Marketplace, MainTab, SubPageItem } from '@/lib/types'
 
 export type SidebarState = 'collapsed' | 'open' | 'hover'
-export type SidebarTab = 'productos' | 'inventario' | 'bodegas' | 'tiendas'
+export type SidebarTab = MainTab
 
 interface SidebarProps {
   children?: React.ReactNode
@@ -11,6 +12,8 @@ interface SidebarProps {
   onStateChange: (state: SidebarState) => void
   activeTab: SidebarTab
   onTabChange: (tab: SidebarTab) => void
+  activeSubPage?: string
+  onSubPageChange?: (subPage: string) => void
   className?: string
 }
 
@@ -62,9 +65,22 @@ function SimpleSidebarTabs({ activeTab, onTabChange }: SimpleSidebarTabsProps) {
   )
 }
 
-export default function Sidebar({ children, state, onStateChange, activeTab, onTabChange, className = '' }: SidebarProps) {
+export default function Sidebar({ 
+  children, 
+  state, 
+  onStateChange, 
+  activeTab, 
+  onTabChange, 
+  activeSubPage, 
+  onSubPageChange,
+  className = '' 
+}: SidebarProps) {
   const [isHovering, setIsHovering] = useState(false)
   const [isHoveringToggleButton, setIsHoveringToggleButton] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Set<MainTab>>(new Set([activeTab]))
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([])
+  const [marketplaces, setMarketplaces] = useState<Marketplace[]>([])
+  const [loading, setLoading] = useState(true)
   
   const sidebarWidths = {
     collapsed: 'w-12',
