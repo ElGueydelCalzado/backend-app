@@ -26,8 +26,39 @@ export default function ImportExportModal({
   selectedProductsCount = 0
 }: ImportExportModalProps) {
   const [activeTab, setActiveTab] = useState<ImportExportTab>('import')
+  const [isDragOver, setIsDragOver] = useState(false)
 
   if (!isOpen) return null
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const validFile = files.find(file => 
+      file.type === 'text/csv' || 
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel'
+    )
+    
+    if (validFile) {
+      console.log('File dropped:', validFile.name)
+      onImport()
+      onClose()
+    } else {
+      alert('Por favor selecciona un archivo válido (.xlsx, .xls, .csv)')
+    }
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -59,6 +90,65 @@ export default function ImportExportModal({
               </div>
             </div>
 
+            {/* Template Download Button */}
+            <button
+              onClick={() => {
+                // Create a simple CSV template
+                const headers = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'costo']
+                const csvContent = headers.join(',') + '\n' + 
+                  'Zapatos,Nike,Air Max 90,Blanco,42,NIKE-AM90-WHT-42,150.00\n' +
+                  'Sandalias,Adidas,Cloudfoam,Negro,40,ADIDAS-CF-BLK-40,80.00'
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' })
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = url
+                link.download = 'plantilla-productos.csv'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+              }}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+            >
+              <FileText className="w-5 h-5" />
+              Descargar Plantilla Excel/CSV
+            </button>
+
+            {/* Drag & Drop Area */}
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                isDragOver 
+                  ? 'border-blue-500 bg-blue-100' 
+                  : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => {
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xlsx,.xls,.csv'
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (file) {
+                    console.log('File selected:', file.name)
+                    onImport()
+                    onClose()
+                  }
+                }
+                input.click()
+              }}
+            >
+              <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
+              <p className={`text-lg font-medium mb-2 ${isDragOver ? 'text-blue-700' : 'text-gray-700'}`}>
+                {isDragOver ? '¡Suelta el archivo aquí!' : 'Arrastra tu archivo aquí o haz clic para seleccionar'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Archivos soportados: .xlsx, .xls, .csv (máximo 10MB)
+              </p>
+            </div>
+
             <button
               onClick={() => {
                 onImport()
@@ -67,7 +157,7 @@ export default function ImportExportModal({
               className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               <Upload className="w-5 h-5" />
-              Seleccionar Archivo para Importar
+              Seleccionar Archivo Manualmente
             </button>
           </div>
         )
