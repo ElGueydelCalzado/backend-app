@@ -346,7 +346,7 @@ export default function InventoryTable({
                                   setImagePreviewProduct(product)
                                   setShowImagePreview(true)
                                 }}
-                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
                                 title="Ver imágenes del producto"
                               >
                                 <span>🔗</span>
@@ -366,7 +366,7 @@ export default function InventoryTable({
                                     stopEditing()
                                   }
                                 }}
-                                className="flex-1 px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner"
+                                className="flex-1 px-3 py-1 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner"
                                 disabled={saving}
                                 placeholder="URL de Google Drive..."
                                 autoFocus
@@ -387,7 +387,7 @@ export default function InventoryTable({
                                   stopEditing()
                                 }
                               }}
-                              className="w-full px-3 py-2 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner font-medium"
+                              className="w-full px-3 py-1 text-sm border-2 border-orange-300 rounded-lg focus:ring-4 focus:ring-orange-200 focus:border-orange-400 focus:outline-none transition-all duration-200 bg-white shadow-inner font-medium"
                               disabled={saving}
                               placeholder={field.type === 'number' ? '0.00' : 'Ingresa valor...'}
                               step={field.type === 'number' ? '0.01' : undefined}
@@ -401,8 +401,8 @@ export default function InventoryTable({
                           </div>
                         </div>
                       ) : (
-                        <div className="group relative flex items-center hover:bg-gradient-to-r hover:from-orange-25 hover:to-orange-50 rounded-lg transition-all duration-200 min-h-[2.5rem]">
-                          <div className="flex-1 px-3 py-2 text-sm">
+                        <div className="group relative flex items-center hover:bg-gradient-to-r hover:from-orange-25 hover:to-orange-50 rounded-lg transition-all duration-200 min-h-[1.67rem]">
+                          <div className="flex-1 px-3 py-1 text-sm">
                             {fieldKey === 'google_drive' && value ? (
                               <div className="flex items-center gap-2">
                                 <button
@@ -411,7 +411,7 @@ export default function InventoryTable({
                                     setImagePreviewProduct(product)
                                     setShowImagePreview(true)
                                   }}
-                                  className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
+                                  className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-sm"
                                   title="Ver imágenes del producto"
                                 >
                                   <span>🔗</span>
