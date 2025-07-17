@@ -1107,9 +1107,36 @@ export default function InventarioPage() {
     )
   }
 
-  // Apply "Basico" preset on page load to ensure consistent column visibility
+  // Apply "Basico" preset on page load - use saved custom preset if available
   useEffect(() => {
-    handlePresetSelect('basic')
+    // Load custom presets from localStorage
+    const loadSavedPresets = () => {
+      if (typeof window === 'undefined') return null
+      try {
+        const stored = localStorage.getItem('egdc-column-presets')
+        return stored ? JSON.parse(stored) : null
+      } catch {
+        return null
+      }
+    }
+
+    const customPresets = loadSavedPresets()
+    const savedBasicPreset = customPresets?.basic
+
+    if (savedBasicPreset && Array.isArray(savedBasicPreset)) {
+      // Use saved custom basic preset
+      console.log('Loading saved Basico preset:', savedBasicPreset)
+      setColumnConfig(prev => 
+        prev.map(col => ({
+          ...col,
+          visible: savedBasicPreset.includes(col.key)
+        }))
+      )
+    } else {
+      // Fallback to hardcoded basic preset
+      console.log('Loading default basic preset')
+      handlePresetSelect('basic')
+    }
   }, []) // Only run once on mount
 
   // Mobile handlers
