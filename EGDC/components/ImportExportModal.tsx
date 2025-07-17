@@ -122,9 +122,9 @@ export default function ImportExportModal({
                   <p className="font-semibold mb-2">Formato requerido:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Archivo Excel (.xlsx) o CSV (.csv)</li>
-                    <li>Columnas: categoria, marca, modelo, color, talla, sku, costo</li>
+                    <li>Columnas REQUERIDAS: categoria, marca, modelo, color, talla, sku</li>
+                    <li>Columnas opcionales: costo, ean, dimensiones, inventario, plataformas</li>
                     <li>SKU debe ser único para cada producto</li>
-                    <li>Los productos duplicados serán actualizados</li>
                   </ul>
                 </div>
               </div>
@@ -133,13 +133,21 @@ export default function ImportExportModal({
             {/* Template Download Button */}
             <button
               onClick={() => {
-                // Create CSV template with proper headers and example data
-                const headers = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'costo']
-                const exampleRows = [
-                  'Zapatos,Nike,Air Max 90,Blanco,42,NIKE-AM90-WHT-42,150.00',
-                  'Sandalias,Adidas,Cloudfoam,Negro,40,ADIDAS-CF-BLK-40,80.00',
-                  'Botas,Timberland,6-inch Premium,Marrón,43,TIMB-6P-BRN-43,220.00'
+                // Create CSV template with ALL database columns - matching BulkImportModal
+                const headers = [
+                  'categoria', 'marca', 'modelo', 'color', 'talla', 'sku', 'ean', 
+                  'height_cm', 'length_cm', 'thickness_cm', 'weight_grams', 'costo', 
+                  'google_drive', 'shein_modifier', 'shopify_modifier', 'meli_modifier', 
+                  'inv_egdc', 'inv_fami', 'shein', 'meli', 'shopify', 'tiktok', 'upseller', 'go_trendier'
                 ]
+                
+                // Create example rows with proper data types
+                const exampleRows = [
+                  'Alpargatas,Nike,Air Max 90,Negro,25,NIKE-AM90-001,1234567890123,12.5,30.0,11.0,650,150.00,https://drive.google.com/file/123,1.5,2.0,2.5,10,5,true,false,true,false,false,false',
+                  'Botas,Adidas,Stan Smith,Blanco,26,ADIDAS-SS-002,1234567890124,13.0,32.5,10.5,580,120.00,,1.6,2.1,2.6,8,3,false,true,true,true,false,false',
+                  'Tenis,Puma,RS-X,Azul,27,PUMA-RSX-003,1234567890125,11.5,28.0,12.0,720,95.00,,1.4,1.9,2.4,15,7,true,true,false,false,true,true'
+                ]
+                
                 const csvContent = headers.join(',') + '\n' + exampleRows.join('\n')
                 
                 // Create and download file
@@ -147,7 +155,7 @@ export default function ImportExportModal({
                 const url = window.URL.createObjectURL(blob)
                 const link = document.createElement('a')
                 link.href = url
-                link.download = 'plantilla-productos.csv'
+                link.download = 'plantilla_productos_EGDC.csv'
                 document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)

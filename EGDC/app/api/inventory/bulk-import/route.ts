@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PostgresManager } from '@/lib/postgres'
+import * as XLSX from 'xlsx'
 
 interface BulkImportRequest {
   products: Array<{
@@ -33,19 +34,159 @@ interface BulkImportRequest {
   }>
 }
 
+// Helper function to parse file data
+function parseFileData(data: any[][]): any[] {
+  if (!data || data.length < 2) return []
+
+  const headers = data[0].map((h: any) => String(h).trim().toLowerCase())
+  const products: any[] = []
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i]
+    
+    // Skip empty rows
+    if (!row || row.every(cell => !cell || String(cell).trim() === '')) {
+      continue
+    }
+    
+    const product: any = {}
+    
+    headers.forEach((header, index) => {
+      const rawValue = row[index]
+      const value = rawValue !== null && rawValue !== undefined ? String(rawValue).trim() : ''
+      
+      switch (header) {
+        case 'costo':
+        case 'shein_modifier':
+        case 'shopify_modifier':
+        case 'meli_modifier':
+        case 'height_cm':
+        case 'length_cm':
+        case 'thickness_cm':
+          product[header] = value ? parseFloat(value) : null
+          break
+        case 'inv_egdc':
+        case 'inv_fami':
+        case 'inv_osiel':
+        case 'inv_molly':
+        case 'weight_grams':
+          product[header] = value ? parseInt(value) : (header.startsWith('inv_') ? 0 : null)
+          break
+        case 'shein':
+        case 'meli':
+        case 'shopify':
+        case 'tiktok':
+        case 'upseller':
+        case 'go_trendier':
+          product[header] = value.toLowerCase() === 'true' || value === '1'
+          break
+        default:
+          product[header] = value
+      }
+    })
+
+    products.push(product)
+  }
+
+  return products
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body: BulkImportRequest = await request.json()
-    const { products } = body
+    let products: any[] = []
+    
+    // Check if it's a file upload (FormData) or JSON
+    const contentType = request.headers.get('content-type')
+    
+    if (contentType?.includes('multipart/form-data')) {
+      // Handle file upload
+      const formData = await request.formData()
+      const file = formData.get('file') as File
+      
+      if (!file) {
+        return NextResponse.json(
+          { success: false, error: 'No file provided' },
+          { status: 400 }
+        )
+      }
+
+      // Read file content
+      const buffer = await file.arrayBuffer()
+      const fileExtension = file.name.split('.').pop()?.toLowerCase()
+      
+      if (fileExtension === 'csv') {
+        // Handle CSV files
+        const text = new TextDecoder().decode(buffer)
+        const lines = text.split('\n').filter(line => line.trim())
+        if (lines.length < 2) {
+          return NextResponse.json(
+            { success: false, error: 'CSV file must have at least a header and one data row' },
+            { status: 400 }
+          )
+        }
+        
+        const data = lines.map(line => {
+          return line.split(',').map(cell => cell.trim())
+        })
+        
+        products = parseFileData(data)
+      } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Handle Excel files
+        const workbook = XLSX.read(buffer, { type: 'array' })
+        const sheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[sheetName]
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+        
+        products = parseFileData(data as any[][])
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Unsupported file format. Use CSV, XLSX, or XLS.' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Handle JSON data (legacy support)
+      const body: BulkImportRequest = await request.json()
+      products = body.products
+    }
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Products array is required' },
+        { success: false, error: 'No valid products found to import' },
         { status: 400 }
       )
     }
 
     console.log(`Bulk importing ${products.length} products...`)
+
+    // Validate required fields for each product
+    const validationErrors = []
+    const requiredFields = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
+    
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i]
+      for (const field of requiredFields) {
+        if (!product[field] || String(product[field]).trim() === '') {
+          validationErrors.push({
+            row: i + 2, // +2 because of 0-based index and header row
+            field,
+            message: `Campo requerido "${field}" está vacío`,
+            value: product[field]
+          })
+        }
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Se encontraron ${validationErrors.length} errores de validación`,
+          validationErrors
+        },
+        { status: 400 }
+      )
+    }
 
     // Check for duplicate SKUs and EANs in the import batch
     const skus = products.map(p => p.sku).filter(Boolean)
@@ -166,6 +307,7 @@ export async function POST(request: NextRequest) {
 
     const response = {
       success: errors.length === 0,
+      imported_count: results.length,
       imported: results.length,
       total: products.length,
       errors: errors.length,
