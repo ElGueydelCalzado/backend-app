@@ -55,6 +55,7 @@ interface UniqueValues {
 // Removed Message interface - now using toast notifications
 
 // Column configuration for the inventory table (auto-generated from database schema)
+// Default visibility matches "Basico" preset: categoria, marca, modelo, color, talla, sku
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'categoria', label: 'Categoría', visible: true, category: 'basic' },
   { key: 'marca', label: 'Marca', visible: true, category: 'basic' },
@@ -1106,7 +1107,7 @@ export default function InventarioPage() {
     )
   }
 
-  // Apply "Basico" preset on page load
+  // Apply "Basico" preset on page load to ensure consistent column visibility
   useEffect(() => {
     handlePresetSelect('basic')
   }, []) // Only run once on mount
