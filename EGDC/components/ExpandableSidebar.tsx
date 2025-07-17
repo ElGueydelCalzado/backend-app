@@ -105,7 +105,7 @@ export default function ExpandableSidebar({
       {/* Collapse/Expand Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed w-8 h-8 bg-orange-500 hover:bg-orange-600 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center text-white transition-all duration-200"
+        className="fixed w-5 h-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center justify-center text-xs font-bold"
         style={{ 
           left: isCollapsed ? '48px' : '312px',
           top: '120px',
@@ -113,15 +113,7 @@ export default function ExpandableSidebar({
         }}
         title={isCollapsed ? 'Expandir panel' : 'Contraer panel'}
       >
-        {isCollapsed ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        )}
+        {isCollapsed ? '→' : '←'}
       </button>
 
       {/* Sidebar Header */}
