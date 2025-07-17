@@ -183,6 +183,13 @@ export default function InventarioPage() {
     }
   }, [sortConfig])
 
+  // Apply search filtering when searchTerm changes
+  useEffect(() => {
+    if (allData.length > 0) {
+      applyFilters()
+    }
+  }, [searchTerm])
+
   // Reload data when filters change (for server-side filtering)
   useEffect(() => {
     if (currentPage > 1) {
@@ -271,6 +278,27 @@ export default function InventarioPage() {
 
     // No warehouse filtering needed - data is already separated by business
     // EGDC tab = real database data, Supplier tabs = pre-filtered dummy data
+
+    // Apply search filtering first
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim()
+      filtered = filtered.filter(item => {
+        // Search across multiple fields: categoria, marca, modelo, color, talla, sku, ean
+        const searchableFields = [
+          item.categoria || '',
+          item.marca || '',
+          item.modelo || '',
+          item.color || '',
+          item.talla || '',
+          item.sku || '',
+          item.ean || ''
+        ]
+        
+        return searchableFields.some(field => 
+          field.toLowerCase().includes(searchLower)
+        )
+      })
+    }
 
     // Apply category/brand/model/color/size filters
     filtered = filtered.filter(item => {
