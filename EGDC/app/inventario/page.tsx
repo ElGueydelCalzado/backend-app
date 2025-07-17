@@ -1584,14 +1584,14 @@ export default function InventarioPage() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowNewProductModal(true)}
-                      className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                      className="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                     >
                       <span>➕</span>
                       Nuevo Producto
                     </button>
                     <button
                       onClick={() => setShowImportExportModal(true)}
-                      className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                      className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                     >
                       <span>🔄</span>
                       Importar / Exportar
@@ -1600,14 +1600,14 @@ export default function InventarioPage() {
                       <>
                         <button
                           onClick={() => setShowBulkUpdateModal(true)}
-                          className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                          className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                         >
                           <span>📝</span>
                           Editar {selectedProducts.size}
                         </button>
                         <button
                           onClick={handleBulkDelete}
-                          className="px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                          className="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
                           disabled={saving}
                         >
                           <span>🗑️</span>

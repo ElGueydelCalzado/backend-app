@@ -75,7 +75,7 @@ export default function UnifiedSearchAndFilters({
   }
 
   return (
-    <div className="mb-6">
+    <div>
       <UnifiedSearchBar
         searchTerm={searchTerm}
         onSearchChange={onSearchChange}
