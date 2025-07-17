@@ -35,13 +35,42 @@ export default function ExpandableSidebar({
     setLoading(true)
     // Set dummy data to prevent crashes
     setWarehouses([
-      { slug: 'egdc-main', name: 'EGDC Principal', icon: '🏪', status: 'active', product_count: 120, last_sync_at: new Date().toISOString() },
-      { slug: 'egdc-storage', name: 'EGDC Almacén', icon: '📦', status: 'active', product_count: 85, last_sync_at: new Date().toISOString() }
+      { 
+        id: 1, slug: 'egdc-main', name: 'EGDC Principal', icon: '🏪', status: 'active', 
+        type: 'own', product_count: 120, last_sync_at: new Date().toISOString(),
+        sync_enabled: true, sync_frequency: 15, sync_bidirectional: false,
+        notify_low_stock: true, min_stock_threshold: 5, auto_reorder: false,
+        default_markup_percentage: 0, created_at: new Date().toISOString(), 
+        updated_at: new Date().toISOString()
+      },
+      { 
+        id: 2, slug: 'egdc-storage', name: 'EGDC Almacén', icon: '📦', status: 'active',
+        type: 'own', product_count: 85, last_sync_at: new Date().toISOString(),
+        sync_enabled: true, sync_frequency: 15, sync_bidirectional: false,
+        notify_low_stock: true, min_stock_threshold: 5, auto_reorder: false,
+        default_markup_percentage: 0, created_at: new Date().toISOString(), 
+        updated_at: new Date().toISOString()
+      }
     ])
     setMarketplaces([
-      { slug: 'shein', name: 'SHEIN', icon: '🛒', status: 'active', published_products_count: 45 },
-      { slug: 'shopify', name: 'Shopify', icon: '🏬', status: 'active', published_products_count: 38 },
-      { slug: 'mercadolibre', name: 'MercadoLibre', icon: '🛍️', status: 'pending', published_products_count: 0 }
+      { 
+        id: 1, slug: 'shein', name: 'SHEIN', icon: '🛒', status: 'active', 
+        platform: 'shein', published_products_count: 45, sync_products: true,
+        sync_prices: true, sync_inventory: true, auto_publish: false, import_orders: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      },
+      { 
+        id: 2, slug: 'shopify', name: 'Shopify', icon: '🏬', status: 'active', 
+        platform: 'shopify', published_products_count: 38, sync_products: true,
+        sync_prices: true, sync_inventory: true, auto_publish: false, import_orders: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      },
+      { 
+        id: 3, slug: 'mercadolibre', name: 'MercadoLibre', icon: '🛍️', status: 'pending', 
+        platform: 'mercadolibre', published_products_count: 0, sync_products: true,
+        sync_prices: true, sync_inventory: true, auto_publish: false, import_orders: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      }
     ])
     setLoading(false)
   }
@@ -417,7 +446,9 @@ export default function ExpandableSidebar({
                   <button
                     onClick={() => {
                       onTabChange('tiendas')
-                      handleSubPageChange('add-marketplace')
+                      if (onSubPageChange) {
+                        onSubPageChange('add-marketplace')
+                      }
                     }}
                     className="w-full px-8 py-2 text-left text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-r-lg mr-2 mt-2"
                   >

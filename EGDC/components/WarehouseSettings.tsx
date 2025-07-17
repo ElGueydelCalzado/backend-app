@@ -42,10 +42,12 @@ export default function WarehouseSettings({ warehouseSlug, onSave }: WarehouseSe
       setLoading(true)
       // Use dummy data instead of API call to prevent crashes
       const dummyWarehouse = {
+        id: 1,
         slug: warehouseSlug,
         name: warehouseSlug === 'egdc-main' ? 'EGDC Principal' : 'EGDC Almacén',
+        type: 'own' as const,
         icon: warehouseSlug === 'egdc-main' ? '🏪' : '📦',
-        status: 'active',
+        status: 'active' as const,
         product_count: warehouseSlug === 'egdc-main' ? 120 : 85,
         last_sync_at: new Date().toISOString(),
         description: `Configuración de ${warehouseSlug}`,
@@ -59,7 +61,9 @@ export default function WarehouseSettings({ warehouseSlug, onSave }: WarehouseSe
         notify_low_stock: true,
         min_stock_threshold: 5,
         auto_reorder: false,
-        default_markup_percentage: 0
+        default_markup_percentage: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
       
       setWarehouse(dummyWarehouse)

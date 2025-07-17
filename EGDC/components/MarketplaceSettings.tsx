@@ -44,10 +44,12 @@ export default function MarketplaceSettings({ marketplaceSlug, onSave }: Marketp
       setLoading(true)
       // Use dummy data instead of API call to prevent crashes
       const dummyMarketplace = {
+        id: 1,
         slug: marketplaceSlug,
         name: marketplaceSlug === 'shein' ? 'SHEIN' : marketplaceSlug === 'shopify' ? 'Shopify' : 'MercadoLibre',
+        platform: (marketplaceSlug === 'shein' ? 'shein' : marketplaceSlug === 'shopify' ? 'shopify' : 'mercadolibre') as 'shein' | 'shopify' | 'mercadolibre',
         icon: marketplaceSlug === 'shein' ? '🛒' : marketplaceSlug === 'shopify' ? '🏬' : '🛍️',
-        status: marketplaceSlug === 'mercadolibre' ? 'pending' : 'active',
+        status: (marketplaceSlug === 'mercadolibre' ? 'pending' : 'active') as 'active' | 'pending',
         published_products_count: marketplaceSlug === 'shein' ? 45 : marketplaceSlug === 'shopify' ? 38 : 0,
         description: `Configuración de ${marketplaceSlug}`,
         app_id: '',
@@ -62,7 +64,9 @@ export default function MarketplaceSettings({ marketplaceSlug, onSave }: Marketp
         import_orders: true,
         store_url: '',
         seller_id: '',
-        store_name: ''
+        store_name: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
       
       setMarketplace(dummyMarketplace)

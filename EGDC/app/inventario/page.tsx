@@ -1353,8 +1353,8 @@ export default function InventarioPage() {
     }
   }
 
-  const getFilteredProducts = () => {
-    let filtered = editedView
+  const getFilteredProducts = (): Product[] => {
+    let filtered = editedView || []
     
     if (mobileSearchTerm.trim()) {
       filtered = filtered.filter(item => 
@@ -1404,7 +1404,8 @@ export default function InventarioPage() {
       return price >= filters.priceRange.min && price <= filters.priceRange.max
     })
 
-    // Sorting is now applied above before setting state
+    // Return filtered products
+    return filtered
   }
 
   const applySorting = (products: Product[]): Product[] => {
