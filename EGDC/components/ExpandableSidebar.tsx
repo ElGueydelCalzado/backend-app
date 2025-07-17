@@ -195,7 +195,7 @@ export default function ExpandableSidebar({
             <div className="border-b border-gray-200">
               <button
                 onClick={() => toggleSection('productos')}
-                className={`w-full px-4 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
                   activeTab === 'productos' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
                 }`}
               >
@@ -230,10 +230,10 @@ export default function ExpandableSidebar({
               >
                 Gestión de Catálogo
               </button>
-              <button className="w-full px-8 py-1 text-left text-sm text-gray-400 cursor-not-allowed">
+              <button className="w-full px-8 py-2 text-left text-sm text-gray-400 cursor-not-allowed">
                 Categorías (Próximamente)
               </button>
-              <button className="w-full px-8 py-1 text-left text-sm text-gray-400 cursor-not-allowed">
+              <button className="w-full px-8 py-2 text-left text-sm text-gray-400 cursor-not-allowed">
                 Atributos (Próximamente)
               </button>
             </div>
@@ -244,7 +244,7 @@ export default function ExpandableSidebar({
         <div className="border-b border-gray-200">
           <button
             onClick={() => toggleSection('inventario')}
-            className={`w-full px-4 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+            className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
               activeTab === 'inventario' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
             }`}
           >
@@ -266,13 +266,13 @@ export default function ExpandableSidebar({
           
           {expandedSections.has('inventario') && (
             <div className="bg-gray-50 py-2">
-              <button className="w-full px-8 py-1 text-left text-sm text-gray-400 cursor-not-allowed">
+              <button className="w-full px-8 py-2 text-left text-sm text-gray-400 cursor-not-allowed">
                 Movimientos (Próximamente)
               </button>
-              <button className="w-full px-8 py-1 text-left text-sm text-gray-400 cursor-not-allowed">
+              <button className="w-full px-8 py-2 text-left text-sm text-gray-400 cursor-not-allowed">
                 Reportes (Próximamente)
               </button>
-              <button className="w-full px-8 py-1 text-left text-sm text-gray-400 cursor-not-allowed">
+              <button className="w-full px-8 py-2 text-left text-sm text-gray-400 cursor-not-allowed">
                 Alertas (Próximamente)
               </button>
             </div>
@@ -283,7 +283,7 @@ export default function ExpandableSidebar({
         <div className="border-b border-gray-200">
           <button
             onClick={() => toggleSection('bodegas')}
-            className={`w-full px-4 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+            className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
               activeTab === 'bodegas' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
             }`}
           >
@@ -321,7 +321,7 @@ export default function ExpandableSidebar({
                           onTabChange('bodegas')
                           handleSubPageSelect(warehouse.slug)
                         }}
-                        className={`w-full px-8 py-1 text-left text-sm transition-colors rounded-r-lg mr-2 ${
+                        className={`w-full px-8 py-2 text-left text-sm transition-colors rounded-r-lg mr-2 ${
                           activeSubPage === warehouse.slug
                             ? 'bg-blue-100 text-blue-700 border-l-2 border-blue-500'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -366,7 +366,7 @@ export default function ExpandableSidebar({
         <div className="border-b border-gray-200">
           <button
             onClick={() => toggleSection('tiendas')}
-            className={`w-full px-4 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+            className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
               activeTab === 'tiendas' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
             }`}
           >
@@ -404,7 +404,7 @@ export default function ExpandableSidebar({
                           onTabChange('tiendas')
                           handleSubPageSelect(marketplace.slug)
                         }}
-                        className={`w-full px-8 py-1 text-left text-sm transition-colors rounded-r-lg mr-2 ${
+                        className={`w-full px-8 py-2 text-left text-sm transition-colors rounded-r-lg mr-2 ${
                           activeSubPage === marketplace.slug
                             ? 'bg-blue-100 text-blue-700 border-l-2 border-blue-500'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
