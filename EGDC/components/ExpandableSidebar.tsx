@@ -24,6 +24,7 @@ export default function ExpandableSidebar({
   const [warehouses, setWarehouses] = useState<Warehouse[]>([])
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([])
   const [loading, setLoading] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Load warehouses and marketplaces data
   useEffect(() => {
@@ -99,40 +100,123 @@ export default function ExpandableSidebar({
   }
 
   return (
-    <div className={`w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden ${className}`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out relative ${className}`}>
       
+      {/* Collapse/Expand Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-4 z-10 w-6 h-6 bg-white border border-gray-300 rounded-full shadow-md hover:shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
+        title={isCollapsed ? 'Expandir panel' : 'Contraer panel'}
+      >
+        {isCollapsed ? (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        )}
+      </button>
+
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">EGDC - Gestión</h2>
-        <p className="text-sm text-gray-500">Sistema de inventario</p>
-      </div>
+      {!isCollapsed && (
+        <div className="p-4 border-b border-gray-200">
+          <p className="text-sm text-gray-500">Sistema de inventario</p>
+        </div>
+      )}
 
       {/* Expandable Navigation */}
       <div className="flex-1 overflow-y-auto">
         
-        {/* PRODUCTOS SECTION */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => toggleSection('productos')}
-            className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
-              activeTab === 'productos' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
-            }`}
-          >
-            <div className="flex items-center">
-              <span className="text-lg mr-3">📦</span>
-              <span className="font-medium text-gray-900">Productos</span>
+        {isCollapsed ? (
+          /* Collapsed State - Icon Only */
+          <div className="p-2 space-y-2 pt-12">
+            <div className="flex flex-col items-center space-y-2">
+              <button 
+                onClick={() => {
+                  setIsCollapsed(false)
+                  onTabChange('productos')
+                }}
+                className={`w-10 h-10 rounded flex items-center justify-center text-lg cursor-pointer transition-colors ${
+                  activeTab === 'productos' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Productos"
+              >
+                📦
+              </button>
+              <button 
+                onClick={() => {
+                  setIsCollapsed(false)
+                  onTabChange('inventario')
+                }}
+                className={`w-10 h-10 rounded flex items-center justify-center text-lg cursor-pointer transition-colors ${
+                  activeTab === 'inventario' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Inventario"
+              >
+                📊
+              </button>
+              <button 
+                onClick={() => {
+                  setIsCollapsed(false)
+                  onTabChange('bodegas')
+                }}
+                className={`w-10 h-10 rounded flex items-center justify-center text-lg cursor-pointer transition-colors ${
+                  activeTab === 'bodegas' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Bodegas"
+              >
+                🏪
+              </button>
+              <button 
+                onClick={() => {
+                  setIsCollapsed(false)
+                  onTabChange('tiendas')
+                }}
+                className={`w-10 h-10 rounded flex items-center justify-center text-lg cursor-pointer transition-colors ${
+                  activeTab === 'tiendas' 
+                    ? 'bg-orange-100 text-orange-700' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Tiendas"
+              >
+                🏬
+              </button>
             </div>
-            <svg
-              className={`w-4 h-4 text-gray-500 transition-transform ${
-                expandedSections.has('productos') ? 'rotate-90' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          </div>
+        ) : (
+          /* Expanded State - Full Content */
+          <>
+            {/* PRODUCTOS SECTION */}
+            <div className="border-b border-gray-200">
+              <button
+                onClick={() => toggleSection('productos')}
+                className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                  activeTab === 'productos' ? 'bg-orange-50 border-r-2 border-orange-500' : ''
+                }`}
+              >
+                <div className="flex items-center">
+                  <span className="text-lg mr-3">📦</span>
+                  <span className="font-medium text-gray-900">Productos</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    expandedSections.has('productos') ? 'rotate-90' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
           
           {expandedSections.has('productos') && (
             <div className="bg-gray-50 py-2">
@@ -363,6 +447,8 @@ export default function ExpandableSidebar({
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   )
