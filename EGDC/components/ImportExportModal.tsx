@@ -88,10 +88,42 @@ export default function ImportExportModal({
               Descargar Plantilla CSV
             </button>
 
+            {/* File Selection Button */}
             <button
               onClick={() => {
-                onImport()
-                onClose()
+                // Create file input element
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xlsx,.xls,.csv'
+                input.style.display = 'none'
+                
+                // Handle file selection
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (file) {
+                    // Validate file type
+                    const validTypes = [
+                      'text/csv',
+                      'application/vnd.ms-excel',
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    ]
+                    
+                    if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                      console.log('File selected for import:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
+                      // Call the import handler
+                      onImport()
+                      onClose()
+                    } else {
+                      alert('Por favor selecciona un archivo válido (.xlsx, .xls, o .csv)')
+                    }
+                  }
+                  // Clean up
+                  document.body.removeChild(input)
+                }
+                
+                // Add to DOM and trigger click
+                document.body.appendChild(input)
+                input.click()
               }}
               className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
