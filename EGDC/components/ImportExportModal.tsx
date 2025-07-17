@@ -6,7 +6,7 @@ import { X, Upload, Download, FileText, AlertCircle } from 'lucide-react'
 interface ImportExportModalProps {
   isOpen: boolean
   onClose: () => void
-  onImport: () => void
+  onImportSuccess: (message: string) => void
   onExport: (format: 'csv' | 'xlsx') => void
   selectedProductsCount?: number
 }
@@ -21,14 +21,46 @@ const TABS = [
 export default function ImportExportModal({
   isOpen,
   onClose,
-  onImport,
+  onImportSuccess,
   onExport,
   selectedProductsCount = 0
 }: ImportExportModalProps) {
   const [activeTab, setActiveTab] = useState<ImportExportTab>('import')
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   if (!isOpen) return null
+
+  // Handle actual file import processing
+  const handleFileImport = async (file: File) => {
+    try {
+      setIsProcessing(true)
+      
+      // Create form data for upload
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      // Call the bulk import API
+      const response = await fetch('/api/inventory/bulk-import', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        onImportSuccess(`¡${result.imported_count || 'Productos'} importados exitosamente!`)
+        onClose()
+      } else {
+        throw new Error(result.error || 'Error al importar archivo')
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      onImportSuccess(`Error al importar: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
 
   // Simple drag & drop handlers - no useCallback to avoid React errors
   const handleDragOver = (e: React.DragEvent) => {
@@ -61,8 +93,7 @@ export default function ImportExportModal({
       
       if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
         console.log('File dropped for import:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
-        onImport()
-        onClose()
+        handleFileImport(file)
       } else {
         alert('Por favor suelta un archivo válido (.xlsx, .xls, o .csv)')
       }
@@ -156,8 +187,7 @@ export default function ImportExportModal({
                     
                     if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                       console.log('File selected via drag area:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
-                      onImport()
-                      onClose()
+                      handleFileImport(file)
                     } else {
                       alert('Por favor selecciona un archivo válido (.xlsx, .xls, o .csv)')
                     }
@@ -180,6 +210,7 @@ export default function ImportExportModal({
 
             {/* File Selection Button */}
             <button
+              disabled={isProcessing}
               onClick={() => {
                 // Create file input element
                 const input = document.createElement('input')
@@ -201,8 +232,7 @@ export default function ImportExportModal({
                     if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                       console.log('File selected for import:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
                       // Call the import handler
-                      onImport()
-                      onClose()
+                      handleFileImport(file)
                     } else {
                       alert('Por favor selecciona un archivo válido (.xlsx, .xls, o .csv)')
                     }
@@ -215,10 +245,14 @@ export default function ImportExportModal({
                 document.body.appendChild(input)
                 input.click()
               }}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-semibold transition-colors ${
+                isProcessing 
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               <Upload className="w-5 h-5" />
-              Seleccionar Archivo para Importar
+              {isProcessing ? 'Procesando archivo...' : 'Seleccionar Archivo para Importar'}
             </button>
           </div>
         )

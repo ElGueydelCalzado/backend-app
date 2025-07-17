@@ -15,7 +15,6 @@ import MarketplaceSettings from '@/components/MarketplaceSettings'
 import SearchBar from '@/components/SearchBar'
 import UnifiedSearchAndFilters from '@/components/UnifiedSearchAndFilters'
 import ProductCollectionWizard from '@/components/ProductCollectionWizard'
-import BulkImportModal from '@/components/BulkImportModal'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import BulkDeleteConfirmModal from '@/components/BulkDeleteConfirmModal'
 import ImportExportModal from '@/components/ImportExportModal'
@@ -102,7 +101,6 @@ export default function InventarioPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [showNewProductModal, setShowNewProductModal] = useState(false)
-  const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false)
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [showImportExportModal, setShowImportExportModal] = useState(false)
@@ -1970,7 +1968,7 @@ export default function InventarioPage() {
               <MobileImportExportModal
                 isOpen={showMobileImportExport}
                 onClose={() => setShowMobileImportExport(false)}
-                onImport={() => setShowBulkImportModal(true)}
+                onImport={() => setShowImportExportModal(true)}
                 onExport={handleExport}
               />
             )}
@@ -1988,22 +1986,17 @@ export default function InventarioPage() {
           allData={allData}
         />
 
-        {/* Bulk Import Modal */}
-        <BulkImportModal
-          isOpen={showBulkImportModal}
-          onClose={() => setShowBulkImportModal(false)}
-          onSuccess={(importedCount) => {
-            showMessage(`¡${importedCount} productos importados exitosamente!`, 'success')
-            loadInventoryData() // Reload data to show new products
-          }}
-          existingProducts={allData}
-        />
 
         {/* Import/Export Modal */}
         <ImportExportModal
           isOpen={showImportExportModal}
           onClose={() => setShowImportExportModal(false)}
-          onImport={() => setShowBulkImportModal(true)}
+          onImportSuccess={(message) => {
+            showMessage(message, message.includes('Error') ? 'error' : 'success')
+            if (!message.includes('Error')) {
+              loadInventoryData() // Reload data to show new products
+            }
+          }}
           onExport={handleExport}
           selectedProductsCount={selectedProducts.size}
         />
