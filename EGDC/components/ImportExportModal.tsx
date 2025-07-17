@@ -26,8 +26,48 @@ export default function ImportExportModal({
   selectedProductsCount = 0
 }: ImportExportModalProps) {
   const [activeTab, setActiveTab] = useState<ImportExportTab>('import')
+  const [isDragOver, setIsDragOver] = useState(false)
 
   if (!isOpen) return null
+
+  // Simple drag & drop handlers - no useCallback to avoid React errors
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const file = files[0] // Take first file only
+    
+    if (file) {
+      // Same validation as file picker
+      const validTypes = [
+        'text/csv',
+        'application/vnd.ms-excel', 
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ]
+      
+      if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        console.log('File dropped for import:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
+        onImport()
+        onClose()
+      } else {
+        alert('Por favor suelta un archivo válido (.xlsx, .xls, o .csv)')
+      }
+    }
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -87,6 +127,56 @@ export default function ImportExportModal({
               <FileText className="w-5 h-5" />
               Descargar Plantilla CSV
             </button>
+
+            {/* Drag & Drop Area */}
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                isDragOver 
+                  ? 'border-blue-500 bg-blue-100' 
+                  : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => {
+                // Same file picker logic as the button below
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xlsx,.xls,.csv'
+                input.style.display = 'none'
+                
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (file) {
+                    const validTypes = [
+                      'text/csv',
+                      'application/vnd.ms-excel',
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    ]
+                    
+                    if (validTypes.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                      console.log('File selected via drag area:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
+                      onImport()
+                      onClose()
+                    } else {
+                      alert('Por favor selecciona un archivo válido (.xlsx, .xls, o .csv)')
+                    }
+                  }
+                  document.body.removeChild(input)
+                }
+                
+                document.body.appendChild(input)
+                input.click()
+              }}
+            >
+              <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
+              <p className={`text-lg font-medium mb-2 ${isDragOver ? 'text-blue-700' : 'text-gray-700'}`}>
+                {isDragOver ? '¡Suelta el archivo aquí!' : 'Arrastra tu archivo aquí o haz clic para seleccionar'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Archivos soportados: .xlsx, .xls, .csv (máximo 10MB)
+              </p>
+            </div>
 
             {/* File Selection Button */}
             <button
