@@ -19,21 +19,22 @@ export default function UnifiedSearchBar({
   activeFilterCount
 }: UnifiedSearchBarProps) {
   return (
-    <div className="bg-white border border-gray-300 rounded-lg shadow-sm">
-      <div className="flex items-center">
+    <div className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+      <div className="flex items-center h-full">
         {/* Search Icon */}
         <div className="flex-shrink-0 pl-4 pr-3">
           <Search className="h-5 w-5 text-gray-400" />
         </div>
 
         {/* Search Input */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0">
           <input
             type="text"
             placeholder="Search by name, brand, model, SKU, EAN..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full py-3 text-base bg-transparent border-0 focus:outline-none focus:ring-0 placeholder-gray-400"
+            className="w-full py-3 text-base bg-transparent border-0 focus:outline-none focus:ring-0 placeholder-gray-400 text-gray-900"
+            style={{ backgroundColor: 'transparent', boxShadow: 'none' }}
           />
         </div>
 
