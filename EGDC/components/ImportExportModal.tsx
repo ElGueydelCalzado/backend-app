@@ -49,10 +49,13 @@ export default function ImportExportModal({
       const result = await response.json()
       
       if (result.success) {
-        onImportSuccess(`¡${result.imported_count || 'Productos'} importados exitosamente!`)
+        // Use the new processed_count and message from upsert API
+        const count = result.processed_count || result.imported_or_updated || result.imported_count || 'Productos'
+        const message = result.message || `¡${count} productos procesados exitosamente!`
+        onImportSuccess(message)
         onClose()
       } else {
-        throw new Error(result.error || 'Error al importar archivo')
+        throw new Error(result.error || 'Error al procesar archivo')
       }
     } catch (error) {
       console.error('Import error:', error)
@@ -119,12 +122,14 @@ export default function ImportExportModal({
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-2">Formato requerido:</p>
+                  <p className="font-semibold mb-2">Importación con UPSERT:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Archivo Excel (.xlsx) o CSV (.csv)</li>
                     <li>Columnas REQUERIDAS: categoria, marca, modelo, color, talla, sku</li>
                     <li>Columnas opcionales: costo, ean, dimensiones, inventario, plataformas</li>
-                    <li>SKU debe ser único para cada producto</li>
+                    <li><strong>SKU existente:</strong> Actualiza el producto con nueva información</li>
+                    <li><strong>SKU nuevo:</strong> Crea un producto completamente nuevo</li>
+                    <li>Solo actualiza campos que tengan valor (preserva datos existentes)</li>
                   </ul>
                 </div>
               </div>

@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for duplicate SKUs and EANs in the import batch
+    // Check for duplicate SKUs and EANs in the import batch only
     const skus = products.map(p => p.sku).filter(Boolean)
     const eans = products.map(p => p.ean).filter(Boolean)
     
@@ -207,119 +207,98 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for existing SKUs and EANs in database
-    const conditions = []
-    const params = []
-    
-    if (skus.length > 0) {
-      conditions.push('sku = ANY($1)')
-      params.push(skus)
-    }
-    
-    if (eans.length > 0) {
-      conditions.push(`ean = ANY($${params.length + 1})`)
-      params.push(eans)
-    }
-    
-    if (conditions.length > 0) {
-      const existingCheck = await PostgresManager.query(`
-        SELECT id, sku, ean, marca, modelo FROM products WHERE ${conditions.join(' OR ')}
-      `, params)
+    // Note: We no longer check for existing SKUs in database since we'll use UPSERT
+    // This allows updating existing products with new data
 
-      if (existingCheck.rows.length > 0) {
-        const existingDetails = existingCheck.rows.map(row => 
-          `ID: ${row.id}, SKU: ${row.sku || 'N/A'}, EAN: ${row.ean || 'N/A'} (${row.marca} ${row.modelo})`
-        )
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'SKUs/EANs already exist in database',
-            existingProducts: existingDetails
-          },
-          { status: 409 }
-        )
-      }
-    }
-
-    // Process in batches to avoid timeout
-    const BATCH_SIZE = 100
+    // Process in batches using UPSERT to handle existing SKUs
+    const BATCH_SIZE = 50 // Smaller batches for upsert processing
     const results = []
     const errors = []
+    let updatedCount = 0
+    let insertedCount = 0
 
     for (let batchStart = 0; batchStart < products.length; batchStart += BATCH_SIZE) {
       const batch = products.slice(batchStart, batchStart + BATCH_SIZE)
-      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)}`)
+      console.log(`Processing UPSERT batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)}`)
 
-      // Prepare batch data
+      // Prepare batch data - pass through all fields, let upsert handle the logic
       const batchData = batch.map(product => ({
-        categoria: product.categoria || null,
-        marca: product.marca || null,
-        modelo: product.modelo || null,
-        color: product.color || null,
-        talla: product.talla || null,
-        sku: product.sku || null,
-        ean: product.ean || null,
-        costo: product.costo || null,
-        google_drive: product.google_drive || null,
-        // Physical dimensions and weight
-        height_cm: product.height_cm || null,
-        length_cm: product.length_cm || null,
-        thickness_cm: product.thickness_cm || null,
-        weight_grams: product.weight_grams || null,
-        shein_modifier: product.shein_modifier || 1.5,
-        shopify_modifier: product.shopify_modifier || 2.0,
-        meli_modifier: product.meli_modifier || 2.5,
-        inv_egdc: product.inv_egdc || 0,
-        inv_fami: product.inv_fami || 0,
-        inv_osiel: product.inv_osiel || 0,
-        inv_molly: product.inv_molly || 0,
-        shein: product.shein || false,
-        meli: product.meli || false,
-        shopify: product.shopify || false,
-        tiktok: product.tiktok || false,
-        upseller: product.upseller || false,
-        go_trendier: product.go_trendier || false
+        categoria: product.categoria,
+        marca: product.marca,
+        modelo: product.modelo,
+        color: product.color,
+        talla: product.talla,
+        sku: product.sku,
+        ean: product.ean,
+        costo: product.costo,
+        google_drive: product.google_drive,
+        height_cm: product.height_cm,
+        length_cm: product.length_cm,
+        thickness_cm: product.thickness_cm,
+        weight_grams: product.weight_grams,
+        shein_modifier: product.shein_modifier,
+        shopify_modifier: product.shopify_modifier,
+        meli_modifier: product.meli_modifier,
+        inv_egdc: product.inv_egdc,
+        inv_fami: product.inv_fami,
+        inv_osiel: product.inv_osiel,
+        inv_molly: product.inv_molly,
+        shein: product.shein,
+        meli: product.meli,
+        shopify: product.shopify,
+        tiktok: product.tiktok,
+        upseller: product.upseller,
+        go_trendier: product.go_trendier
       }))
 
       try {
-        // Use batch insert for better performance
-        const batchResults = await PostgresManager.batchCreateProducts(batchData)
-        results.push(...batchResults)
-      } catch (error) {
-        console.error(`Error importing batch starting at ${batchStart}:`, error)
-        // Fall back to individual processing for this batch
-        for (let i = 0; i < batch.length; i++) {
-          const product = batch[i]
-          try {
-            const createdProduct = await PostgresManager.createProduct(batchData[i])
-            results.push(createdProduct)
-          } catch (individualError) {
-            console.error(`Error importing product ${batchStart + i + 1}:`, individualError)
-            errors.push({ 
-              error: individualError instanceof Error ? individualError.message : 'Unknown error', 
-              product,
-              index: batchStart + i + 1
-            })
-          }
+        // Use batch upsert for handling existing products
+        const batchResult = await PostgresManager.batchUpsertProducts(batchData)
+        
+        // Type guard to ensure batchResult has the expected structure
+        if (batchResult && typeof batchResult === 'object' && 'results' in batchResult && 'errors' in batchResult) {
+          results.push(...batchResult.results)
+          errors.push(...batchResult.errors)
+          
+          // Track updates vs inserts (simplified - we'll count all as processed)
+          console.log(`Batch processed: ${batchResult.results.length} products, ${batchResult.errors.length} errors`)
+        } else {
+          // Fallback for unexpected return format
+          console.error('Unexpected batch result format:', batchResult)
+          errors.push({
+            error: 'Unexpected batch result format',
+            batch: `Batch starting at row ${batchStart + 2}`,
+            index: batchStart
+          })
         }
+      } catch (error) {
+        console.error(`Error in batch upsert starting at ${batchStart}:`, error)
+        errors.push({
+          error: error instanceof Error ? error.message : 'Unknown batch error',
+          batch: `Batch starting at row ${batchStart + 2}`, // +2 for header and 0-based index
+          index: batchStart
+        })
       }
     }
 
     const response = {
       success: errors.length === 0,
-      imported_count: results.length,
-      imported: results.length,
+      processed_count: results.length,
+      imported_or_updated: results.length, // UPSERT combines insert + update
       total: products.length,
       errors: errors.length,
       results,
-      errorDetails: errors.length > 0 ? errors : undefined
+      errorDetails: errors.length > 0 ? errors : undefined,
+      message: errors.length === 0 
+        ? `¡${results.length} productos procesados exitosamente! (nuevos productos creados o existentes actualizados)`
+        : `${results.length} productos procesados, ${errors.length} errores encontrados`
     }
 
     if (errors.length > 0 && results.length === 0) {
       return NextResponse.json(response, { status: 400 })
     }
 
-    console.log(`Bulk import completed: ${results.length} imported, ${errors.length} errors`)
+    console.log(`Bulk UPSERT completed: ${results.length} processed (inserted/updated), ${errors.length} errors`)
 
     return NextResponse.json(response)
 

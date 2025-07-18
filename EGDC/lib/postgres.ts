@@ -197,6 +197,97 @@ export class PostgresManager {
     return result.rows[0]
   }
 
+  static async upsertProduct(product: any) {
+    // UPSERT: Update if SKU exists, Insert if it doesn't
+    // We'll use a different approach: dynamically build the query
+    
+    if (!product.sku) {
+      throw new Error('SKU is required for upsert operation')
+    }
+    
+    // First, try to find if product exists
+    const existingQuery = 'SELECT * FROM products WHERE sku = $1'
+    const existingResult = await this.query(existingQuery, [product.sku])
+    const exists = existingResult.rows.length > 0
+    
+    if (exists) {
+      // Update existing product - only update fields that are provided
+      const existingProduct = existingResult.rows[0]
+      const updates: any = {}
+      
+      // Only add fields to update if they have values
+      Object.keys(product).forEach(key => {
+        if (key !== 'id' && key !== 'sku' && product[key] !== undefined && product[key] !== null && product[key] !== '') {
+          updates[key] = product[key]
+        }
+      })
+      
+      if (Object.keys(updates).length === 0) {
+        // No updates needed, just return existing product
+        return existingProduct
+      }
+      
+      return await this.updateProduct(existingProduct.id, updates)
+    } else {
+      // Create new product - include all required fields with defaults
+      const newProduct = {
+        categoria: product.categoria || null,
+        marca: product.marca || null,
+        modelo: product.modelo || null,
+        color: product.color || null,
+        talla: product.talla || null,
+        sku: product.sku,
+        ean: product.ean || null,
+        costo: product.costo || null,
+        google_drive: product.google_drive || null,
+        height_cm: product.height_cm || null,
+        length_cm: product.length_cm || null,
+        thickness_cm: product.thickness_cm || null,
+        weight_grams: product.weight_grams || null,
+        shein_modifier: product.shein_modifier || 1.5,
+        shopify_modifier: product.shopify_modifier || 2.0,
+        meli_modifier: product.meli_modifier || 2.5,
+        inv_egdc: product.inv_egdc || 0,
+        inv_fami: product.inv_fami || 0,
+        inv_osiel: product.inv_osiel || 0,
+        inv_molly: product.inv_molly || 0,
+        shein: product.shein || false,
+        meli: product.meli || false,
+        shopify: product.shopify || false,
+        tiktok: product.tiktok || false,
+        upseller: product.upseller || false,
+        go_trendier: product.go_trendier || false
+      }
+      
+      return await this.createProduct(newProduct)
+    }
+  }
+
+  static async batchUpsertProducts(products: any[]) {
+    if (products.length === 0) return []
+    
+    const results = []
+    const errors = []
+    
+    // Process each product individually for upsert
+    // This is more reliable than batch upsert for handling conflicts
+    for (let i = 0; i < products.length; i++) {
+      try {
+        const result = await this.upsertProduct(products[i])
+        results.push(result)
+      } catch (error) {
+        console.error(`Error upserting product ${i + 1}:`, error)
+        errors.push({
+          index: i + 1,
+          product: products[i],
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
+    }
+    
+    return { results, errors }
+  }
+
   static async batchCreateProducts(products: any[]) {
     if (products.length === 0) return []
     
