@@ -68,6 +68,6 @@ export const config = {
     '/',
     '/inventario/:path*',
     '/nuevo-producto/:path*',
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|login|public).*)',
+    '/((?!api/auth|api/drive-images|api/drive-proxy|api/health|_next/static|_next/image|favicon.ico|login|public).*)',
   ],
 }
