@@ -32,36 +32,55 @@ export default function ImagePreviewModal({
     setError(false)
     
     try {
-      console.log('Original Google Drive URL:', googleDriveUrl)
+      console.log('🔍 ImagePreviewModal: Starting image load')
+      console.log('📂 Original Google Drive URL:', googleDriveUrl)
+      console.log('📝 URL type:', typeof googleDriveUrl)
+      console.log('📏 URL length:', googleDriveUrl?.length)
+      
+      if (!googleDriveUrl || googleDriveUrl.trim() === '') {
+        console.error('❌ No Google Drive URL provided')
+        throw new Error('No Google Drive URL provided')
+      }
       
       // Extract folder ID from Google Drive URL
       const folderId = extractFolderIdFromUrl(googleDriveUrl)
-      console.log('Extracted folder ID:', folderId)
+      console.log('🆔 Extracted folder ID:', folderId)
       
       if (!folderId) {
-        throw new Error('Invalid Google Drive URL')
+        console.error('❌ Failed to extract folder ID from URL:', googleDriveUrl)
+        throw new Error('Invalid Google Drive URL - could not extract folder ID')
       }
 
+      console.log('🌐 Calling API: /api/drive-images/' + folderId)
+      
       // Try to get images using Google Drive API through our server
       const response = await fetch(`/api/drive-images/${folderId}`)
       
-      if (response.ok) {
-        const imageData = await response.json()
-        console.log('Images from API:', imageData)
+      console.log('📡 API Response status:', response.status)
+      console.log('📡 API Response ok:', response.ok)
+      
+      const imageData = await response.json()
+      console.log('📋 API Response data:', imageData)
+      
+      if (response.ok && imageData.success) {
+        console.log('✅ API call successful')
         
         if (imageData.images && imageData.images.length > 0) {
+          console.log('🖼️ Found', imageData.images.length, 'images')
           setImages(imageData.images)
           setCurrentImageIndex(0)
           return
+        } else {
+          console.log('📷 No images found in response')
+          throw new Error('No images found in this folder')
         }
+      } else {
+        console.error('❌ API call failed:', imageData)
+        throw new Error(imageData.error || 'Failed to load images from Google Drive')
       }
       
-      // If API failed, show error (no direct URLs work due to CSP)
-      console.log('API failed, showing error state')
-      setError(true)
-      
     } catch (err) {
-      console.error('Error loading images:', err)
+      console.error('💥 Error loading images:', err)
       setError(true)
     } finally {
       setLoading(false)
@@ -151,10 +170,15 @@ export default function ImagePreviewModal({
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
                 Vista previa no disponible
               </h3>
-              <p className="text-gray-600 mb-6">
-                No se pueden cargar las imágenes en este momento. 
-                Usa el botón de abajo para ver las imágenes en Google Drive.
+              <p className="text-gray-600 mb-4">
+                No se pueden cargar las imágenes en este momento.
               </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 max-w-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>URL:</strong> {googleDriveUrl || 'No URL provided'}<br/>
+                  <strong>Motivo:</strong> Revisa los logs de la consola para más detalles
+                </p>
+              </div>
               <button
                 onClick={openInDrive}
                 className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
