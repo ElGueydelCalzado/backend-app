@@ -199,93 +199,160 @@ export class PostgresManager {
 
   static async upsertProduct(product: any) {
     // UPSERT: Update if SKU exists, Insert if it doesn't
-    // We'll use a different approach: dynamically build the query
+    // Use PostgreSQL's native UPSERT (INSERT ... ON CONFLICT) for efficiency
     
     if (!product.sku) {
       throw new Error('SKU is required for upsert operation')
     }
     
-    // First, try to find if product exists
-    const existingQuery = 'SELECT * FROM products WHERE sku = $1'
-    const existingResult = await this.query(existingQuery, [product.sku])
-    const exists = existingResult.rows.length > 0
-    
-    if (exists) {
-      // Update existing product - only update fields that are provided
-      const existingProduct = existingResult.rows[0]
-      const updates: any = {}
-      
-      // Only add fields to update if they have values
-      Object.keys(product).forEach(key => {
-        if (key !== 'id' && key !== 'sku' && product[key] !== undefined && product[key] !== null && product[key] !== '') {
-          updates[key] = product[key]
-        }
-      })
-      
-      if (Object.keys(updates).length === 0) {
-        // No updates needed, just return existing product
-        return existingProduct
-      }
-      
-      return await this.updateProduct(existingProduct.id, updates)
-    } else {
-      // Create new product - include all required fields with defaults
-      const newProduct = {
-        categoria: product.categoria || null,
-        marca: product.marca || null,
-        modelo: product.modelo || null,
-        color: product.color || null,
-        talla: product.talla || null,
-        sku: product.sku,
-        ean: product.ean || null,
-        costo: product.costo || null,
-        google_drive: product.google_drive || null,
-        height_cm: product.height_cm || null,
-        length_cm: product.length_cm || null,
-        thickness_cm: product.thickness_cm || null,
-        weight_grams: product.weight_grams || null,
-        shein_modifier: product.shein_modifier || 1.5,
-        shopify_modifier: product.shopify_modifier || 2.0,
-        meli_modifier: product.meli_modifier || 2.5,
-        inv_egdc: product.inv_egdc || 0,
-        inv_fami: product.inv_fami || 0,
-        inv_osiel: product.inv_osiel || 0,
-        inv_molly: product.inv_molly || 0,
-        shein: product.shein || false,
-        meli: product.meli || false,
-        shopify: product.shopify || false,
-        tiktok: product.tiktok || false,
-        upseller: product.upseller || false,
-        go_trendier: product.go_trendier || false
-      }
-      
-      return await this.createProduct(newProduct)
+    // Prepare product data with defaults for new products
+    const productData = {
+      categoria: product.categoria || null,
+      marca: product.marca || null,
+      modelo: product.modelo || null,
+      color: product.color || null,
+      talla: product.talla || null,
+      sku: product.sku,
+      ean: product.ean || null,
+      costo: product.costo || null,
+      google_drive: product.google_drive || null,
+      height_cm: product.height_cm || null,
+      length_cm: product.length_cm || null,
+      thickness_cm: product.thickness_cm || null,
+      weight_grams: product.weight_grams || null,
+      shein_modifier: product.shein_modifier || 1.5,
+      shopify_modifier: product.shopify_modifier || 2.0,
+      meli_modifier: product.meli_modifier || 2.5,
+      inv_egdc: product.inv_egdc || 0,
+      inv_fami: product.inv_fami || 0,
+      inv_osiel: product.inv_osiel || 0,
+      inv_molly: product.inv_molly || 0,
+      shein: product.shein || false,
+      meli: product.meli || false,
+      shopify: product.shopify || false,
+      tiktok: product.tiktok || false,
+      upseller: product.upseller || false,
+      go_trendier: product.go_trendier || false
     }
+    
+    const fields = Object.keys(productData)
+    const values = fields.map(field => productData[field])
+    
+    // Build UPDATE SET clause - only update fields that have actual values in the input
+    const updateClauses = []
+    Object.keys(product).forEach(key => {
+      if (key !== 'id' && key !== 'sku' && product[key] !== undefined && product[key] !== null && product[key] !== '') {
+        updateClauses.push(`${key} = EXCLUDED.${key}`)
+      }
+    })
+    
+    // If no updates specified, at least update the timestamp
+    const setClause = updateClauses.length > 0 
+      ? updateClauses.join(', ') + ', updated_at = NOW()'
+      : 'updated_at = NOW()'
+    
+    const query = `
+      INSERT INTO products (${fields.join(', ')})
+      VALUES (${fields.map((_, index) => `$${index + 1}`).join(', ')})
+      ON CONFLICT (sku) 
+      DO UPDATE SET ${setClause}
+      RETURNING *
+    `
+    
+    const result = await this.query(query, values)
+    return result.rows[0]
   }
 
   static async batchUpsertProducts(products: any[]) {
-    if (products.length === 0) return []
+    if (products.length === 0) return { results: [], errors: [] }
     
-    const results = []
-    const errors = []
+    // Prepare all products with consistent structure
+    const processedProducts = products.map(product => ({
+      categoria: product.categoria || null,
+      marca: product.marca || null,
+      modelo: product.modelo || null,
+      color: product.color || null,
+      talla: product.talla || null,
+      sku: product.sku,
+      ean: product.ean || null,
+      costo: product.costo || null,
+      google_drive: product.google_drive || null,
+      height_cm: product.height_cm || null,
+      length_cm: product.length_cm || null,
+      thickness_cm: product.thickness_cm || null,
+      weight_grams: product.weight_grams || null,
+      shein_modifier: product.shein_modifier || 1.5,
+      shopify_modifier: product.shopify_modifier || 2.0,
+      meli_modifier: product.meli_modifier || 2.5,
+      inv_egdc: product.inv_egdc || 0,
+      inv_fami: product.inv_fami || 0,
+      inv_osiel: product.inv_osiel || 0,
+      inv_molly: product.inv_molly || 0,
+      shein: product.shein || false,
+      meli: product.meli || false,
+      shopify: product.shopify || false,
+      tiktok: product.tiktok || false,
+      upseller: product.upseller || false,
+      go_trendier: product.go_trendier || false
+    }))
     
-    // Process each product individually for upsert
-    // This is more reliable than batch upsert for handling conflicts
-    for (let i = 0; i < products.length; i++) {
-      try {
-        const result = await this.upsertProduct(products[i])
-        results.push(result)
-      } catch (error) {
-        console.error(`Error upserting product ${i + 1}:`, error)
-        errors.push({
-          index: i + 1,
-          product: products[i],
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
+    // Get field names from the first processed product
+    const fields = Object.keys(processedProducts[0])
+    
+    // Build batch upsert query
+    const valueRows = []
+    const allValues = []
+    
+    for (let i = 0; i < processedProducts.length; i++) {
+      const product = processedProducts[i]
+      const productValues = fields.map(field => product[field])
+      const placeholders = fields.map((_, fieldIndex) => `$${allValues.length + fieldIndex + 1}`)
+      
+      valueRows.push(`(${placeholders.join(', ')})`)
+      allValues.push(...productValues)
     }
     
-    return { results, errors }
+    // Create dynamic UPDATE SET clause that only updates non-null/non-empty values
+    // For batch operations, we'll update all fields for simplicity
+    const updateFields = fields.filter(field => field !== 'sku')
+    const setClause = updateFields.map(field => `${field} = EXCLUDED.${field}`).join(', ')
+    
+    const query = `
+      INSERT INTO products (${fields.join(', ')})
+      VALUES ${valueRows.join(', ')}
+      ON CONFLICT (sku) 
+      DO UPDATE SET 
+        ${setClause},
+        updated_at = NOW()
+      RETURNING *
+    `
+    
+    try {
+      const result = await this.query(query, allValues)
+      return { results: result.rows, errors: [] }
+    } catch (error) {
+      console.error('Batch upsert failed, falling back to individual processing:', error)
+      
+      // Fallback to individual processing if batch fails
+      const results = []
+      const errors = []
+      
+      for (let i = 0; i < products.length; i++) {
+        try {
+          const result = await this.upsertProduct(products[i])
+          results.push(result)
+        } catch (individualError) {
+          console.error(`Error upserting product ${i + 1}:`, individualError)
+          errors.push({
+            index: i + 1,
+            product: products[i],
+            error: individualError instanceof Error ? individualError.message : 'Unknown error'
+          })
+        }
+      }
+      
+      return { results, errors }
+    }
   }
 
   static async batchCreateProducts(products: any[]) {

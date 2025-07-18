@@ -118,19 +118,11 @@ export default function ImportExportModal({
               </div>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-2">Importación con UPSERT:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Archivo Excel (.xlsx) o CSV (.csv)</li>
-                    <li>Columnas REQUERIDAS: categoria, marca, modelo, color, talla, sku</li>
-                    <li>Columnas opcionales: costo, ean, dimensiones, inventario, plataformas</li>
-                    <li><strong>SKU existente:</strong> Actualiza el producto con nueva información</li>
-                    <li><strong>SKU nuevo:</strong> Crea un producto completamente nuevo</li>
-                    <li>Solo actualiza campos que tengan valor (preserva datos existentes)</li>
-                  </ul>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-800">
+                  <p className="font-medium mb-1">UPSERT: Excel/CSV • REQUERIDO: categoria, marca, modelo, color, talla, sku • SKU existente=actualiza, SKU nuevo=crea • Preserva datos existentes</p>
                 </div>
               </div>
             </div>

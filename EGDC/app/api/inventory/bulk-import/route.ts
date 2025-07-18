@@ -92,6 +92,10 @@ function parseFileData(data: any[][]): any[] {
 }
 
 export async function POST(request: NextRequest) {
+  // Set a longer timeout for bulk operations
+  const startTime = Date.now()
+  const TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+  
   try {
     let products: any[] = []
     
@@ -211,15 +215,21 @@ export async function POST(request: NextRequest) {
     // This allows updating existing products with new data
 
     // Process in batches using UPSERT to handle existing SKUs
-    const BATCH_SIZE = 50 // Smaller batches for upsert processing
+    const BATCH_SIZE = 100 // Larger batches since we're using efficient batch upsert
     const results = []
     const errors = []
     let updatedCount = 0
     let insertedCount = 0
 
     for (let batchStart = 0; batchStart < products.length; batchStart += BATCH_SIZE) {
+      // Check for timeout
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        console.error('Bulk import timeout reached')
+        break
+      }
+      
       const batch = products.slice(batchStart, batchStart + BATCH_SIZE)
-      console.log(`Processing UPSERT batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)}`)
+      console.log(`Processing UPSERT batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)} (${Date.now() - startTime}ms elapsed)`)
 
       // Prepare batch data - pass through all fields, let upsert handle the logic
       const batchData = batch.map(product => ({
