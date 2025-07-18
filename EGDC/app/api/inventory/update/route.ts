@@ -1,5 +1,9 @@
+// TENANT-SAFE Inventory Update API
+// 🔒 All updates validate tenant ownership before modifying data
+
 import { NextRequest, NextResponse } from 'next/server'
-import { PostgresManager } from '@/lib/postgres'
+import { getTenantContext } from '@/lib/tenant-context'
+import { TenantSafePostgresManager } from '@/lib/postgres-tenant-safe'
 
 interface UpdateChange {
   id: number
@@ -38,6 +42,23 @@ interface RequestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 STEP 1: Validate tenant context
+    const tenantContext = await getTenantContext(request)
+    
+    if (!tenantContext) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tenant context found. Please login.',
+        code: 'TENANT_CONTEXT_MISSING'
+      }, { status: 401 })
+    }
+
+    console.log('🔒 Processing updates for tenant:', {
+      tenant_id: tenantContext.user.tenant_id,
+      tenant_name: tenantContext.user.tenant_name,
+      user_email: tenantContext.user.email
+    })
+
     const body: RequestBody = await request.json()
     const { changes } = body
 
@@ -55,87 +76,90 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Processing ${changes.length} product updates...`)
+    console.log(`🔒 Processing ${changes.length} product updates for tenant ${tenantContext.user.tenant_name}`)
 
-    const results = []
+    const updatedProducts = []
     const errors = []
 
+    // 🔒 STEP 2: Process each change with tenant validation
     for (const change of changes) {
       try {
-        if (!change.id) {
-          errors.push({ error: 'Product ID is required', change })
-          continue
-        }
-
-        // Get current product for change logging
-        const currentProduct = await PostgresManager.getProductById(change.id)
-        if (!currentProduct) {
-          errors.push({ error: `Product with ID ${change.id} not found`, change })
-          continue
-        }
-
-        // Create update object (excluding id)
         const { id, ...updates } = change
-        const updateFields = Object.entries(updates)
-          .filter(([_, value]) => value !== undefined)
-          .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
 
-        if (Object.keys(updateFields).length === 0) {
-          errors.push({ error: 'No valid updates provided', change })
+        if (!id) {
+          errors.push({
+            id: 'unknown',
+            error: 'Product ID is required'
+          })
           continue
         }
 
-        // Update the product
-        const updatedProduct = await PostgresManager.updateProduct(change.id, updateFields)
-
-        // Log changes for audit trail
-        for (const [field, newValue] of Object.entries(updateFields)) {
-          const oldValue = currentProduct[field]
-          if (oldValue !== newValue) {
-            await PostgresManager.logChange(
-              change.id,
-              field,
-              oldValue,
-              newValue,
-              'update'
-            )
-          }
+        // 🔒 STEP 3: Validate tenant ownership before update
+        const currentProduct = await TenantSafePostgresManager.getProductById(id, tenantContext.user.tenant_id)
+        
+        if (!currentProduct) {
+          errors.push({
+            id,
+            error: 'Product not found or access denied'
+          })
+          continue
         }
 
-        results.push(updatedProduct)
+        // 🔒 STEP 4: Perform tenant-safe update
+        const updatedProduct = await TenantSafePostgresManager.updateProduct(
+          id,
+          tenantContext.user.tenant_id,
+          updates
+        )
+
+        if (updatedProduct) {
+          updatedProducts.push(updatedProduct)
+          console.log(`✅ Updated product ${id} for tenant ${tenantContext.user.tenant_name}`)
+        } else {
+          errors.push({
+            id,
+            error: 'Failed to update product'
+          })
+        }
+
       } catch (error) {
-        console.error(`Error updating product ${change.id}:`, error)
-        errors.push({ 
-          error: error instanceof Error ? error.message : 'Unknown error', 
-          change 
+        console.error(`❌ Error updating product ${change.id}:`, error)
+        errors.push({
+          id: change.id,
+          error: error instanceof Error ? error.message : 'Unknown error'
         })
       }
     }
 
-    const response = {
-      success: errors.length === 0,
-      updated: results.length,
+    // 🔒 STEP 5: Log change activity (for audit trail)
+    console.log(`🔒 Tenant ${tenantContext.user.tenant_name} update summary:`, {
+      successful_updates: updatedProducts.length,
       errors: errors.length,
-      results,
-      errorDetails: errors.length > 0 ? errors : undefined
-    }
+      total_changes: changes.length
+    })
 
-    if (errors.length > 0 && results.length === 0) {
-      return NextResponse.json(response, { status: 400 })
+    const response = {
+      success: true,
+      updated_count: updatedProducts.length,
+      products: updatedProducts,
+      tenant: {
+        id: tenantContext.user.tenant_id,
+        name: tenantContext.user.tenant_name,
+        subdomain: tenantContext.user.tenant_subdomain
+      },
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully updated ${updatedProducts.length} products${errors.length > 0 ? ` with ${errors.length} errors` : ''}`
     }
-
-    console.log(`Successfully updated ${results.length} products, ${errors.length} errors`)
 
     return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Error processing updates:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    )
+    console.error('❌ Error in tenant-safe inventory update:', error)
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to update inventory',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }

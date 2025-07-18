@@ -2,6 +2,7 @@
 
 export interface Product {
   id: number
+  tenant_id: string  // 🔒 Multi-tenant isolation - REQUIRED for all products
   fecha?: string | null
   categoria: string | null
   marca: string | null
@@ -52,7 +53,9 @@ export interface Product {
 
 export interface ChangeLog {
   id: number
+  tenant_id: string  // 🔒 Multi-tenant isolation - REQUIRED for all change logs
   product_id: number
+  user_id?: string | null  // Track which user made the change
   field_name: string
   old_value: string | null
   new_value: string | null

@@ -1,5 +1,9 @@
+// TENANT-SAFE Bulk Import API
+// 🔒 All imports are automatically assigned to the authenticated tenant
+
 import { NextRequest, NextResponse } from 'next/server'
-import { PostgresManager } from '@/lib/postgres'
+import { getTenantContext } from '@/lib/tenant-context'
+import { TenantSafePostgresManager } from '@/lib/postgres-tenant-safe'
 import * as XLSX from 'xlsx'
 
 interface BulkImportRequest {
@@ -48,61 +52,153 @@ function parseFileData(data: any[][]): any[] {
     if (!row || row.every(cell => !cell || String(cell).trim() === '')) {
       continue
     }
-    
+
     const product: any = {}
     
     headers.forEach((header, index) => {
-      const rawValue = row[index]
-      const value = rawValue !== null && rawValue !== undefined ? String(rawValue).trim() : ''
+      const value = row[index]
       
-      switch (header) {
-        case 'costo':
-        case 'shein_modifier':
-        case 'shopify_modifier':
-        case 'meli_modifier':
-        case 'height_cm':
-        case 'length_cm':
-        case 'thickness_cm':
-          product[header] = value ? parseFloat(value) : null
-          break
-        case 'inv_egdc':
-        case 'inv_fami':
-        case 'inv_osiel':
-        case 'inv_molly':
-        case 'weight_grams':
-          product[header] = value ? parseInt(value) : (header.startsWith('inv_') ? 0 : null)
-          break
-        case 'shein':
-        case 'meli':
-        case 'shopify':
-        case 'tiktok':
-        case 'upseller':
-        case 'go_trendier':
-          product[header] = value.toLowerCase() === 'true' || value === '1'
-          break
-        default:
-          product[header] = value
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        const normalizedHeader = header.toLowerCase().replace(/\s+/g, '_')
+        
+        // Map common header variations
+        switch (normalizedHeader) {
+          case 'categoria':
+          case 'category':
+            product.categoria = String(value).trim()
+            break
+          case 'marca':
+          case 'brand':
+            product.marca = String(value).trim()
+            break
+          case 'modelo':
+          case 'model':
+            product.modelo = String(value).trim()
+            break
+          case 'color':
+            product.color = String(value).trim()
+            break
+          case 'talla':
+          case 'size':
+            product.talla = String(value).trim()
+            break
+          case 'sku':
+            product.sku = String(value).trim()
+            break
+          case 'ean':
+          case 'barcode':
+            product.ean = String(value).trim()
+            break
+          case 'costo':
+          case 'cost':
+          case 'price':
+            product.costo = parseFloat(String(value)) || 0
+            break
+          case 'google_drive':
+          case 'googledrive':
+          case 'drive_url':
+            product.google_drive = String(value).trim()
+            break
+          case 'height_cm':
+          case 'height':
+            product.height_cm = parseFloat(String(value)) || null
+            break
+          case 'length_cm':
+          case 'length':
+            product.length_cm = parseFloat(String(value)) || null
+            break
+          case 'thickness_cm':
+          case 'thickness':
+            product.thickness_cm = parseFloat(String(value)) || null
+            break
+          case 'weight_grams':
+          case 'weight':
+            product.weight_grams = parseFloat(String(value)) || null
+            break
+          case 'shein_modifier':
+            product.shein_modifier = parseFloat(String(value)) || 1.5
+            break
+          case 'shopify_modifier':
+            product.shopify_modifier = parseFloat(String(value)) || 2.0
+            break
+          case 'meli_modifier':
+            product.meli_modifier = parseFloat(String(value)) || 2.5
+            break
+          case 'inv_egdc':
+          case 'inventory_egdc':
+            product.inv_egdc = parseInt(String(value)) || 0
+            break
+          case 'inv_fami':
+          case 'inventory_fami':
+            product.inv_fami = parseInt(String(value)) || 0
+            break
+          case 'inv_osiel':
+          case 'inventory_osiel':
+            product.inv_osiel = parseInt(String(value)) || 0
+            break
+          case 'inv_molly':
+          case 'inventory_molly':
+            product.inv_molly = parseInt(String(value)) || 0
+            break
+          case 'shein':
+            product.shein = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+          case 'meli':
+          case 'mercadolibre':
+            product.meli = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+          case 'shopify':
+            product.shopify = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+          case 'tiktok':
+            product.tiktok = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+          case 'upseller':
+            product.upseller = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+          case 'go_trendier':
+            product.go_trendier = ['true', '1', 'yes', 'si'].includes(String(value).toLowerCase())
+            break
+        }
       }
     })
 
-    products.push(product)
+    // Only add product if it has at least SKU or basic info
+    if (product.sku || (product.categoria && product.marca && product.modelo)) {
+      products.push(product)
+    }
   }
 
   return products
 }
 
 export async function POST(request: NextRequest) {
-  // Set a longer timeout for bulk operations
-  const startTime = Date.now()
-  const TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
-  
   try {
-    let products: any[] = []
+    // 🔒 STEP 1: Validate tenant context
+    const tenantContext = await getTenantContext(request)
     
-    // Check if it's a file upload (FormData) or JSON
+    if (!tenantContext) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tenant context found. Please login.',
+        code: 'TENANT_CONTEXT_MISSING'
+      }, { status: 401 })
+    }
+
+    console.log('🔒 Processing bulk import for tenant:', {
+      tenant_id: tenantContext.user.tenant_id,
+      tenant_name: tenantContext.user.tenant_name,
+      user_email: tenantContext.user.email
+    })
+
     const contentType = request.headers.get('content-type')
-    
-    if (contentType?.includes('multipart/form-data')) {
+    let products: any[] = []
+
+    if (contentType?.includes('application/json')) {
+      // Handle JSON request
+      const body: BulkImportRequest = await request.json()
+      products = body.products || []
+    } else if (contentType?.includes('multipart/form-data')) {
       // Handle file upload
       const formData = await request.formData()
       const file = formData.get('file') as File
@@ -114,212 +210,63 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Read file content
-      const buffer = await file.arrayBuffer()
-      const fileExtension = file.name.split('.').pop()?.toLowerCase()
+      const buffer = Buffer.from(await file.arrayBuffer())
+      const workbook = XLSX.read(buffer)
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
       
-      if (fileExtension === 'csv') {
-        // Handle CSV files
-        const text = new TextDecoder().decode(buffer)
-        const lines = text.split('\n').filter(line => line.trim())
-        if (lines.length < 2) {
-          return NextResponse.json(
-            { success: false, error: 'CSV file must have at least a header and one data row' },
-            { status: 400 }
-          )
-        }
-        
-        const data = lines.map(line => {
-          return line.split(',').map(cell => cell.trim())
-        })
-        
-        products = parseFileData(data)
-      } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-        // Handle Excel files
-        const workbook = XLSX.read(buffer, { type: 'array' })
-        const sheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[sheetName]
-        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
-        
-        products = parseFileData(data as any[][])
-      } else {
-        return NextResponse.json(
-          { success: false, error: 'Unsupported file format. Use CSV, XLSX, or XLS.' },
-          { status: 400 }
-        )
-      }
+      products = parseFileData(data as any[][])
     } else {
-      // Handle JSON data (legacy support)
-      const body: BulkImportRequest = await request.json()
-      products = body.products
-    }
-
-    if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No valid products found to import' },
+        { success: false, error: 'Invalid content type. Use JSON or multipart/form-data' },
         { status: 400 }
       )
     }
 
-    console.log(`Bulk importing ${products.length} products...`)
-
-    // Validate required fields for each product
-    const validationErrors = []
-    const requiredFields = ['categoria', 'marca', 'modelo', 'color', 'talla', 'sku']
-    
-    for (let i = 0; i < products.length; i++) {
-      const product = products[i]
-      for (const field of requiredFields) {
-        if (!product[field] || String(product[field]).trim() === '') {
-          validationErrors.push({
-            row: i + 2, // +2 because of 0-based index and header row
-            field,
-            message: `Campo requerido "${field}" está vacío`,
-            value: product[field]
-          })
-        }
-      }
-    }
-
-    if (validationErrors.length > 0) {
+    if (!products || products.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Se encontraron ${validationErrors.length} errores de validación`,
-          validationErrors
-        },
+        { success: false, error: 'No products to import' },
         { status: 400 }
       )
     }
 
-    // Check for duplicate SKUs and EANs in the import batch only
-    const skus = products.map(p => p.sku).filter(Boolean)
-    const eans = products.map(p => p.ean).filter(Boolean)
-    
-    const duplicateSkus = skus.filter((sku, index) => skus.indexOf(sku) !== index)
-    const duplicateEans = eans.filter((ean, index) => eans.indexOf(ean) !== index)
-    
-    if (duplicateSkus.length > 0 || duplicateEans.length > 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Duplicate SKUs/EANs found in import batch',
-          duplicateSkus,
-          duplicateEans
-        },
-        { status: 400 }
-      )
-    }
+    console.log(`🔒 Processing ${products.length} products for tenant ${tenantContext.user.tenant_name}`)
 
-    // Note: We no longer check for existing SKUs in database since we'll use UPSERT
-    // This allows updating existing products with new data
+    // 🔒 STEP 2: Process products with tenant isolation
+    const result = await TenantSafePostgresManager.batchUpsertProducts(
+      tenantContext.user.tenant_id,
+      products
+    )
 
-    // Process in batches using UPSERT to handle existing SKUs
-    const BATCH_SIZE = 100 // Larger batches since we're using efficient batch upsert
-    const results = []
-    const errors = []
-    let updatedCount = 0
-    let insertedCount = 0
-
-    for (let batchStart = 0; batchStart < products.length; batchStart += BATCH_SIZE) {
-      // Check for timeout
-      if (Date.now() - startTime > TIMEOUT_MS) {
-        console.error('Bulk import timeout reached')
-        break
-      }
-      
-      const batch = products.slice(batchStart, batchStart + BATCH_SIZE)
-      console.log(`Processing UPSERT batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(products.length / BATCH_SIZE)} (${Date.now() - startTime}ms elapsed)`)
-
-      // Prepare batch data - pass through all fields, let upsert handle the logic
-      const batchData = batch.map(product => ({
-        categoria: product.categoria,
-        marca: product.marca,
-        modelo: product.modelo,
-        color: product.color,
-        talla: product.talla,
-        sku: product.sku,
-        ean: product.ean,
-        costo: product.costo,
-        google_drive: product.google_drive,
-        height_cm: product.height_cm,
-        length_cm: product.length_cm,
-        thickness_cm: product.thickness_cm,
-        weight_grams: product.weight_grams,
-        shein_modifier: product.shein_modifier,
-        shopify_modifier: product.shopify_modifier,
-        meli_modifier: product.meli_modifier,
-        inv_egdc: product.inv_egdc,
-        inv_fami: product.inv_fami,
-        inv_osiel: product.inv_osiel,
-        inv_molly: product.inv_molly,
-        shein: product.shein,
-        meli: product.meli,
-        shopify: product.shopify,
-        tiktok: product.tiktok,
-        upseller: product.upseller,
-        go_trendier: product.go_trendier
-      }))
-
-      try {
-        // Use batch upsert for handling existing products
-        const batchResult = await PostgresManager.batchUpsertProducts(batchData)
-        
-        // Type guard to ensure batchResult has the expected structure
-        if (batchResult && typeof batchResult === 'object' && 'results' in batchResult && 'errors' in batchResult) {
-          results.push(...batchResult.results)
-          errors.push(...batchResult.errors)
-          
-          // Track updates vs inserts (simplified - we'll count all as processed)
-          console.log(`Batch processed: ${batchResult.results.length} products, ${batchResult.errors.length} errors`)
-        } else {
-          // Fallback for unexpected return format
-          console.error('Unexpected batch result format:', batchResult)
-          errors.push({
-            error: 'Unexpected batch result format',
-            batch: `Batch starting at row ${batchStart + 2}`,
-            index: batchStart
-          })
-        }
-      } catch (error) {
-        console.error(`Error in batch upsert starting at ${batchStart}:`, error)
-        errors.push({
-          error: error instanceof Error ? error.message : 'Unknown batch error',
-          batch: `Batch starting at row ${batchStart + 2}`, // +2 for header and 0-based index
-          index: batchStart
-        })
-      }
-    }
+    // 🔒 STEP 3: Log import activity
+    console.log(`🔒 Tenant ${tenantContext.user.tenant_name} bulk import summary:`, {
+      successful_imports: result.results.length,
+      errors: result.errors.length,
+      total_products: products.length
+    })
 
     const response = {
-      success: errors.length === 0,
-      processed_count: results.length,
-      imported_or_updated: results.length, // UPSERT combines insert + update
-      total: products.length,
-      errors: errors.length,
-      results,
-      errorDetails: errors.length > 0 ? errors : undefined,
-      message: errors.length === 0 
-        ? `¡${results.length} productos procesados exitosamente! (nuevos productos creados o existentes actualizados)`
-        : `${results.length} productos procesados, ${errors.length} errores encontrados`
+      success: true,
+      imported_count: result.results.length,
+      products: result.results,
+      tenant: {
+        id: tenantContext.user.tenant_id,
+        name: tenantContext.user.tenant_name,
+        subdomain: tenantContext.user.tenant_subdomain
+      },
+      errors: result.errors.length > 0 ? result.errors : undefined,
+      message: `Successfully imported ${result.results.length} products${result.errors.length > 0 ? ` with ${result.errors.length} errors` : ''}`
     }
-
-    if (errors.length > 0 && results.length === 0) {
-      return NextResponse.json(response, { status: 400 })
-    }
-
-    console.log(`Bulk UPSERT completed: ${results.length} processed (inserted/updated), ${errors.length} errors`)
 
     return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Error in bulk import:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    )
+    console.error('❌ Error in tenant-safe bulk import:', error)
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to import products',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }

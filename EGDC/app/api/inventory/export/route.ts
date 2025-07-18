@@ -1,5 +1,9 @@
+// TENANT-SAFE Export API
+// 🔒 All exports validate tenant ownership before data access
+
 import { NextRequest, NextResponse } from 'next/server'
-import { PostgresManager } from '@/lib/postgres'
+import { getTenantContext } from '@/lib/tenant-context'
+import { TenantSafePostgresManager } from '@/lib/postgres-tenant-safe'
 import * as XLSX from 'xlsx'
 
 interface ExportRequest {
@@ -9,6 +13,23 @@ interface ExportRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 STEP 1: Validate tenant context
+    const tenantContext = await getTenantContext(request)
+    
+    if (!tenantContext) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tenant context found. Please login.',
+        code: 'TENANT_CONTEXT_MISSING'
+      }, { status: 401 })
+    }
+
+    console.log('🔒 Processing export for tenant:', {
+      tenant_id: tenantContext.user.tenant_id,
+      tenant_name: tenantContext.user.tenant_name,
+      user_email: tenantContext.user.email
+    })
+
     const body: ExportRequest = await request.json()
     const { products, format = 'csv' } = body
 
@@ -19,24 +40,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Exporting ${products.length} products in ${format} format...`)
+    console.log(`🔒 Exporting ${products.length} products in ${format} format for tenant ${tenantContext.user.tenant_name}`)
 
-    // Get products from database
-    const query = `
-      SELECT * FROM products 
-      WHERE id = ANY($1)
-      ORDER BY categoria, marca, modelo
-    `
-    const result = await PostgresManager.query(query, [products])
+    // 🔒 STEP 2: Get tenant-filtered products
+    const productData = []
+    
+    // Validate each product belongs to the tenant
+    for (const productId of products) {
+      const product = await TenantSafePostgresManager.getProductById(productId, tenantContext.user.tenant_id)
+      if (product) {
+        productData.push(product)
+      } else {
+        console.log(`⚠️ Product ${productId} not found or access denied for tenant ${tenantContext.user.tenant_name}`)
+      }
+    }
 
-    if (result.rows.length === 0) {
+    if (productData.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No products found' },
+        { success: false, error: 'No products found or access denied' },
         { status: 404 }
       )
     }
 
-    const productData = result.rows
+    console.log(`✅ Validated access to ${productData.length} products for tenant ${tenantContext.user.tenant_name}`)
 
     // Define export columns with Spanish labels
     const exportColumns = [
@@ -142,11 +168,12 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Error in export:', error)
+    console.error('❌ Error in tenant-safe export:', error)
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+        error: 'Failed to export products',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )

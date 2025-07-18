@@ -1,7 +1,7 @@
 // Multi-Tenant Context Management for Google Cloud PostgreSQL
 import { Pool } from 'pg'
 import { getServerSession } from 'next-auth'
-import { authConfig } from './auth-config-multi-tenant'
+import { authConfig } from './auth-config'
 import { NextRequest } from 'next/server'
 
 // Database connection pool

@@ -1,28 +1,118 @@
-// Google OAuth configuration for EGDC (NextAuth v4)
+// Multi-Tenant SaaS Authentication Configuration
 import GoogleProvider from 'next-auth/providers/google'
 import type { NextAuthOptions } from 'next-auth'
+import { Pool } from 'pg'
 
-// Authorized Google accounts - only these emails can access the system
-const AUTHORIZED_EMAILS = [
-  'elweydelcalzado@gmail.com',      // 🔥 Primary account - El Guey del Calzado
-  'manager@elgueydelcalzado.com',   // Replace with actual manager email
-  'employee@elgueydelcalzado.com',  // Replace with actual employee email
-  // Add more authorized emails as needed
-]
+// Database connection for auth operations
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+})
 
-// User roles based on email
-const getUserRole = (email: string): 'admin' | 'manager' | 'employee' => {
-  if (email === 'elweydelcalzado@gmail.com') {
-    return 'admin'
+// Extended user type with tenant information
+declare module 'next-auth' {
+  interface User {
+    tenant_id: string
+    role: string
+    tenant_name: string
+    tenant_subdomain: string
   }
-  if (email === 'manager@elgueydelcalzado.com') {
-    return 'manager'
+  
+  interface Session {
+    user: {
+      id: string
+      name: string
+      email: string
+      tenant_id: string
+      role: string
+      tenant_name: string
+      tenant_subdomain: string
+    }
   }
-  return 'employee'
+}
+
+// Helper function to get or create user with tenant
+async function getOrCreateUser(email: string, name: string, googleId: string) {
+  const client = await pool.connect()
+  
+  try {
+    await client.query('BEGIN')
+    
+    // Check if user exists
+    const userResult = await client.query(`
+      SELECT 
+        u.id,
+        u.tenant_id,
+        u.role,
+        u.name,
+        u.email,
+        t.name as tenant_name,
+        t.subdomain as tenant_subdomain
+      FROM users u
+      JOIN tenants t ON u.tenant_id = t.id
+      WHERE u.email = $1
+    `, [email])
+    
+    if (userResult.rows.length > 0) {
+      // Update last login
+      await client.query(`
+        UPDATE users 
+        SET last_login = NOW(), google_id = $1 
+        WHERE email = $2
+      `, [googleId, email])
+      
+      await client.query('COMMIT')
+      return userResult.rows[0]
+    }
+    
+    // User doesn't exist - this is a new registration
+    // For now, we'll create a new tenant for each new user
+    // Later we can add invitation system
+    
+    const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
+    const tenantName = name || email.split('@')[0]
+    
+    // Create new tenant
+    const tenantResult = await client.query(`
+      INSERT INTO tenants (name, subdomain, email, plan, status)
+      VALUES ($1, $2, $3, 'starter', 'active')
+      RETURNING id, name, subdomain
+    `, [tenantName, subdomain, email])
+    
+    const tenant = tenantResult.rows[0]
+    
+    // Create new user as admin of their tenant
+    const newUserResult = await client.query(`
+      INSERT INTO users (tenant_id, email, name, role, google_id, status)
+      VALUES ($1, $2, $3, 'admin', $4, 'active')
+      RETURNING id, tenant_id, role, name, email
+    `, [tenant.id, email, name, googleId])
+    
+    const newUser = newUserResult.rows[0]
+    
+    await client.query('COMMIT')
+    
+    return {
+      id: newUser.id,
+      tenant_id: newUser.tenant_id,
+      role: newUser.role,
+      name: newUser.name,
+      email: newUser.email,
+      tenant_name: tenant.name,
+      tenant_subdomain: tenant.subdomain
+    }
+    
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error in getOrCreateUser:', error)
+    throw error
+  } finally {
+    client.release()
+  }
 }
 
 export const authConfig: NextAuthOptions = {
-  debug: true, // 🔍 Enable debug mode
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -32,41 +122,58 @@ export const authConfig: NextAuthOptions = {
   
   callbacks: {
     async signIn({ user, account, profile }) {
-      // 🔍 DEBUG: Log all OAuth data
-      console.log('🔍 OAuth SignIn Debug:', {
-        user: user,
-        account: account,
-        profile: profile,
-        userEmail: user?.email,
-        isEmailAuthorized: user?.email ? AUTHORIZED_EMAILS.includes(user.email) : false,
-        authorizedEmails: AUTHORIZED_EMAILS,
+      console.log('🔍 Multi-Tenant SignIn:', {
+        user: user?.email,
+        account: account?.provider,
         timestamp: new Date().toISOString()
       })
       
-      // Check if user email is in authorized list
-      if (!user.email || !AUTHORIZED_EMAILS.includes(user.email)) {
-        console.log(`❌ Unauthorized access attempt: ${user.email}`)
-        console.log(`📧 Authorized emails:`, AUTHORIZED_EMAILS)
-        return false // Deny access
+      // Allow all Google OAuth users - they'll get their own tenant
+      if (account?.provider === 'google' && user?.email) {
+        return true
       }
       
-      console.log(`✅ Authorized access granted: ${user.email}`)
-      return true // Allow access
+      return false
     },
     
     async session({ session, token }) {
-      if (session.user?.email) {
-        // Add role to session
-        session.user.role = getUserRole(session.user.email)
+      if (session?.user?.email && token?.tenant_id) {
         session.user.id = token.sub as string
+        session.user.tenant_id = token.tenant_id as string
+        session.user.role = token.role as string
+        session.user.tenant_name = token.tenant_name as string
+        session.user.tenant_subdomain = token.tenant_subdomain as string
       }
       return session
     },
     
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = getUserRole(user.email!)
+    async jwt({ token, user, account }) {
+      // On first sign in, get or create user and tenant
+      if (account && user?.email) {
+        try {
+          const userData = await getOrCreateUser(
+            user.email,
+            user.name || user.email,
+            account.providerAccountId
+          )
+          
+          token.tenant_id = userData.tenant_id
+          token.role = userData.role
+          token.tenant_name = userData.tenant_name
+          token.tenant_subdomain = userData.tenant_subdomain
+          
+          console.log('✅ User authenticated:', {
+            email: user.email,
+            tenant: userData.tenant_name,
+            role: userData.role
+          })
+          
+        } catch (error) {
+          console.error('❌ Error creating user/tenant:', error)
+          return null
+        }
       }
+      
       return token
     },
   },
@@ -84,12 +191,37 @@ export const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 }
 
-// Helper function to check if email is authorized
-export function isAuthorizedEmail(email: string): boolean {
-  return AUTHORIZED_EMAILS.includes(email)
+// Helper function to get tenant context for API routes
+export async function getTenantContext(userId: string) {
+  const client = await pool.connect()
+  
+  try {
+    const result = await client.query(`
+      SELECT 
+        u.tenant_id,
+        t.name as tenant_name,
+        t.subdomain as tenant_subdomain,
+        u.role
+      FROM users u
+      JOIN tenants t ON u.tenant_id = t.id
+      WHERE u.id = $1
+    `, [userId])
+    
+    return result.rows[0] || null
+  } finally {
+    client.release()
+  }
 }
 
-// Helper function to get user role
-export function getUserRoleByEmail(email: string): 'admin' | 'manager' | 'employee' {
-  return getUserRole(email)
+// Helper function to set tenant context for RLS
+export async function setTenantContext(tenantId: string) {
+  const client = await pool.connect()
+  
+  try {
+    await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [tenantId])
+    return client
+  } catch (error) {
+    client.release()
+    throw error
+  }
 }

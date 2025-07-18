@@ -2,30 +2,35 @@
 
 import { useState, useEffect } from 'react'
 
-export type WarehouseFilter = 'egdc' | 'fami' | 'osiel' | 'molly'
+export type WarehouseFilter = string
+
+interface WarehouseTab {
+  id: WarehouseFilter
+  label: string
+  icon: string
+  type: 'own' | 'supplier' | 'external'
+}
 
 interface WarehouseTabsProps {
   activeWarehouse: WarehouseFilter
   onWarehouseChange: (warehouse: WarehouseFilter) => void
-  productCounts?: {
-    egdc: number
-    fami: number
-    osiel: number
-    molly: number
-  }
+  warehouses?: WarehouseTab[]
+  productCounts?: Record<string, number>
   isDemoMode?: boolean // Show when using dummy data
 }
 
-const WAREHOUSE_TABS = [
-  { id: 'egdc' as WarehouseFilter, label: 'EGDC', icon: '🏪', type: 'own' },
-  { id: 'fami' as WarehouseFilter, label: 'FAMI', icon: '🏭', type: 'supplier' },
-  { id: 'osiel' as WarehouseFilter, label: 'Osiel', icon: '📦', type: 'supplier' },
-  { id: 'molly' as WarehouseFilter, label: 'Molly', icon: '🛍️', type: 'supplier' }
+// 🔒 DEFAULT WAREHOUSES - Can be overridden by tenant-specific warehouses
+const DEFAULT_WAREHOUSE_TABS: WarehouseTab[] = [
+  { id: 'egdc', label: 'EGDC', icon: '🏪', type: 'own' },
+  { id: 'fami', label: 'FAMI', icon: '🏭', type: 'supplier' },
+  { id: 'osiel', label: 'Osiel', icon: '📦', type: 'supplier' },
+  { id: 'molly', label: 'Molly', icon: '🛍️', type: 'supplier' }
 ]
 
 export default function WarehouseTabs({ 
   activeWarehouse, 
   onWarehouseChange, 
+  warehouses = DEFAULT_WAREHOUSE_TABS,
   productCounts,
   isDemoMode = false
 }: WarehouseTabsProps) {
@@ -84,7 +89,7 @@ export default function WarehouseTabs({
           </div>
         )}
         
-        {WAREHOUSE_TABS.map((tab) => {
+        {warehouses.map((tab) => {
           const isActive = activeWarehouse === tab.id
           const count = productCounts?.[tab.id] || 0
           

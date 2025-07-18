@@ -1,8 +1,12 @@
 import { Product } from './types'
 
+// Default tenant ID for mock data (EGDC tenant)
+const DEFAULT_TENANT_ID = '471e9c26-a232-46b3-a992-2932e5dfadf4' // EGDC tenant ID
+
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: 1,
+    tenant_id: DEFAULT_TENANT_ID,
     categoria: 'Zapatos',
     marca: 'Nike',
     modelo: 'Air Max 90',
@@ -38,6 +42,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 2,
+    tenant_id: DEFAULT_TENANT_ID,
     categoria: 'Zapatos',
     marca: 'Adidas',
     modelo: 'Stan Smith',
@@ -73,6 +78,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 3,
+    tenant_id: DEFAULT_TENANT_ID,
     categoria: 'Sandalias',
     marca: 'Havaianas',
     modelo: 'Brasil',
@@ -108,6 +114,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 4,
+    tenant_id: DEFAULT_TENANT_ID,
     categoria: 'Botas',
     marca: 'Timberland',
     modelo: '6-Inch Premium',
@@ -143,6 +150,7 @@ export const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 5,
+    tenant_id: DEFAULT_TENANT_ID,
     categoria: 'Zapatos',
     marca: 'Converse',
     modelo: 'Chuck Taylor All Star',

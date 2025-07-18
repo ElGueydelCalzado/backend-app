@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { connectToDatabase } from '@/lib/postgres'
+import { connectToDatabase } from '@/lib/postgres-tenant-safe'
 import { Warehouse, ApiResponse } from '@/lib/types'
 
 export async function GET(

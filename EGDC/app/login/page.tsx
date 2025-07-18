@@ -90,11 +90,25 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* Registration Link */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                ¿No tienes una cuenta?
+              </p>
+              <button
+                onClick={() => router.push('/register')}
+                className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <span>Crear cuenta para tu negocio</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Info Message */}
             <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">Acceso Restringido</h3>
+              <h3 className="text-sm font-medium text-blue-800 mb-2">EGDC SaaS Platform</h3>
               <p className="text-sm text-blue-700">
-                Solo las cuentas de Google autorizadas pueden acceder al sistema de inventario.
+                Sistema de inventario multi-tenant para negocios de calzado. Cada negocio tiene su propia cuenta aislada.
               </p>
             </div>
           </div>

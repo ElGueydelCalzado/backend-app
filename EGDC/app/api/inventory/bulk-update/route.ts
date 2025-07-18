@@ -1,5 +1,9 @@
+// TENANT-SAFE Bulk Update API
+// 🔒 All updates validate tenant ownership before modifying data
+
 import { NextRequest, NextResponse } from 'next/server'
-import { PostgresManager } from '@/lib/postgres'
+import { getTenantContext } from '@/lib/tenant-context'
+import { TenantSafePostgresManager } from '@/lib/postgres-tenant-safe'
 
 interface BulkUpdateRequest {
   productIds: number[]
@@ -36,6 +40,23 @@ interface BulkUpdateRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 STEP 1: Validate tenant context
+    const tenantContext = await getTenantContext(request)
+    
+    if (!tenantContext) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tenant context found. Please login.',
+        code: 'TENANT_CONTEXT_MISSING'
+      }, { status: 401 })
+    }
+
+    console.log('🔒 Processing bulk update for tenant:', {
+      tenant_id: tenantContext.user.tenant_id,
+      tenant_name: tenantContext.user.tenant_name,
+      user_email: tenantContext.user.email
+    })
+
     const body: BulkUpdateRequest = await request.json()
     const { productIds, updates } = body
 
@@ -53,17 +74,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Bulk updating ${productIds.length} products...`)
+    console.log(`🔒 Bulk updating ${productIds.length} products for tenant ${tenantContext.user.tenant_name}`)
 
     const results = []
     const errors = []
 
+    // 🔒 STEP 2: Process each product with tenant validation
     for (const productId of productIds) {
       try {
-        // Get current product for change logging
-        const currentProduct = await PostgresManager.getProductById(productId)
+        // 🔒 STEP 3: Validate tenant ownership before update
+        const currentProduct = await TenantSafePostgresManager.getProductById(productId, tenantContext.user.tenant_id)
         if (!currentProduct) {
-          errors.push({ error: `Product with ID ${productId} not found`, productId })
+          errors.push({ error: `Product with ID ${productId} not found or access denied`, productId })
           continue
         }
 
@@ -77,26 +99,22 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Update the product
-        const updatedProduct = await PostgresManager.updateProduct(productId, validUpdates)
+        // 🔒 STEP 4: Perform tenant-safe update
+        const updatedProduct = await TenantSafePostgresManager.updateProduct(
+          productId,
+          tenantContext.user.tenant_id,
+          validUpdates
+        )
 
-        // Log changes for audit trail
-        for (const [field, newValue] of Object.entries(validUpdates)) {
-          const oldValue = currentProduct[field]
-          if (oldValue !== newValue) {
-            await PostgresManager.logChange(
-              productId,
-              field,
-              oldValue,
-              newValue,
-              'bulk_update'
-            )
-          }
+        if (updatedProduct) {
+          results.push(updatedProduct)
+          console.log(`✅ Bulk updated product ${productId} for tenant ${tenantContext.user.tenant_name}`)
+        } else {
+          errors.push({ error: 'Failed to update product', productId })
         }
 
-        results.push(updatedProduct)
       } catch (error) {
-        console.error(`Error updating product ${productId}:`, error)
+        console.error(`❌ Error updating product ${productId}:`, error)
         errors.push({ 
           error: error instanceof Error ? error.message : 'Unknown error', 
           productId 
@@ -104,28 +122,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 🔒 STEP 5: Log bulk update activity
+    console.log(`🔒 Tenant ${tenantContext.user.tenant_name} bulk update summary:`, {
+      successful_updates: results.length,
+      errors: errors.length,
+      total_products: productIds.length
+    })
+
     const response = {
       success: errors.length === 0,
       updated: results.length,
       errors: errors.length,
       results,
-      errorDetails: errors.length > 0 ? errors : undefined
+      tenant: {
+        id: tenantContext.user.tenant_id,
+        name: tenantContext.user.tenant_name,
+        subdomain: tenantContext.user.tenant_subdomain
+      },
+      errorDetails: errors.length > 0 ? errors : undefined,
+      message: `Successfully updated ${results.length} products${errors.length > 0 ? ` with ${errors.length} errors` : ''}`
     }
 
     if (errors.length > 0 && results.length === 0) {
       return NextResponse.json(response, { status: 400 })
     }
 
-    console.log(`Bulk update completed: ${results.length} updated, ${errors.length} errors`)
-
     return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Error in bulk update:', error)
+    console.error('❌ Error in tenant-safe bulk update:', error)
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+        error: 'Failed to bulk update products',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )

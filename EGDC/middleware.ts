@@ -19,8 +19,8 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
   
-  // If not authenticated and not on login/auth page, redirect to login
-  if (!isAuthenticated && url.pathname !== '/login' && !url.pathname.startsWith('/api/auth')) {
+  // If not authenticated and not on login/auth/register page, redirect to login
+  if (!isAuthenticated && url.pathname !== '/login' && url.pathname !== '/register' && !url.pathname.startsWith('/api/auth')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
@@ -68,6 +68,6 @@ export const config = {
     '/',
     '/inventario/:path*',
     '/nuevo-producto/:path*',
-    '/((?!api/auth|api/drive-images|api/drive-proxy|api/health|_next/static|_next/image|favicon.ico|login|public).*)',
+    '/((?!api/auth|api/drive-images|api/drive-proxy|api/health|_next/static|_next/image|favicon.ico|login|register|public).*)',
   ],
 }

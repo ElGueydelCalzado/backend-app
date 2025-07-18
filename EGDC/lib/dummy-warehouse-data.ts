@@ -1,9 +1,16 @@
 import { Product } from './types'
 
+// Tenant IDs for different warehouses
+const EGDC_TENANT_ID = '471e9c26-a232-46b3-a992-2932e5dfadf4' // EGDC tenant
+const FAMI_TENANT_ID = 'fami-tenant-id' // FAMI tenant (will be real when they register)
+const OSIEL_TENANT_ID = 'osiel-tenant-id' // Osiel tenant (will be real when they register)
+const MOLLY_TENANT_ID = 'molly-tenant-id' // Molly tenant (will be real when they register)
+
 // Dummy data for EGDC warehouse
 export const EGDC_WAREHOUSE_DATA: Product[] = [
   {
     id: 1001,
+    tenant_id: EGDC_TENANT_ID,
     categoria: 'Calzado Deportivo',
     marca: 'Nike',
     modelo: 'Air Max 90',
@@ -80,6 +87,7 @@ export const EGDC_WAREHOUSE_DATA: Product[] = [
 export const FAMI_WAREHOUSE_DATA: Product[] = [
   {
     id: 2001,
+    tenant_id: FAMI_TENANT_ID,
     categoria: 'Calzado Casual',
     marca: 'Vans',
     modelo: 'Old Skool',
@@ -156,6 +164,7 @@ export const FAMI_WAREHOUSE_DATA: Product[] = [
 export const OSIEL_WAREHOUSE_DATA: Product[] = [
   {
     id: 3001,
+    tenant_id: OSIEL_TENANT_ID,
     categoria: 'Calzado Formal',
     marca: 'Clarks',
     modelo: 'Desert Boot',
@@ -232,6 +241,7 @@ export const OSIEL_WAREHOUSE_DATA: Product[] = [
 export const MOLLY_WAREHOUSE_DATA: Product[] = [
   {
     id: 4001,
+    tenant_id: MOLLY_TENANT_ID,
     categoria: 'Calzado Infantil',
     marca: 'Stride Rite',
     modelo: 'Made2Play Sneaker',

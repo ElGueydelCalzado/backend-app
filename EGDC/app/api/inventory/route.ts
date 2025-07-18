@@ -1,5 +1,6 @@
+// Multi-Tenant Inventory API for Google Cloud PostgreSQL
 import { NextRequest, NextResponse } from 'next/server'
-import { PostgresManager } from '@/lib/postgres'
+import { getTenantContext, executeWithTenant } from '@/lib/tenant-context'
 import { mockInventoryAPI } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
@@ -23,7 +24,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log('Fetching inventory data from PostgreSQL...')
+    // Get tenant context from session
+    const tenantContext = await getTenantContext(request)
+    
+    if (!tenantContext) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tenant context found. Please login.',
+        code: 'TENANT_CONTEXT_MISSING'
+      }, { status: 401 })
+    }
+
+    console.log('🏢 Fetching inventory for tenant:', {
+      tenant_id: tenantContext.user.tenant_id,
+      tenant_name: tenantContext.user.tenant_name,
+      user_email: tenantContext.user.email
+    })
     
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -33,79 +49,134 @@ export async function GET(request: NextRequest) {
     const marca = searchParams.get('marca') || ''
     const modelo = searchParams.get('modelo') || ''
     
-    const filters = {
-      ...(categoria && { categoria }),
-      ...(marca && { marca }),
-      ...(modelo && { modelo })
+    // Build WHERE clause for filters
+    let whereClause = 'WHERE tenant_id = $1'
+    const params = [tenantContext.user.tenant_id]
+    let paramIndex = 2
+    
+    if (search) {
+      whereClause += ` AND (
+        LOWER(modelo) LIKE LOWER($${paramIndex}) OR 
+        LOWER(marca) LIKE LOWER($${paramIndex + 1}) OR 
+        LOWER(categoria) LIKE LOWER($${paramIndex + 2}) OR
+        LOWER(color) LIKE LOWER($${paramIndex + 3}) OR
+        LOWER(sku) LIKE LOWER($${paramIndex + 4})
+      )`
+      const searchTerm = `%${search}%`
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm)
+      paramIndex += 5
     }
     
-    const result = await PostgresManager.getProductsPaginated({
-      page,
-      limit,
-      search,
-      filters
-    })
+    if (categoria) {
+      whereClause += ` AND categoria = $${paramIndex}`
+      params.push(categoria)
+      paramIndex++
+    }
     
-    console.log(`Successfully fetched ${result.data.length} products (page ${page}/${result.pagination.totalPages})`)
+    if (marca) {
+      whereClause += ` AND marca = $${paramIndex}`
+      params.push(marca)
+      paramIndex++
+    }
+    
+    if (modelo) {
+      whereClause += ` AND modelo = $${paramIndex}`
+      params.push(modelo)
+      paramIndex++
+    }
+    
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM products 
+      ${whereClause}
+    `
+    
+    const countResult = await executeWithTenant<{ total: string }>(
+      tenantContext.user.tenant_id,
+      countQuery,
+      params
+    )
+    
+    const totalItems = parseInt(countResult[0].total)
+    const totalPages = Math.ceil(totalItems / limit)
+    const offset = (page - 1) * limit
+    
+    // Get products with pagination
+    const productsQuery = `
+      SELECT 
+        id,
+        fecha,
+        categoria,
+        marca,
+        modelo,
+        color,
+        talla,
+        sku,
+        ean,
+        google_drive,
+        costo,
+        shein_modifier,
+        shopify_modifier,
+        meli_modifier,
+        precio_shein,
+        precio_shopify,
+        precio_meli,
+        inv_egdc,
+        inv_fami,
+        inv_osiel,
+        inv_molly,
+        inventory_total,
+        shein,
+        meli,
+        shopify,
+        tiktok,
+        upseller,
+        go_trendier,
+        created_at,
+        updated_at
+      FROM products 
+      ${whereClause}
+      ORDER BY categoria, marca, modelo
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `
+    
+    params.push(limit, offset)
+    
+    const products = await executeWithTenant(
+      tenantContext.user.tenant_id,
+      productsQuery,
+      params
+    )
+    
+    console.log(`✅ Successfully fetched ${products.length} products for tenant ${tenantContext.user.tenant_name}`)
     
     return NextResponse.json({
       success: true,
-      data: result.data,
-      pagination: result.pagination,
-      message: `Successfully fetched ${result.data.length} products`
+      data: products,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      },
+      tenant: {
+        id: tenantContext.user.tenant_id,
+        name: tenantContext.user.tenant_name,
+        subdomain: tenantContext.user.tenant_subdomain
+      },
+      message: `Fetched ${products.length} products`
     })
     
   } catch (error) {
-    console.error('Error fetching inventory:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error',
-        data: []
-      },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const { product } = await request.json()
-    
-    if (!product) {
-      return NextResponse.json(
-        { success: false, error: 'Product data is required' },
-        { status: 400 }
-      )
-    }
-    
-    console.log('Creating new product:', product)
-    
-    const newProduct = await PostgresManager.createProduct(product)
-    
-    // Log the creation
-    await PostgresManager.logChange(
-      newProduct.id,
-      'created',
-      null,
-      'Product created',
-      'create'
-    )
+    console.error('❌ Error fetching inventory:', error)
     
     return NextResponse.json({
-      success: true,
-      data: newProduct,
-      message: 'Product created successfully'
-    })
-    
-  } catch (error) {
-    console.error('Error creating product:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    )
+      success: false,
+      error: 'Failed to fetch inventory data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
