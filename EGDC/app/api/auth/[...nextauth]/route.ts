@@ -1,4 +1,4 @@
-import { authConfig } from '@/lib/auth-config'
+import { authConfig } from '@/lib/auth-config-multi-tenant'
 import NextAuth from 'next-auth'
 
 // 🔍 DEBUG: Log environment variables (without secrets)

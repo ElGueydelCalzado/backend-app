@@ -9,12 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Current Project Status
 
 ✅ **FULLY FUNCTIONAL** - Complete SaaS multi-tenant platform  
-✅ **PRODUCTION READY** - All core features implemented and working  
+✅ **PRODUCTION DEPLOYED** - Live at inv.elgueydelcalzado.com with all core features  
 ✅ **DATABASE COMPLETE** - PostgreSQL with automated pricing, triggers, and audit trails  
 ✅ **UI/UX COMPLETE** - Modern, responsive interface with warehouse switching  
 ✅ **API ENDPOINTS** - REST API for inventory operations and supplier integration  
 ✅ **SUPPLIER INTEGRATION** - Multi-business warehouse architecture with BUY functionality  
-✅ **SCRIPTS READY** - Database management and testing utilities  
+✅ **BULK OPERATIONS** - UPSERT functionality for efficient bulk import/export  
+✅ **IMAGE PREVIEW** - Google Drive API integration for product image galleries  
+✅ **CODEBASE CLEAN** - Removed 3,500+ lines of legacy code and backup files  
 
 ## Development Commands
 
@@ -27,14 +29,10 @@ npm run lint         # Run ESLint linter
 npm run type-check   # Run TypeScript type checking
 
 # Database Management Scripts
-npx tsx scripts/test-connection.ts      # Test Supabase connection
+npx tsx scripts/test-connection.ts      # Test PostgreSQL connection
 npx tsx scripts/check-schema.ts         # Verify database schema
 npx tsx scripts/setup-db.ts             # Setup database from scratch
 npx tsx scripts/database-examples.ts    # Example database operations
-npx tsx scripts/force-update.ts         # Force database schema update
-npx tsx scripts/update-database.ts      # Update database with fixes
-npx tsx scripts/final-update.ts         # Final database configuration
-npx tsx scripts/db-direct.ts            # Direct database operations
 ```
 
 ## **🔥 CRITICAL: Git Workflow Requirements**
@@ -108,6 +106,8 @@ git push origin --delete feature/descriptive-name
 - **Multi-business Warehouse System**: Independent warehouses for EGDC + supplier integration
 - **Supplier Integration**: Read-only catalogs with BUY functionality for purchase orders
 - **Comprehensive Audit Trail**: All changes logged with timestamps and old/new values
+- **Bulk Operations**: UPSERT-based bulk import/export with conflict resolution
+- **Image Preview System**: Google Drive API integration for product photo galleries
 
 #### 🎯 **Advanced Filtering & Search**
 - **Hierarchical Filtering**: Categories → Brands → Models cascade filtering
@@ -211,6 +211,12 @@ git push origin --delete feature/descriptive-name
    - Auto-dismissing with customizable duration
    - Multiple toast support with queue management
 
+10. **`ImagePreviewModal.tsx`** - Google Drive integration
+    - Preview product images from Google Drive folders
+    - Navigation between multiple images
+    - Fallback to Drive when images fail to load
+    - Comprehensive error handling with debugging
+
 ### API Endpoints
 
 #### **`GET /api/inventory`** - Fetch Products
@@ -223,6 +229,24 @@ git push origin --delete feature/descriptive-name
 - Validates all input data
 - Logs all changes to audit trail
 - Returns operation status and error details
+
+#### **`POST /api/inventory/bulk-import`** - Bulk Import Products
+- UPSERT functionality for efficient bulk operations
+- Handles conflicts with existing products
+- Batch processing to prevent 504 timeouts
+- Comprehensive error reporting and rollback
+
+#### **`GET /api/drive-images/[folderId]`** - Google Drive Images
+- Fetches image lists from Google Drive folders
+- Converts to proxy URLs for CSP compliance
+- Environment-aware API key handling
+- Comprehensive debugging and error handling
+
+#### **`GET /api/drive-proxy/[fileId]`** - Image Proxy
+- Serves Google Drive images through our domain
+- Bypasses CSP restrictions
+- Multiple fallback URL strategies
+- Proper caching and content-type handling
 
 ### Database Management Scripts
 
@@ -247,7 +271,7 @@ Choose the appropriate SQL script based on your needs:
 
 ## Environment Variables
 
-Required in `.env.local`:
+Required in `.env.local` and production:
 ```bash
 # PostgreSQL Database (GCP Cloud SQL)
 DATABASE_URL=postgresql://username:password@host:port/database
@@ -257,10 +281,19 @@ POSTGRES_HOST=your_postgres_host
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=your_database_name
 
-# Legacy Supabase variables (for migration compatibility)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Google Drive API (Required for image preview)
+GOOGLE_DRIVE_API_KEY=your_google_drive_api_key
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# NextAuth Configuration
+NEXTAUTH_URL=your_app_url
+NEXTAUTH_SECRET=your_nextauth_secret
+
+# Optional - Preview environment skip auth
+SKIP_AUTH=true
 ```
 
 ## Pricing System (Automated)
@@ -371,18 +404,23 @@ EGDC/
 
 ## 4-Phase Improvement Plan
 
-### Phase 1: Stability & Security (Week 1) - ✅ COMPLETED
+### Phase 1: Stability & Security (Week 1) - ✅ COMPLETED & DEPLOYED
 - [x] **CRITICAL**: Fix environment variable validation (`lib/supabase.ts`) ✅ COMPLETED
 - [x] **CRITICAL**: Fix state mutation bug (`components/FilterSection.tsx`) ✅ COMPLETED
 - [x] Add comprehensive input validation to API routes ✅ COMPLETED
 - [x] Standardize error handling across all endpoints ✅ COMPLETED
 - [x] Implement error boundaries for component protection ✅ COMPLETED
+- [x] **PRODUCTION DEPLOYMENT**: Live at inv.elgueydelcalzado.com ✅ COMPLETED
+- [x] **GOOGLE DRIVE INTEGRATION**: Image preview functionality ✅ COMPLETED
+- [x] **BULK OPERATIONS**: UPSERT functionality for import/export ✅ COMPLETED
+- [x] **CODEBASE CLEANUP**: Removed 3,500+ lines of legacy code ✅ COMPLETED
 
-### Phase 2: Performance & UX (Week 2) - ✅ COMPLETED
+### Phase 2: Performance & UX (Week 2) - ✅ COMPLETED & DEPLOYED
 - [x] Optimize database queries (batch updates in API routes) ✅ COMPLETED
 - [x] Add memoization to expensive calculations (QuickStats, FilterSection) ✅ COMPLETED
 - [x] Implement proper loading states throughout app ✅ COMPLETED
 - [x] Add accessibility improvements (ARIA labels, keyboard navigation) ✅ COMPLETED
+- [x] **PRODUCTION OPTIMIZATION**: 504 timeout fixes and performance improvements ✅ COMPLETED
 
 ### Phase 3: Feature Enhancements (Week 3-4)
 - [ ] Enhanced Dashboard: Real-time analytics, inventory alerts
@@ -426,9 +464,17 @@ This system implements a **B2B SaaS marketplace model** where:
 4. 🔄 **Real API Integration** (replace dummy data with live connections)
 5. 🔄 **Platform Launch** (onboard real suppliers as SaaS customers)
 
-### Critical Issues Identified (16 total: 2 Critical, 3 High, 4 Medium, 7 Low)
-**Status**: Phase 1-2 completed, transitioning to SaaS platform development
+### Development Status Summary
+
+**✅ PHASE 1 & 2 COMPLETED - PRODUCTION DEPLOYED**
+- **Live URL**: inv.elgueydelcalzado.com
+- **Status**: Fully functional multi-tenant SaaS platform
+- **Codebase**: Clean, optimized, and production-ready
+- **Performance**: 504 timeout fixes and bulk operation optimization
+- **Features**: Complete inventory management with Google Drive integration
+
+**🚀 READY FOR PHASE 3: FEATURE ENHANCEMENTS**
 
 ---
 
-**Status**: Production-ready SaaS multi-tenant platform with retailer inventory management, supplier integration, purchase order system, and foundation for B2B marketplace expansion.
+**Current Status**: Production-deployed SaaS multi-tenant platform with complete retailer inventory management, supplier integration, bulk operations, image preview system, and foundation for B2B marketplace expansion. Phase 1-2 completed successfully with 3,500+ lines of legacy code removed and performance optimizations deployed.
