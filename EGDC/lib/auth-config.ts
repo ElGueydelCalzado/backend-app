@@ -187,35 +187,55 @@ export const authConfig: NextAuthOptions = {
     },
     
     async session({ session, token }) {
-      if (session?.user?.email) {
+      console.log('🔍 Session Callback:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        hasToken: !!token,
+        tokenTenantId: token?.tenant_id
+      })
+      
+      if (session?.user && token) {
         session.user.id = token.sub as string
-        session.user.tenant_id = token.tenant_id as string || null
-        session.user.role = token.role as string || 'pending'
-        session.user.tenant_name = token.tenant_name as string || null
-        session.user.tenant_subdomain = token.tenant_subdomain as string || null
+        session.user.tenant_id = token.tenant_id as string
+        session.user.role = token.role as string
+        session.user.tenant_name = token.tenant_name as string
+        session.user.tenant_subdomain = token.tenant_subdomain as string
         
-        // Add error state to session if tenant creation failed
-        if (token.error) {
-          session.error = token.error as string
+        // Add error state if auth failed
+        if (token.auth_error) {
+          session.error = 'tenant_setup_required'
         }
       }
+      
+      console.log('✅ Session callback complete')
       return session
     },
     
     async jwt({ token, user, account }) {
-      console.log('🔍 JWT Callback Debug:', {
+      console.log('🔍 JWT Callback Start:', {
         hasAccount: !!account,
         hasUser: !!user,
         userEmail: user?.email,
         accountProvider: account?.provider,
         tokenSub: token?.sub,
-        existingTenantId: token?.tenant_id,
         timestamp: new Date().toISOString()
       })
       
+      // ALWAYS ensure token is a valid object
+      if (!token || typeof token !== 'object') {
+        console.log('⚠️ Invalid token received, creating new one')
+        token = {}
+      }
+      
       // On first sign in, get or create user and tenant
       if (account && user?.email) {
-        console.log('🚀 First sign in detected, creating/getting user...')
+        console.log('🚀 First sign in detected')
+        
+        // Set basic token properties first
+        token.email = user.email
+        token.name = user.name
+        
         try {
           const userData = await getOrCreateUser(
             user.email,
@@ -223,46 +243,43 @@ export const authConfig: NextAuthOptions = {
             account.providerAccountId
           )
           
+          // Add tenant data to token
           token.tenant_id = userData.tenant_id
           token.role = userData.role
           token.tenant_name = userData.tenant_name
           token.tenant_subdomain = userData.tenant_subdomain
           
-          console.log('✅ User authenticated successfully:', {
-            email: user.email,
-            tenant: userData.tenant_name,
-            tenant_id: userData.tenant_id,
-            role: userData.role
-          })
+          console.log('✅ User created/found successfully')
           
         } catch (error) {
-          console.error('❌ Error creating user/tenant:', error)
-          console.error('❌ Error details:', {
-            message: error.message,
-            stack: error.stack,
-            email: user.email,
-            name: user.name
-          })
+          console.error('❌ Database error:', error?.message || 'Unknown error')
           
-          // Return the basic token without tenant info instead of null
-          // This allows authentication to continue, user can complete setup later
-          console.log('⚠️ Authentication error - returning basic token')
-          return {
-            ...token,
-            tenant_id: null,
-            role: 'pending',
-            tenant_name: null,
-            tenant_subdomain: null,
-            error: 'tenant_creation_failed'
-          }
+          // Still return valid token with minimal data
+          token.tenant_id = 'pending'
+          token.role = 'pending'
+          token.tenant_name = 'Setup Required'
+          token.tenant_subdomain = 'pending'
+          token.auth_error = true
         }
       }
       
-      console.log('✅ JWT callback returning token:', {
-        hasTenantId: !!token.tenant_id,
-        tenantName: token.tenant_name
-      })
-      return token
+      // Ensure token always has required structure
+      const finalToken = {
+        sub: token.sub || user?.id,
+        email: token.email || user?.email,
+        name: token.name || user?.name,
+        tenant_id: token.tenant_id || 'pending',
+        role: token.role || 'pending',
+        tenant_name: token.tenant_name || 'Setup Required',
+        tenant_subdomain: token.tenant_subdomain || 'pending',
+        auth_error: token.auth_error || false,
+        iat: token.iat,
+        exp: token.exp,
+        jti: token.jti
+      }
+      
+      console.log('✅ JWT returning valid token structure')
+      return finalToken
     },
   },
   
