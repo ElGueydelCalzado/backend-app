@@ -153,9 +153,10 @@ export const authConfig: NextAuthOptions = {
   
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('🔍 MINIMAL SignIn:', {
+      console.log('🔍 SignIn:', {
         email: user?.email,
-        provider: account?.provider
+        provider: account?.provider,
+        useMockData: process.env.USE_MOCK_DATA
       })
       
       // Allow all Google OAuth users
@@ -167,41 +168,68 @@ export const authConfig: NextAuthOptions = {
     },
     
     async session({ session, token }) {
-      console.log('🔍 MINIMAL Session:', {
+      console.log('🔍 Session callback:', {
         hasSession: !!session,
-        hasToken: !!token
+        hasToken: !!token,
+        useMockData: process.env.USE_MOCK_DATA
       })
       
       if (session?.user && token) {
         session.user.id = token.sub as string
+        session.user.tenant_id = token.tenant_id as string || 'mock-tenant'
+        session.user.role = token.role as string || 'admin'
+        session.user.tenant_name = token.tenant_name as string || 'Preview Environment'
+        session.user.tenant_subdomain = token.tenant_subdomain as string || 'preview'
       }
       
       return session
     },
     
-    // Minimal JWT callback - just pass through
     async jwt({ token, user, account }) {
-      console.log('🔍 MINIMAL JWT Start:', {
+      console.log('🔍 JWT Start:', {
         hasAccount: !!account,
         hasUser: !!user,
         hasToken: !!token,
-        tokenType: typeof token,
         userEmail: user?.email,
-        accountProvider: account?.provider
+        useMockData: process.env.USE_MOCK_DATA
       })
       
       if (account && user) {
-        console.log('🔍 MINIMAL JWT: First sign in detected for:', user.email)
-        console.log('🔍 MINIMAL JWT: Account details:', {
-          provider: account.provider,
-          type: account.type,
-          providerAccountId: account.providerAccountId
-        })
-        // Just return the token as-is for now
-        return token
+        console.log('🔍 JWT: First sign in for:', user.email)
+        
+        // Check if we're in preview/mock mode
+        if (process.env.USE_MOCK_DATA === 'true') {
+          console.log('🔍 JWT: Using mock data - skipping database')
+          // Mock tenant data for preview environment
+          token.tenant_id = 'mock-tenant-id'
+          token.role = 'admin'
+          token.tenant_name = 'Preview Environment'
+          token.tenant_subdomain = 'preview'
+        } else {
+          console.log('🔍 JWT: Using real database')
+          try {
+            const userData = await getOrCreateUser(
+              user.email,
+              user.name || user.email,
+              account.providerAccountId
+            )
+            
+            token.tenant_id = userData.tenant_id
+            token.role = userData.role
+            token.tenant_name = userData.tenant_name
+            token.tenant_subdomain = userData.tenant_subdomain
+          } catch (error) {
+            console.error('❌ Database error:', error?.message)
+            // Fallback to mock data if database fails
+            token.tenant_id = 'fallback-tenant'
+            token.role = 'admin'
+            token.tenant_name = 'Fallback Environment'
+            token.tenant_subdomain = 'fallback'
+          }
+        }
       }
       
-      console.log('🔍 MINIMAL JWT: Returning existing token of type:', typeof token)
+      console.log('🔍 JWT: Returning token with tenant_id:', token.tenant_id)
       return token
     },
   },
