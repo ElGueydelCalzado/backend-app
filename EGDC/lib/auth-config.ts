@@ -152,6 +152,7 @@ export const authConfig: NextAuthOptions = {
   ],
   
   // NO CALLBACKS AT ALL - let NextAuth handle everything default
+  // DEPLOYMENT TEST: This config should have NO custom JWT logic
   
   pages: {
     signIn: '/login',
