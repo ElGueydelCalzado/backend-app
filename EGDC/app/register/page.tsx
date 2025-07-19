@@ -1,5 +1,6 @@
 'use client'
 
+// Force rebuild - registration UX improvements
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
