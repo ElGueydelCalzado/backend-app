@@ -31,13 +31,14 @@ export async function getTenantContext(req: NextRequest): Promise<TenantSession 
   try {
     const session = await getServerSession(authConfig) as TenantSession
     
-    console.log('🔍 Session debug:', {
+    console.log('🔍 Session debug (v2):', {
       hasSession: !!session,
       hasUser: !!session?.user,
       userEmail: session?.user?.email,
       tenantId: session?.user?.tenant_id,
       sessionKeys: session ? Object.keys(session) : 'no session',
-      userKeys: session?.user ? Object.keys(session.user) : 'no user'
+      userKeys: session?.user ? Object.keys(session.user) : 'no user',
+      timestamp: new Date().toISOString()
     })
     
     if (!session?.user?.tenant_id) {
