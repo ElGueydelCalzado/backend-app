@@ -65,12 +65,12 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
       return userResult.rows[0]
     }
     
-    // User doesn't exist - this is a new registration
-    // For now, we'll create a new tenant for each new user
-    // Later we can add invitation system
+    // User doesn't exist - this is a new registration via Google OAuth
+    // Create a default tenant for one-click sign-up
+    // Business details can be updated later in account settings
     
-    const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
-    const tenantName = name || email.split('@')[0]
+    const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
+    const tenantName = name || email.split('@')[0] + ' Business'
     
     // Create new tenant
     const tenantResult = await client.query(`
