@@ -47,6 +47,7 @@ export const EGDC_WAREHOUSE_DATA: Product[] = [
   },
   {
     id: 1002,
+    tenant_id: EGDC_TENANT_ID,
     categoria: 'Calzado Deportivo',
     marca: 'Adidas',
     modelo: 'Ultraboost 22',
@@ -124,6 +125,7 @@ export const FAMI_WAREHOUSE_DATA: Product[] = [
   },
   {
     id: 2002,
+    tenant_id: FAMI_TENANT_ID,
     categoria: 'Calzado Casual',
     marca: 'Converse',
     modelo: 'Chuck Taylor All Star',
@@ -201,6 +203,7 @@ export const OSIEL_WAREHOUSE_DATA: Product[] = [
   },
   {
     id: 3002,
+    tenant_id: OSIEL_TENANT_ID,
     categoria: 'Calzado Formal',
     marca: 'Cole Haan',
     modelo: 'Oxford Dress Shoe',
@@ -278,6 +281,7 @@ export const MOLLY_WAREHOUSE_DATA: Product[] = [
   },
   {
     id: 4002,
+    tenant_id: MOLLY_TENANT_ID,
     categoria: 'Calzado Infantil',
     marca: 'New Balance',
     modelo: 'Kids 574',
@@ -314,6 +318,7 @@ export const MOLLY_WAREHOUSE_DATA: Product[] = [
   },
   {
     id: 4003,
+    tenant_id: MOLLY_TENANT_ID,
     categoria: 'Calzado Infantil',
     marca: 'Skechers',
     modelo: 'Light-Up Sneakers',

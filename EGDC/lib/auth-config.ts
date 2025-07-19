@@ -227,7 +227,7 @@ export const authConfig: NextAuthOptions = {
             console.error('❌ Production database error:', error?.message)
             // Fallback - still provide session but mark as needs setup
             token.tenant_id = 'setup-required'
-            token.role = 'pending'
+            token.role = 'admin'
             token.tenant_name = 'Setup Required'
             token.tenant_subdomain = 'setup'
           }
