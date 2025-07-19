@@ -8,6 +8,9 @@ console.log('🔍 NextAuth Environment Debug:', {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? '✅ SET' : '❌ MISSING',
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? '✅ SET' : '❌ MISSING',
   NODE_ENV: process.env.NODE_ENV,
+  VERCEL_URL: process.env.VERCEL_URL,
+  VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  HOST: process.env.HOST,
   timestamp: new Date().toISOString()
 })
 

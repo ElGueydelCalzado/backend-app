@@ -184,16 +184,24 @@ export const authConfig: NextAuthOptions = {
       console.log('🔍 MINIMAL JWT Start:', {
         hasAccount: !!account,
         hasUser: !!user,
-        hasToken: !!token
+        hasToken: !!token,
+        tokenType: typeof token,
+        userEmail: user?.email,
+        accountProvider: account?.provider
       })
       
       if (account && user) {
-        console.log('🔍 MINIMAL JWT: First sign in detected')
+        console.log('🔍 MINIMAL JWT: First sign in detected for:', user.email)
+        console.log('🔍 MINIMAL JWT: Account details:', {
+          provider: account.provider,
+          type: account.type,
+          providerAccountId: account.providerAccountId
+        })
         // Just return the token as-is for now
         return token
       }
       
-      console.log('🔍 MINIMAL JWT: Returning existing token')
+      console.log('🔍 MINIMAL JWT: Returning existing token of type:', typeof token)
       return token
     },
   },
