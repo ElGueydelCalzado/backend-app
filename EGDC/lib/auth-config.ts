@@ -1,5 +1,6 @@
 // Multi-Tenant SaaS Authentication Configuration
 import GoogleProvider from 'next-auth/providers/google'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import type { NextAuthOptions } from 'next-auth'
 import { Pool } from 'pg'
 
@@ -145,10 +146,52 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
 
 export const authConfig: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    // Production: Use Google OAuth
+    ...(process.env.VERCEL_ENV === 'production' ? [
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      })
+    ] : []),
+    
+    // Preview/Development: Use test credentials
+    ...(process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development' ? [
+      CredentialsProvider({
+        id: 'test-account',
+        name: 'Test Account (Preview Only)',
+        credentials: {
+          username: { 
+            label: 'Username', 
+            type: 'text', 
+            placeholder: 'test' 
+          },
+          password: { 
+            label: 'Password', 
+            type: 'password', 
+            placeholder: 'password' 
+          }
+        },
+        async authorize(credentials) {
+          console.log('🧪 Test credentials auth attempt:', credentials?.username)
+          
+          // Simple test auth for previews
+          if (credentials?.username === 'test' && credentials?.password === 'password') {
+            return {
+              id: 'test-user-' + Date.now(),
+              name: 'Test User',
+              email: 'test@preview.com',
+              tenant_id: 'test-tenant',
+              role: 'admin',
+              tenant_name: 'Test Business',
+              tenant_subdomain: 'test'
+            }
+          }
+          
+          console.log('❌ Invalid test credentials')
+          return null
+        }
+      })
+    ] : [])
   ],
   
   callbacks: {
@@ -156,16 +199,22 @@ export const authConfig: NextAuthOptions = {
       console.log('🔍 SignIn Callback:', {
         email: user?.email,
         provider: account?.provider,
-        isPreview: process.env.USE_MOCK_DATA === 'true'
+        environment: process.env.VERCEL_ENV
       })
       
-      // Allow all Google OAuth users
+      // Allow Google OAuth users in production
       if (account?.provider === 'google' && user?.email) {
         console.log('✅ Google OAuth user allowed:', user.email)
         return true
       }
       
-      console.log('❌ SignIn rejected - not Google OAuth or missing email')
+      // Allow test credentials in preview/development
+      if (account?.provider === 'test-account') {
+        console.log('✅ Test account allowed in preview/dev environment')
+        return true
+      }
+      
+      console.log('❌ SignIn rejected - invalid provider or missing email')
       return false
     },
     
@@ -181,6 +230,8 @@ export const authConfig: NextAuthOptions = {
         session.user.role = token.role as string || 'user'
         session.user.tenant_name = token.tenant_name as string || 'Unknown Tenant'
         session.user.tenant_subdomain = token.tenant_subdomain as string || 'unknown'
+        
+        console.log('✅ Session ready for environment:', process.env.VERCEL_ENV)
       }
       
       return session
@@ -196,16 +247,19 @@ export const authConfig: NextAuthOptions = {
       // On first sign in (when account and user are present)
       if (account && user?.email) {
         console.log('🚀 First sign in detected for:', user.email)
+        console.log('🌍 Environment:', process.env.VERCEL_ENV)
         
-        // Check environment to determine data source
-        const isPreviewEnvironment = process.env.USE_MOCK_DATA === 'true'
+        // Environment-aware authentication
+        const isPreviewOrDev = process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development'
         
-        if (isPreviewEnvironment) {
-          console.log('🎭 Preview Environment: Using mock tenant data')
-          // Mock tenant data for preview - no database calls
+        if (isPreviewOrDev || account.provider === 'test-account') {
+          console.log('🎭 Preview/Dev Environment: Using mock tenant data')
+          // Mock tenant data for preview/dev - no database calls
           token.tenant_id = `mock-${user.id}`
           token.role = 'admin'
-          token.tenant_name = `${user.name}'s Preview Business`
+          token.tenant_name = account.provider === 'test-account' 
+            ? 'Test Business (Preview)' 
+            : `${user.name}'s Preview Business`
           token.tenant_subdomain = `preview-${user.id}`
         } else {
           console.log('🏭 Production Environment: Creating real tenant')
