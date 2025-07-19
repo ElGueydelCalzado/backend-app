@@ -144,142 +144,57 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
 }
 
 export const authConfig: NextAuthOptions = {
-  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
   ],
   
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('🔍 Multi-Tenant SignIn Debug:', {
-        user: {
-          email: user?.email,
-          name: user?.name,
-          id: user?.id
-        },
-        account: {
-          provider: account?.provider,
-          providerAccountId: account?.providerAccountId,
-          type: account?.type
-        },
-        profile: profile ? 'Present' : 'Missing',
-        timestamp: new Date().toISOString()
+      console.log('🔍 MINIMAL SignIn:', {
+        email: user?.email,
+        provider: account?.provider
       })
       
-      // Allow all Google OAuth users - they'll get their own tenant
+      // Allow all Google OAuth users
       if (account?.provider === 'google' && user?.email) {
-        console.log('✅ Google OAuth user allowed:', user.email)
         return true
       }
       
-      console.log('❌ SignIn rejected - not Google OAuth or missing email')
       return false
     },
     
     async session({ session, token }) {
-      console.log('🔍 Session Callback:', {
+      console.log('🔍 MINIMAL Session:', {
         hasSession: !!session,
-        hasUser: !!session?.user,
-        userEmail: session?.user?.email,
-        hasToken: !!token,
-        tokenTenantId: token?.tenant_id
+        hasToken: !!token
       })
       
       if (session?.user && token) {
         session.user.id = token.sub as string
-        session.user.tenant_id = token.tenant_id as string
-        session.user.role = token.role as string
-        session.user.tenant_name = token.tenant_name as string
-        session.user.tenant_subdomain = token.tenant_subdomain as string
-        
-        // Add error state if auth failed
-        if (token.auth_error) {
-          session.error = 'tenant_setup_required'
-        }
       }
       
-      console.log('✅ Session callback complete')
       return session
     },
     
+    // Minimal JWT callback - just pass through
     async jwt({ token, user, account }) {
-      console.log('🔍 JWT Callback Start:', {
+      console.log('🔍 MINIMAL JWT Start:', {
         hasAccount: !!account,
         hasUser: !!user,
-        userEmail: user?.email,
-        accountProvider: account?.provider,
-        tokenSub: token?.sub,
-        timestamp: new Date().toISOString()
+        hasToken: !!token
       })
       
-      // ALWAYS ensure token is a valid object
-      if (!token || typeof token !== 'object') {
-        console.log('⚠️ Invalid token received, creating new one')
-        token = {}
+      if (account && user) {
+        console.log('🔍 MINIMAL JWT: First sign in detected')
+        // Just return the token as-is for now
+        return token
       }
       
-      // On first sign in, get or create user and tenant
-      if (account && user?.email) {
-        console.log('🚀 First sign in detected')
-        
-        // Set basic token properties first
-        token.email = user.email
-        token.name = user.name
-        
-        try {
-          const userData = await getOrCreateUser(
-            user.email,
-            user.name || user.email,
-            account.providerAccountId
-          )
-          
-          // Add tenant data to token
-          token.tenant_id = userData.tenant_id
-          token.role = userData.role
-          token.tenant_name = userData.tenant_name
-          token.tenant_subdomain = userData.tenant_subdomain
-          
-          console.log('✅ User created/found successfully')
-          
-        } catch (error) {
-          console.error('❌ Database error:', error?.message || 'Unknown error')
-          
-          // Still return valid token with minimal data
-          token.tenant_id = 'pending'
-          token.role = 'pending'
-          token.tenant_name = 'Setup Required'
-          token.tenant_subdomain = 'pending'
-          token.auth_error = true
-        }
-      }
-      
-      // Ensure token always has required structure
-      const finalToken = {
-        sub: token.sub || user?.id,
-        email: token.email || user?.email,
-        name: token.name || user?.name,
-        tenant_id: token.tenant_id || 'pending',
-        role: token.role || 'pending',
-        tenant_name: token.tenant_name || 'Setup Required',
-        tenant_subdomain: token.tenant_subdomain || 'pending',
-        auth_error: token.auth_error || false,
-        iat: token.iat,
-        exp: token.exp,
-        jti: token.jti
-      }
-      
-      console.log('✅ JWT returning valid token structure')
-      return finalToken
+      console.log('🔍 MINIMAL JWT: Returning existing token')
+      return token
     },
   },
   
@@ -288,12 +203,11 @@ export const authConfig: NextAuthOptions = {
     error: '/login',
   },
   
-  // Enable debug mode to see detailed logs
   debug: true,
   
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours
+    maxAge: 24 * 60 * 60,
   },
   
   secret: process.env.NEXTAUTH_SECRET,
