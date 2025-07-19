@@ -170,6 +170,12 @@ export const authConfig: NextAuthOptions = {
           
         } catch (error) {
           console.error('❌ Error creating user/tenant:', error)
+          console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack,
+            email: user.email,
+            name: user.name
+          })
           return null
         }
       }
