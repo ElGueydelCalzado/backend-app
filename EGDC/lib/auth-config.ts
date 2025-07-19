@@ -122,17 +122,28 @@ export const authConfig: NextAuthOptions = {
   
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('🔍 Multi-Tenant SignIn:', {
-        user: user?.email,
-        account: account?.provider,
+      console.log('🔍 Multi-Tenant SignIn Debug:', {
+        user: {
+          email: user?.email,
+          name: user?.name,
+          id: user?.id
+        },
+        account: {
+          provider: account?.provider,
+          providerAccountId: account?.providerAccountId,
+          type: account?.type
+        },
+        profile: profile ? 'Present' : 'Missing',
         timestamp: new Date().toISOString()
       })
       
       // Allow all Google OAuth users - they'll get their own tenant
       if (account?.provider === 'google' && user?.email) {
+        console.log('✅ Google OAuth user allowed:', user.email)
         return true
       }
       
+      console.log('❌ SignIn rejected - not Google OAuth or missing email')
       return false
     },
     
@@ -148,8 +159,19 @@ export const authConfig: NextAuthOptions = {
     },
     
     async jwt({ token, user, account }) {
+      console.log('🔍 JWT Callback Debug:', {
+        hasAccount: !!account,
+        hasUser: !!user,
+        userEmail: user?.email,
+        accountProvider: account?.provider,
+        tokenSub: token?.sub,
+        existingTenantId: token?.tenant_id,
+        timestamp: new Date().toISOString()
+      })
+      
       // On first sign in, get or create user and tenant
       if (account && user?.email) {
+        console.log('🚀 First sign in detected, creating/getting user...')
         try {
           const userData = await getOrCreateUser(
             user.email,
@@ -162,9 +184,10 @@ export const authConfig: NextAuthOptions = {
           token.tenant_name = userData.tenant_name
           token.tenant_subdomain = userData.tenant_subdomain
           
-          console.log('✅ User authenticated:', {
+          console.log('✅ User authenticated successfully:', {
             email: user.email,
             tenant: userData.tenant_name,
+            tenant_id: userData.tenant_id,
             role: userData.role
           })
           
@@ -176,10 +199,15 @@ export const authConfig: NextAuthOptions = {
             email: user.email,
             name: user.name
           })
+          console.log('🔄 Returning null token - will retry authentication')
           return null
         }
       }
       
+      console.log('✅ JWT callback returning token:', {
+        hasTenantId: !!token.tenant_id,
+        tenantName: token.tenant_name
+      })
       return token
     },
   },
@@ -188,6 +216,9 @@ export const authConfig: NextAuthOptions = {
     signIn: '/login',
     error: '/login',
   },
+  
+  // Enable debug mode to see detailed logs
+  debug: true,
   
   session: {
     strategy: 'jwt',
