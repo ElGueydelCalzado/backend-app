@@ -151,8 +151,93 @@ export const authConfig: NextAuthOptions = {
     }),
   ],
   
-  // NO CALLBACKS AT ALL - let NextAuth handle everything default
-  // DEPLOYMENT TEST: This config should have NO custom JWT logic
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log('🔍 SignIn Callback:', {
+        email: user?.email,
+        provider: account?.provider,
+        isPreview: process.env.USE_MOCK_DATA === 'true'
+      })
+      
+      // Allow all Google OAuth users
+      if (account?.provider === 'google' && user?.email) {
+        console.log('✅ Google OAuth user allowed:', user.email)
+        return true
+      }
+      
+      console.log('❌ SignIn rejected - not Google OAuth or missing email')
+      return false
+    },
+    
+    async session({ session, token }) {
+      console.log('🔍 Session Callback:', {
+        email: session?.user?.email,
+        isPreview: process.env.USE_MOCK_DATA === 'true'
+      })
+      
+      if (session?.user && token) {
+        session.user.id = token.sub as string
+        session.user.tenant_id = token.tenant_id as string || 'unknown'
+        session.user.role = token.role as string || 'user'
+        session.user.tenant_name = token.tenant_name as string || 'Unknown Tenant'
+        session.user.tenant_subdomain = token.tenant_subdomain as string || 'unknown'
+      }
+      
+      return session
+    },
+    
+    async jwt({ token, user, account }) {
+      console.log('🔍 JWT Callback:', {
+        isFirstSignIn: !!(account && user),
+        email: user?.email,
+        isPreview: process.env.USE_MOCK_DATA === 'true'
+      })
+      
+      // On first sign in (when account and user are present)
+      if (account && user?.email) {
+        console.log('🚀 First sign in detected for:', user.email)
+        
+        // Check environment to determine data source
+        const isPreviewEnvironment = process.env.USE_MOCK_DATA === 'true'
+        
+        if (isPreviewEnvironment) {
+          console.log('🎭 Preview Environment: Using mock tenant data')
+          // Mock tenant data for preview - no database calls
+          token.tenant_id = `mock-${user.id}`
+          token.role = 'admin'
+          token.tenant_name = `${user.name}'s Preview Business`
+          token.tenant_subdomain = `preview-${user.id}`
+        } else {
+          console.log('🏭 Production Environment: Creating real tenant')
+          try {
+            // Real database operations for production
+            const userData = await getOrCreateUser(
+              user.email,
+              user.name || user.email,
+              account.providerAccountId
+            )
+            
+            token.tenant_id = userData.tenant_id
+            token.role = userData.role
+            token.tenant_name = userData.tenant_name
+            token.tenant_subdomain = userData.tenant_subdomain
+            
+            console.log('✅ Real tenant created/found:', userData.tenant_name)
+          } catch (error) {
+            console.error('❌ Production database error:', error?.message)
+            // Fallback - still provide session but mark as needs setup
+            token.tenant_id = 'setup-required'
+            token.role = 'pending'
+            token.tenant_name = 'Setup Required'
+            token.tenant_subdomain = 'setup'
+          }
+        }
+      }
+      
+      console.log('✅ JWT token ready with tenant_id:', token.tenant_id)
+      return token
+    },
+  },
   
   pages: {
     signIn: '/login',

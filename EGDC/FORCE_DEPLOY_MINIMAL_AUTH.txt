@@ -1,3 +1,0 @@
-This file forces Vercel to deploy our minimal NextAuth config with NO database access.
-If you see database connection attempts in logs, Vercel is using cached deployment.
-Timestamp: 2025-07-19T13:40:00Z
