@@ -31,6 +31,15 @@ export async function getTenantContext(req: NextRequest): Promise<TenantSession 
   try {
     const session = await getServerSession(authConfig) as TenantSession
     
+    console.log('🔍 Session debug:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      tenantId: session?.user?.tenant_id,
+      sessionKeys: session ? Object.keys(session) : 'no session',
+      userKeys: session?.user ? Object.keys(session.user) : 'no user'
+    })
+    
     if (!session?.user?.tenant_id) {
       console.log('❌ No tenant context found in session')
       return null
