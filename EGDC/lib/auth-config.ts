@@ -6,8 +6,20 @@ import { Pool } from 'pg'
 // Database connection for auth operations
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.DATABASE_URL?.includes('localhost') 
+    ? false 
+    : { rejectUnauthorized: false }
 })
+
+// Test connection at startup
+pool.connect()
+  .then(client => {
+    console.log('✅ Auth database connection established')
+    client.release()
+  })
+  .catch(err => {
+    console.error('❌ Auth database connection failed:', err)
+  })
 
 // Extended user type with tenant information
 declare module 'next-auth' {
@@ -28,15 +40,21 @@ declare module 'next-auth' {
       tenant_name: string
       tenant_subdomain: string
     }
+    error?: string
   }
 }
 
 // Helper function to get or create user with tenant
 async function getOrCreateUser(email: string, name: string, googleId: string) {
-  const client = await pool.connect()
+  console.log('🔍 getOrCreateUser called:', { email, name, googleId })
   
+  let client
   try {
+    client = await pool.connect()
+    console.log('✅ Database connection established')
+    
     await client.query('BEGIN')
+    console.log('✅ Transaction started')
     
     // Check if user exists
     const userResult = await client.query(`
@@ -103,11 +121,25 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
     }
     
   } catch (error) {
-    await client.query('ROLLBACK')
-    console.error('Error in getOrCreateUser:', error)
+    console.error('❌ Error in getOrCreateUser:', error)
+    if (client) {
+      try {
+        await client.query('ROLLBACK')
+        console.log('✅ Transaction rolled back')
+      } catch (rollbackError) {
+        console.error('❌ Rollback failed:', rollbackError)
+      }
+    }
     throw error
   } finally {
-    client.release()
+    if (client) {
+      try {
+        client.release()
+        console.log('✅ Database connection released')
+      } catch (releaseError) {
+        console.error('❌ Connection release failed:', releaseError)
+      }
+    }
   }
 }
 
@@ -117,6 +149,13 @@ export const authConfig: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
   ],
   
@@ -148,12 +187,17 @@ export const authConfig: NextAuthOptions = {
     },
     
     async session({ session, token }) {
-      if (session?.user?.email && token?.tenant_id) {
+      if (session?.user?.email) {
         session.user.id = token.sub as string
-        session.user.tenant_id = token.tenant_id as string
-        session.user.role = token.role as string
-        session.user.tenant_name = token.tenant_name as string
-        session.user.tenant_subdomain = token.tenant_subdomain as string
+        session.user.tenant_id = token.tenant_id as string || null
+        session.user.role = token.role as string || 'pending'
+        session.user.tenant_name = token.tenant_name as string || null
+        session.user.tenant_subdomain = token.tenant_subdomain as string || null
+        
+        // Add error state to session if tenant creation failed
+        if (token.error) {
+          session.error = token.error as string
+        }
       }
       return session
     },
@@ -199,8 +243,18 @@ export const authConfig: NextAuthOptions = {
             email: user.email,
             name: user.name
           })
-          console.log('🔄 Returning null token - will retry authentication')
-          return null
+          
+          // Return the basic token without tenant info instead of null
+          // This allows authentication to continue, user can complete setup later
+          console.log('⚠️ Authentication error - returning basic token')
+          return {
+            ...token,
+            tenant_id: null,
+            role: 'pending',
+            tenant_name: null,
+            tenant_subdomain: null,
+            error: 'tenant_creation_failed'
+          }
         }
       }
       
