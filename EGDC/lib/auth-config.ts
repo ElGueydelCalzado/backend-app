@@ -11,15 +11,15 @@ const pool = new Pool({
     : { rejectUnauthorized: false }
 })
 
-// Test connection at startup
-pool.connect()
-  .then(client => {
-    console.log('✅ Auth database connection established')
-    client.release()
-  })
-  .catch(err => {
-    console.error('❌ Auth database connection failed:', err)
-  })
+// DISABLED FOR MINIMAL TEST - no database connections
+// pool.connect()
+//   .then(client => {
+//     console.log('✅ Auth database connection established')
+//     client.release()
+//   })
+//   .catch(err => {
+//     console.error('❌ Auth database connection failed:', err)
+//   })
 
 // Extended user type with tenant information
 declare module 'next-auth' {
