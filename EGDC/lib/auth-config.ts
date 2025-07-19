@@ -45,103 +45,75 @@ declare module 'next-auth' {
   }
 }
 
+// Map known users to specific tenants for production SaaS
+function mapUserToTenant(email: string): { tenant_id: string, tenant_name: string, tenant_subdomain: string } {
+  // EGDC - Main business owner
+  if (email === 'elweydelcalzado@gmail.com') {
+    return {
+      tenant_id: '471e9c26-a232-46b3-a992-2932e5dfadf4',
+      tenant_name: 'EGDC',
+      tenant_subdomain: 'egdc'
+    }
+  }
+  
+  // Future customers - will be real when they register
+  if (email === 'fami@example.com') {
+    return {
+      tenant_id: 'fami-tenant-id',
+      tenant_name: 'FAMI',
+      tenant_subdomain: 'fami'
+    }
+  }
+  
+  if (email === 'osiel@example.com') {
+    return {
+      tenant_id: 'osiel-tenant-id', 
+      tenant_name: 'Osiel',
+      tenant_subdomain: 'osiel'
+    }
+  }
+  
+  if (email === 'molly@example.com') {
+    return {
+      tenant_id: 'molly-tenant-id',
+      tenant_name: 'Molly',
+      tenant_subdomain: 'molly'
+    }
+  }
+  
+  // Default for new users - create a new tenant
+  const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
+  return {
+    tenant_id: `tenant-${Date.now()}`, // Will be replaced with real UUID
+    tenant_name: email.split('@')[0] + ' Business',
+    tenant_subdomain: subdomain
+  }
+}
+
 // Helper function to get or create user with tenant
 async function getOrCreateUser(email: string, name: string, googleId: string) {
   console.log('🔍 getOrCreateUser called:', { email, name, googleId })
   
-  let client
-  try {
-    client = await pool.connect()
-    console.log('✅ Database connection established')
-    
-    await client.query('BEGIN')
-    console.log('✅ Transaction started')
-    
-    // Check if user exists
-    const userResult = await client.query(`
-      SELECT 
-        u.id,
-        u.tenant_id,
-        u.role,
-        u.name,
-        u.email,
-        t.name as tenant_name,
-        t.subdomain as tenant_subdomain
-      FROM users u
-      JOIN tenants t ON u.tenant_id = t.id
-      WHERE u.email = $1
-    `, [email])
-    
-    if (userResult.rows.length > 0) {
-      // Update last login
-      await client.query(`
-        UPDATE users 
-        SET last_login = NOW(), google_id = $1 
-        WHERE email = $2
-      `, [googleId, email])
-      
-      await client.query('COMMIT')
-      return userResult.rows[0]
-    }
-    
-    // User doesn't exist - this is a new registration via Google OAuth
-    // Create a default tenant for one-click sign-up
-    // Business details can be updated later in account settings
-    
-    const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
-    const tenantName = name || email.split('@')[0] + ' Business'
-    
-    // Create new tenant
-    const tenantResult = await client.query(`
-      INSERT INTO tenants (name, subdomain, email, plan, status)
-      VALUES ($1, $2, $3, 'starter', 'active')
-      RETURNING id, name, subdomain
-    `, [tenantName, subdomain, email])
-    
-    const tenant = tenantResult.rows[0]
-    
-    // Create new user as admin of their tenant
-    const newUserResult = await client.query(`
-      INSERT INTO users (tenant_id, email, name, role, google_id, status)
-      VALUES ($1, $2, $3, 'admin', $4, 'active')
-      RETURNING id, tenant_id, role, name, email
-    `, [tenant.id, email, name, googleId])
-    
-    const newUser = newUserResult.rows[0]
-    
-    await client.query('COMMIT')
-    
-    return {
-      id: newUser.id,
-      tenant_id: newUser.tenant_id,
-      role: newUser.role,
-      name: newUser.name,
-      email: newUser.email,
-      tenant_name: tenant.name,
-      tenant_subdomain: tenant.subdomain
-    }
-    
-  } catch (error) {
-    console.error('❌ Error in getOrCreateUser:', error)
-    if (client) {
-      try {
-        await client.query('ROLLBACK')
-        console.log('✅ Transaction rolled back')
-      } catch (rollbackError) {
-        console.error('❌ Rollback failed:', rollbackError)
-      }
-    }
-    throw error
-  } finally {
-    if (client) {
-      try {
-        client.release()
-        console.log('✅ Database connection released')
-      } catch (releaseError) {
-        console.error('❌ Connection release failed:', releaseError)
-      }
-    }
-  }
+  // For EGDC (main business), use hardcoded tenant mapping
+  // This ensures consistent tenant_id for production
+  const tenantMapping = mapUserToTenant(email)
+  
+  console.log('🏢 Tenant mapping for user:', {
+    email,
+    tenant_id: tenantMapping.tenant_id,
+    tenant_subdomain: tenantMapping.tenant_subdomain
+  })
+  
+  // For now, return the mapped tenant directly
+  // In the future, this will query/create in the tenants/users tables
+  return {
+    id: googleId,
+    tenant_id: tenantMapping.tenant_id,
+    role: 'admin', // All OAuth users are admins of their tenant
+    name: name,
+    email: email,
+    tenant_name: tenantMapping.tenant_name,
+    tenant_subdomain: tenantMapping.tenant_subdomain
 }
 
 export const authConfig: NextAuthOptions = {
@@ -194,7 +166,31 @@ export const authConfig: NextAuthOptions = {
     ] : [])
   ],
   
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
+  
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      console.log('🔄 NextAuth redirect called:', { url, baseUrl })
+      
+      // After successful login, redirect to user's tenant subdomain
+      if (url.startsWith('/') || url.startsWith(baseUrl)) {
+        // This is a relative URL or same domain - let it proceed
+        return url
+      }
+      
+      // For external redirects, validate they're our tenant subdomains
+      if (url.includes('elgueydelcalzado.com')) {
+        console.log('✅ Allowing redirect to tenant subdomain:', url)
+        return url
+      }
+      
+      // Default fallback
+      return baseUrl
+    },
+    
     async signIn({ user, account, profile }) {
       console.log('🔍 SignIn Callback:', {
         email: user?.email,
@@ -221,7 +217,7 @@ export const authConfig: NextAuthOptions = {
     async session({ session, token }) {
       console.log('🔍 Session Callback:', {
         email: session?.user?.email,
-        isPreview: process.env.USE_MOCK_DATA === 'true'
+        environment: process.env.VERCEL_ENV
       })
       
       if (session?.user && token) {
@@ -231,7 +227,7 @@ export const authConfig: NextAuthOptions = {
         session.user.tenant_name = token.tenant_name as string || 'Unknown Tenant'
         session.user.tenant_subdomain = token.tenant_subdomain as string || 'unknown'
         
-        console.log('✅ Session ready for environment:', process.env.VERCEL_ENV)
+        console.log('✅ Session ready for tenant:', token.tenant_subdomain)
       }
       
       return session
@@ -241,7 +237,7 @@ export const authConfig: NextAuthOptions = {
       console.log('🔍 JWT Callback:', {
         isFirstSignIn: !!(account && user),
         email: user?.email,
-        isPreview: process.env.USE_MOCK_DATA === 'true'
+        environment: process.env.VERCEL_ENV
       })
       
       // On first sign in (when account and user are present)
@@ -262,9 +258,9 @@ export const authConfig: NextAuthOptions = {
             : `${user.name}'s Preview Business`
           token.tenant_subdomain = `preview-${user.id}`
         } else {
-          console.log('🏭 Production Environment: Creating real tenant')
+          console.log('🏭 Production Environment: Using tenant mapping')
           try {
-            // Real database operations for production
+            // Use tenant mapping for production
             const userData = await getOrCreateUser(
               user.email,
               user.name || user.email,
@@ -276,9 +272,13 @@ export const authConfig: NextAuthOptions = {
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
             
-            console.log('✅ Real tenant created/found:', userData.tenant_name)
+            console.log('✅ Tenant mapped:', {
+              email: user.email,
+              tenant_subdomain: userData.tenant_subdomain,
+              tenant_name: userData.tenant_name
+            })
           } catch (error) {
-            console.error('❌ Production database error:', error?.message)
+            console.error('❌ Tenant mapping error:', error?.message)
             // Fallback - still provide session but mark as needs setup
             token.tenant_id = 'setup-required'
             token.role = 'admin'
@@ -288,14 +288,9 @@ export const authConfig: NextAuthOptions = {
         }
       }
       
-      console.log('✅ JWT token ready with tenant_id:', token.tenant_id)
+      console.log('✅ JWT token ready with tenant_subdomain:', token.tenant_subdomain)
       return token
     },
-  },
-  
-  pages: {
-    signIn: '/login',
-    error: '/login',
   },
   
   debug: true,
