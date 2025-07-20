@@ -114,6 +114,7 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
     email: email,
     tenant_name: tenantMapping.tenant_name,
     tenant_subdomain: tenantMapping.tenant_subdomain
+  }
 }
 
 export const authConfig: NextAuthOptions = {
