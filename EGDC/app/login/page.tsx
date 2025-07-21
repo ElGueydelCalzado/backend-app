@@ -4,12 +4,12 @@ import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { 
-  Mail, Phone, Lock, Eye, EyeOff, 
-  Chrome, Apple, MessageSquare, ArrowLeft,
+  Mail, Lock, Eye, EyeOff, 
+  Chrome, ArrowLeft,
   CheckCircle2, AlertCircle, Loader2
 } from 'lucide-react'
 
-type AuthMethod = 'email' | 'phone' | 'google' | 'apple' | 'magic-link'
+type AuthMethod = 'credentials' | 'google'
 type UserType = 'retailer' | 'supplier' | null
 
 function LoginPageContent() {
@@ -17,20 +17,16 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   
   // Form state
-  const [authMethod, setAuthMethod] = useState<AuthMethod>('email')
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('credentials')
   const [userType, setUserType] = useState<UserType>(null)
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [phone, setPhone] = useState('')
-  const [smsCode, setSmsCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
   // UI state
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [smsCodeSent, setSmsCodeSent] = useState(false)
-  const [countdown, setCountdown] = useState(0)
 
   useEffect(() => {
     // Get redirect URL from query params
@@ -45,19 +41,11 @@ function LoginPageContent() {
     setError('')
   }, [searchParams])
 
-  // Countdown timer for SMS resend
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [countdown])
-
-  const handleEmailPasswordLogin = async (e: React.FormEvent) => {
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!email || !password) {
-      setError('Email and password are required')
+    if (!username || !password) {
+      setError('Username and password are required')
       return
     }
 
@@ -65,8 +53,8 @@ function LoginPageContent() {
     setError('')
 
     try {
-      const result = await signIn('credentials', {
-        email,
+      const result = await signIn('test-account', {
+        username,
         password,
         redirect: false,
       })
@@ -74,6 +62,7 @@ function LoginPageContent() {
       if (result?.error) {
         setError(result.error)
       } else if (result?.ok) {
+        setSuccess('Login successful!')
         // Get session to determine redirect
         const session = await getSession()
         if (session?.user?.tenant_subdomain) {
@@ -90,116 +79,16 @@ function LoginPageContent() {
     }
   }
 
-  const handlePhoneLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!phone) {
-      setError('Phone number is required')
-      return
-    }
-
+  const handleGoogleLogin = async () => {
     setIsLoading(true)
     setError('')
 
     try {
-      if (!smsCodeSent) {
-        // Send SMS code
-        const result = await signIn('phone', {
-          phone,
-          redirect: false,
-        })
-
-        if (result?.error === 'SMS_CODE_SENT') {
-          setSmsCodeSent(true)
-          setSuccess('Verification code sent to your phone')
-          setCountdown(60) // 60 second countdown
-        } else {
-          setError(result?.error || 'Failed to send verification code')
-        }
-      } else {
-        // Verify SMS code
-        if (!smsCode) {
-          setError('Verification code is required')
-          return
-        }
-
-        const result = await signIn('phone', {
-          phone,
-          code: smsCode,
-          redirect: false,
-        })
-
-        if (result?.error) {
-          setError(result.error)
-        } else if (result?.ok) {
-          const session = await getSession()
-          if (session?.user?.tenant_subdomain) {
-            const redirectUrl = `https://${session.user.tenant_subdomain}.elgueydelcalzado.com/dashboard`
-            window.location.href = redirectUrl
-          } else {
-            router.push('/dashboard')
-          }
-        }
-      }
-    } catch (error) {
-      setError('Phone authentication failed. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleOAuthLogin = async (provider: 'google' | 'apple') => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      await signIn(provider, {
+      await signIn('google', {
         callbackUrl: searchParams.get('redirect') || '/dashboard'
       })
     } catch (error) {
-      setError(`${provider} login failed. Please try again.`)
-      setIsLoading(false)
-    }
-  }
-
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!email) {
-      setError('Email is required')
-      return
-    }
-
-    setIsLoading(true)
-    setError('')
-
-    try {
-      await signIn('email', { 
-        email,
-        callbackUrl: '/dashboard'
-      })
-      setSuccess('Magic link sent to your email!')
-    } catch (error) {
-      setError('Failed to send magic link. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const resendSMSCode = async () => {
-    if (countdown > 0) return
-    
-    setIsLoading(true)
-    try {
-      await signIn('phone', {
-        phone,
-        redirect: false,
-      })
-      setSuccess('New verification code sent')
-      setCountdown(60)
-    } catch (error) {
-      setError('Failed to resend code')
-    } finally {
+      setError('Google login failed. Please try again.')
       setIsLoading(false)
     }
   }
@@ -269,9 +158,8 @@ function LoginPageContent() {
         {/* Authentication Method Tabs */}
         <div className="flex border-b border-gray-200 mb-6">
           {[
-            { id: 'email', label: 'Email', icon: Mail },
-            { id: 'phone', label: 'Phone', icon: Phone },
-            { id: 'magic-link', label: 'Magic Link', icon: MessageSquare }
+            { id: 'credentials', label: 'Test Login', icon: Lock },
+            { id: 'google', label: 'Google', icon: Chrome }
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -279,7 +167,6 @@ function LoginPageContent() {
                 setAuthMethod(id as AuthMethod)
                 setError('')
                 setSuccess('')
-                setSmsCodeSent(false)
               }}
               className={`flex-1 py-2 px-3 flex items-center justify-center space-x-2 border-b-2 text-sm font-medium transition-colors ${
                 authMethod === id
@@ -293,21 +180,21 @@ function LoginPageContent() {
           ))}
         </div>
 
-        {/* Email & Password Form */}
-        {authMethod === 'email' && (
-          <form onSubmit={handleEmailPasswordLogin} className="space-y-4">
+        {/* Test Credentials Form */}
+        {authMethod === 'credentials' && (
+          <form onSubmit={handleCredentialsLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
+                Username
               </label>
               <div className="relative">
-                <Mail className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Lock className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="your@email.com"
+                  placeholder="test"
                   required
                 />
               </div>
@@ -324,7 +211,7 @@ function LoginPageContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your password"
+                  placeholder="password"
                   required
                 />
                 <button
@@ -335,6 +222,12 @@ function LoginPageContent() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
+
+            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+              <p><strong>Demo credentials:</strong></p>
+              <p>Username: test</p>
+              <p>Password: password</p>
             </div>
 
             <button
@@ -354,142 +247,23 @@ function LoginPageContent() {
           </form>
         )}
 
-        {/* Phone & SMS Form */}
-        {authMethod === 'phone' && (
-          <form onSubmit={handlePhoneLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+1234567890"
-                  required
-                  disabled={smsCodeSent}
-                />
-              </div>
-            </div>
-
-            {smsCodeSent && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Verification Code
-                </label>
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    value={smsCode}
-                    onChange={(e) => setSmsCode(e.target.value)}
-                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-center"
-                    placeholder="123456"
-                    maxLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={resendSMSCode}
-                    disabled={countdown > 0 || isLoading}
-                    className="px-4 py-3 text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400"
-                  >
-                    {countdown > 0 ? `${countdown}s` : 'Resend'}
-                  </button>
-                </div>
-              </div>
-            )}
-
+        {/* Google OAuth Button */}
+        {authMethod === 'google' && (
+          <div className="space-y-4">
             <button
-              type="submit"
+              onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  {smsCodeSent ? 'Verifying...' : 'Sending code...'}
-                </>
-              ) : (
-                smsCodeSent ? 'Verify Code' : 'Send Verification Code'
-              )}
+              <Chrome className="w-5 h-5 text-gray-600" />
+              <span className="font-medium text-gray-900">Continue with Google</span>
             </button>
-          </form>
-        )}
-
-        {/* Magic Link Form */}
-        {authMethod === 'magic-link' && (
-          <form onSubmit={handleMagicLink} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
+            
+            <div className="text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
+              <p>Production Google OAuth for business owners</p>
             </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Sending magic link...
-                </>
-              ) : (
-                'Send Magic Link'
-              )}
-            </button>
-
-            <p className="text-sm text-gray-600 text-center">
-              We'll send you a secure link to sign in without a password
-            </p>
-          </form>
+          </div>
         )}
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
-          </div>
-        </div>
-
-        {/* OAuth Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={() => handleOAuthLogin('google')}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Chrome className="w-5 h-5 text-gray-600" />
-            <span className="font-medium text-gray-900">Continue with Google</span>
-          </button>
-
-          <button
-            onClick={() => handleOAuthLogin('apple')}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Apple className="w-5 h-5" />
-            <span className="font-medium">Continue with Apple</span>
-          </button>
-        </div>
 
         {/* Footer Links */}
         <div className="mt-8 text-center">
