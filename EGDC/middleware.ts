@@ -71,9 +71,9 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // CENTRALIZED LOGIN PORTAL: login.elgueydelcalzado.com (temporary: also accept 'inv')
-  if (subdomain === 'login' || subdomain === 'inv') {
-    console.log('🚪 Login portal accessed')
+  // CENTRALIZED LOGIN PORTAL: login.elgueydelcalzado.com ONLY
+  if (subdomain === 'login') {
+    console.log('🚪 Centralized login portal accessed')
     
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     
@@ -82,20 +82,23 @@ export default async function middleware(request: NextRequest) {
       const tenantSubdomain = token.tenant_subdomain
       console.log('✅ Authenticated user, redirecting to tenant:', tenantSubdomain)
       
-      // Redirect to tenant subdomain (temporarily use inv for egdc until domains are configured)
-      if (tenantSubdomain === 'egdc') {
-        url.hostname = 'inv.elgueydelcalzado.com'
-        url.pathname = '/inventario'
-        return NextResponse.redirect(url)
-      } else {
-        url.hostname = `${tenantSubdomain}.elgueydelcalzado.com`
-        url.pathname = '/inventario'
-        return NextResponse.redirect(url)
-      }
+      // Clean subdomain (remove preview/mock prefixes)
+      const cleanSubdomain = tenantSubdomain.replace('preview-', '').replace('mock-', '')
+      
+      // Redirect to tenant subdomain
+      url.hostname = `${cleanSubdomain}.elgueydelcalzado.com`
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
     }
     
-    // If not authenticated, show login page
-    if (url.pathname !== '/login' && !url.pathname.startsWith('/api/auth')) {
+    // Show centralized login page for both suppliers and retailers
+    if (url.pathname !== '/login' && 
+        url.pathname !== '/signup' && 
+        url.pathname !== '/signup/supplier' && 
+        url.pathname !== '/signup/retailer' &&
+        !url.pathname.startsWith('/api/auth') &&
+        !url.pathname.startsWith('/verify-request') &&
+        !url.pathname.startsWith('/forgot-password')) {
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
@@ -157,15 +160,7 @@ export default async function middleware(request: NextRequest) {
   // FALLBACK: Unknown subdomain or invalid access
   console.log('❓ Unknown access pattern:', { hostname, subdomain })
   
-  // For now, redirect unknown subdomains to inv.elgueydelcalzado.com (working domain)
-  // until we get login.elgueydelcalzado.com working in Vercel
-  if (hostname !== 'inv.elgueydelcalzado.com') {
-    console.log('🔄 Redirecting unknown subdomain to inv.elgueydelcalzado.com')
-    url.hostname = 'inv.elgueydelcalzado.com'
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-  
+  // No fallback redirect needed - login.elgueydelcalzado.com is working
   return NextResponse.next()
 }
 
