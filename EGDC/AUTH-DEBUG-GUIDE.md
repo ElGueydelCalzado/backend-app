@@ -21,7 +21,7 @@ Your database is working perfectly and has the correct multi-tenant setup. Let's
 5. **Check if any API calls are failing**
 
 ### **Step 3: Test Direct Login URL**
-Try going directly to: `https://pre.elgueydelcalzado.com/api/auth/signin/google`
+Try going directly to: `https://pre.lospapatos.com/api/auth/signin/google`
 
 **Expected**: Should redirect to Google OAuth
 **If broken**: API routing issue
@@ -30,17 +30,17 @@ Try going directly to: `https://pre.elgueydelcalzado.com/api/auth/signin/google`
 The issue might be Google OAuth settings:
 
 1. **Authorized JavaScript origins** should include:
-   - `https://pre.elgueydelcalzado.com`
+   - `https://pre.lospapatos.com`
    
 2. **Authorized redirect URIs** should include:
-   - `https://pre.elgueydelcalzado.com/api/auth/callback/google`
+   - `https://pre.lospapatos.com/api/auth/callback/google`
 
 ### **Step 5: Environment Variables Check**
 On your server/Vercel, verify these are set:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET` 
 - `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL=https://pre.elgueydelcalzado.com`
+- `NEXTAUTH_URL=https://pre.lospapatos.com`
 - `DATABASE_URL`
 
 ## 🔧 **COMMON FIXES**
@@ -51,28 +51,28 @@ If you're using Google Cloud Console:
 2. Edit your OAuth 2.0 Client ID
 3. Add to **Authorized JavaScript origins**:
    ```
-   https://pre.elgueydelcalzado.com
+   https://pre.lospapatos.com
    ```
 4. Add to **Authorized redirect URIs**:
    ```
-   https://pre.elgueydelcalzado.com/api/auth/callback/google
+   https://pre.lospapatos.com/api/auth/callback/google
    ```
 
 ### **Fix 2: Environment Variable Issue**
 If deploying to Vercel:
 1. Go to Vercel Dashboard > Your Project > Settings > Environment Variables
-2. Make sure `NEXTAUTH_URL` is set to: `https://pre.elgueydelcalzado.com`
+2. Make sure `NEXTAUTH_URL` is set to: `https://pre.lospapatos.com`
 3. Redeploy after changing environment variables
 
 ### **Fix 3: HTTPS/Domain Issue**
 Sometimes preview URLs change. Check:
-1. Is `pre.elgueydelcalzado.com` the correct preview URL?
+1. Is `pre.lospapatos.com` the correct preview URL?
 2. Is it using HTTPS?
 3. Try the Vercel auto-generated URL instead
 
 ### **Fix 4: Database Connection on Preview**
 Test if database is accessible from preview:
-1. Go to: `https://pre.elgueydelcalzado.com/api/health`
+1. Go to: `https://pre.lospapatos.com/api/health`
 2. Should return database connection status
 
 ## 🚨 **IMMEDIATE TESTS**
@@ -80,11 +80,11 @@ Test if database is accessible from preview:
 Please try these and tell me the results:
 
 ### **Test A: Direct API Test**
-Go to: `https://pre.elgueydelcalzado.com/api/auth/signin/google`
+Go to: `https://pre.lospapatos.com/api/auth/signin/google`
 **What happens?**
 
 ### **Test B: Health Check**
-Go to: `https://pre.elgueydelcalzado.com/api/health`
+Go to: `https://pre.lospapatos.com/api/health`
 **What do you see?**
 
 ### **Test C: Console Errors**

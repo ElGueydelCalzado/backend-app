@@ -2,13 +2,13 @@
 
 ## 🌐 Update for New Domain
 
-Since your app is now live at `inventario.elgueydelcalzado.com`, update this environment variable in Vercel:
+Since your app is now live at `inventario.lospapatos.com`, update this environment variable in Vercel:
 
 ### **In Vercel Dashboard:**
 1. **Go to**: https://vercel.com/dashboard
 2. **Select your project** → **Settings** → **Environment Variables**
 3. **Find**: `NEXT_PUBLIC_APP_URL`
-4. **Update to**: `https://inventario.elgueydelcalzado.com`
+4. **Update to**: `https://inventario.lospapatos.com`
 
 ## 🔐 Security Environment Variables
 

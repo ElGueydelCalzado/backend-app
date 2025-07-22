@@ -28,7 +28,7 @@ async function applyFixesStepByStep() {
             subdomain, name, email, plan, status, 
             currency, timezone, created_at, updated_at
           ) VALUES (
-            'egdc', 'EGDC', 'admin@elgueydelcalzado.com', 'enterprise', 'active',
+            'egdc', 'EGDC', 'admin@lospapatos.com', 'enterprise', 'active',
             'MXN', 'America/Mexico_City', NOW(), NOW()
           )
         `)

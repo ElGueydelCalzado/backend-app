@@ -35,13 +35,15 @@ export async function GET(request: NextRequest) {
       }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const supplier = searchParams.get('supplier') || '' // New supplier filter parameter
+    
     console.log('🏢 Fetching inventory for tenant:', {
       tenant_id: tenantContext.user.tenant_id,
       tenant_name: tenantContext.user.tenant_name,
-      user_email: tenantContext.user.email
+      user_email: tenantContext.user.email,
+      supplier_filter: supplier || 'none'
     })
-    
-    const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '100')
     const search = searchParams.get('search') || ''
@@ -50,9 +52,38 @@ export async function GET(request: NextRequest) {
     const modelo = searchParams.get('modelo') || ''
     
     // Build WHERE clause for filters
-    let whereClause = 'WHERE tenant_id = $1'
-    const params = [tenantContext.user.tenant_id]
-    let paramIndex = 2
+    let whereClause = ''
+    const params: any[] = []
+    let paramIndex = 1
+    
+    if (supplier) {
+      // When supplier is specified, filter by supplier's tenant_id
+      // First, get the supplier's tenant_id from subdomain
+      const supplierQuery = `SELECT id FROM tenants WHERE subdomain = $1 AND business_type = 'wholesaler'`
+      const supplierResult = await executeWithTenant(
+        tenantContext.user.tenant_id,
+        supplierQuery,
+        [supplier]
+      )
+      
+      if (supplierResult.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: `Supplier '${supplier}' not found`,
+          code: 'SUPPLIER_NOT_FOUND'
+        }, { status: 404 })
+      }
+      
+      const supplierTenantId = (supplierResult[0] as any).id
+      whereClause = 'WHERE tenant_id = $1'
+      params.push(supplierTenantId)
+      paramIndex = 2
+    } else {
+      // Default behavior: filter by user's tenant_id
+      whereClause = 'WHERE tenant_id = $1'
+      params.push(tenantContext.user.tenant_id)
+      paramIndex = 2
+    }
     
     if (search) {
       whereClause += ` AND (

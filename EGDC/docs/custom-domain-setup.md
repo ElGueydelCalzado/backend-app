@@ -6,10 +6,10 @@ Set up a professional custom domain for your EGDC inventory system instead of th
 ## 🌐 Domain Options
 
 ### **Recommended Domain Names:**
-- `inventory.elgueydelcalzado.com`
+- `inventory.lospapatos.com`
 - `egdc-inventory.com`
-- `admin.elgueydelcalzado.com`
-- `sistema.elgueydelcalzado.com`
+- `admin.lospapatos.com`
+- `sistema.lospapatos.com`
 
 ## 📋 Step-by-Step Setup
 
@@ -111,7 +111,7 @@ After setup, verify these work:
 ## 🎯 **Expected Results**
 
 After completing this setup:
-- ✅ **Professional URL**: `https://inventory.elgueydelcalzado.com`
+- ✅ **Professional URL**: `https://inventory.lospapatos.com`
 - ✅ **Automatic SSL**: Secure HTTPS connection
 - ✅ **Fast loading**: Global CDN distribution
 - ✅ **Professional appearance**: Custom branding

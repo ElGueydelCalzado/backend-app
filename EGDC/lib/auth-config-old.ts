@@ -5,8 +5,8 @@ import type { NextAuthOptions } from 'next-auth'
 // Authorized Google accounts - only these emails can access the system
 const AUTHORIZED_EMAILS = [
   'elweydelcalzado@gmail.com',      // 🔥 Primary account - El Guey del Calzado
-  'manager@elgueydelcalzado.com',   // Replace with actual manager email
-  'employee@elgueydelcalzado.com',  // Replace with actual employee email
+  'manager@lospapatos.com',   // Replace with actual manager email
+  'employee@lospapatos.com',  // Replace with actual employee email
   // Add more authorized emails as needed
 ]
 
@@ -15,7 +15,7 @@ const getUserRole = (email: string): 'admin' | 'manager' | 'employee' => {
   if (email === 'elweydelcalzado@gmail.com') {
     return 'admin'
   }
-  if (email === 'manager@elgueydelcalzado.com') {
+  if (email === 'manager@lospapatos.com') {
     return 'manager'
   }
   return 'employee'

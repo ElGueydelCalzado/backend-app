@@ -39,7 +39,7 @@ git push origin preview-ux-clean
 ### **Step 2: Test Multi-Tenant Registration Flow**
 
 #### **🆕 New Business Registration**
-1. **Go to**: `https://pre.elgueydelcalzado.com/register`
+1. **Go to**: `https://pre.lospapatos.com/register`
 2. **Click**: "Sign in with Google" 
 3. **Use a NEW Google account** (not your existing EGDC account)
 4. **Fill out the registration form**:
@@ -55,7 +55,7 @@ git push origin preview-ux-clean
    - ✅ User menu shows "Test Business 1"
 
 #### **🔄 Existing EGDC Account**
-1. **Go to**: `https://pre.elgueydelcalzado.com/login`
+1. **Go to**: `https://pre.lospapatos.com/login`
 2. **Use your existing EGDC Google account**
 3. **Expected Result**:
    - ✅ Login to existing EGDC tenant

@@ -20,7 +20,7 @@ Your EGDC inventory management system is now fully deployed and operational:
 
 #### 2. **Domain & SSL Certificate** 🌐
 - **Current**: Using Vercel subdomain
-- **Goal**: Custom domain like `inventory.elgueydelcalzado.com`
+- **Goal**: Custom domain like `inventory.lospapatos.com`
 - **Benefit**: Professional branding, custom URLs
 - **Effort**: 1 hour
 

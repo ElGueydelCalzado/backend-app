@@ -30,7 +30,7 @@ Current issue: Vercel's "Build Logs and Source Protection" is blocking **all pub
 **Required Environment Variables:**
 ```bash
 # Authentication
-NEXTAUTH_URL=https://pre.elgueydelcalzado.com
+NEXTAUTH_URL=https://pre.lospapatos.com
 NEXTAUTH_SECRET=[your-secret]
 GOOGLE_CLIENT_ID=[your-google-client-id]
 GOOGLE_CLIENT_SECRET=[your-google-client-secret]
@@ -50,12 +50,12 @@ VERCEL_ENV=preview  # Specify environment
 1. **APIs & Services → Credentials → OAuth 2.0 Client**
 2. **Authorized JavaScript Origins:**
    ```
-   https://pre.elgueydelcalzado.com
+   https://pre.lospapatos.com
    https://[your-project].vercel.app
    ```
 3. **Authorized Redirect URIs:**
    ```
-   https://pre.elgueydelcalzado.com/api/auth/callback/google
+   https://pre.lospapatos.com/api/auth/callback/google
    https://[your-project].vercel.app/api/auth/callback/google
    ```
 
@@ -109,7 +109,7 @@ Our middleware already provides professional security:
 #### **Long-term Production Strategy:**
 
 1. **Production Domain Setup**
-   - Configure `app.elgueydelcalzado.com` for production
+   - Configure `app.lospapatos.com` for production
    - Same selective protection approach
    - SSL certificate automation
 
@@ -133,7 +133,7 @@ Our middleware already provides professional security:
    - Save changes
 
 2. **Verify Google OAuth:**
-   - Check authorized origins include `pre.elgueydelcalzado.com`
+   - Check authorized origins include `pre.lospapatos.com`
    - Test OAuth callback URLs
 
 3. **Deploy Updated Configuration:**
@@ -144,7 +144,7 @@ Our middleware already provides professional security:
    ```
 
 4. **Test Registration Flow:**
-   - Access `pre.elgueydelcalzado.com/register` (should be public)
+   - Access `pre.lospapatos.com/register` (should be public)
    - Test Google OAuth with new account
    - Verify tenant creation and data isolation
 
@@ -159,7 +159,7 @@ Our middleware already provides professional security:
 ## ✅ **SUCCESS CRITERIA**
 
 ### **Immediate (Preview)**
-- [ ] Anyone can access `pre.elgueydelcalzado.com/register` without authentication
+- [ ] Anyone can access `pre.lospapatos.com/register` without authentication
 - [ ] Google OAuth works for new users
 - [ ] New tenants are created automatically
 - [ ] Data isolation is maintained between tenants

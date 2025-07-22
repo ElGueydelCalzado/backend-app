@@ -2,8 +2,8 @@ const instructions = `
 === EGDC Mock Preview Database Setup ===
 
 CURRENT SETUP:
-✅ Production (inv.elgueydelcalzado.com) - Uses current database with real data
-🎭 Preview (pre.elgueydelcalzado.com) - Will use mock database for testing
+✅ Production (inv.lospapatos.com) - Uses current database with real data
+🎭 Preview (pre.lospapatos.com) - Will use mock database for testing
 
 STEPS TO SET UP:
 

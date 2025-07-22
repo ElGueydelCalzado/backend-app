@@ -183,7 +183,7 @@ export const authConfig: NextAuthOptions = {
       }
       
       // For external redirects, validate they're our tenant subdomains
-      if (url.includes('elgueydelcalzado.com')) {
+      if (url.includes('lospapatos.com')) {
         console.log('✅ Allowing redirect to tenant subdomain:', url)
         return url
       }

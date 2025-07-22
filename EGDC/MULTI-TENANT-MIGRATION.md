@@ -17,13 +17,13 @@
 ## 🏗️ **Migration Architecture**
 
 ### **Current State (Single-Tenant)**
-- **Domain**: pre.elgueydelcalzado.com
+- **Domain**: pre.lospapatos.com
 - **Database**: PostgreSQL with single business data
 - **Auth**: Hard-coded email whitelist (EGDC only)
 - **UI**: Hard-coded warehouse tabs (EGDC, FAMI, Osiel, Molly)
 
 ### **Target State (Multi-Tenant)**
-- **Domain**: pre.elgueydelcalzado.com/{tenant-subdomain} (Phase 1)
+- **Domain**: pre.lospapatos.com/{tenant-subdomain} (Phase 1)
 - **Database**: PostgreSQL with Row-Level Security + tenant_id isolation
 - **Auth**: Google OAuth with automatic tenant creation
 - **UI**: Dynamic warehouse configuration per tenant

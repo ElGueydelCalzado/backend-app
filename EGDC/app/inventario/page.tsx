@@ -135,6 +135,12 @@ export default function InventarioPage() {
   // Warehouse filtering state
   const [activeWarehouse, setActiveWarehouse] = useState<WarehouseFilter>('egdc')
   const [useDummyData, setUseDummyData] = useState(false) // Switch between real and dummy data
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({
+    egdc: 0,
+    fami: 0,
+    osiel: 0,
+    molly: 0
+  })
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -153,6 +159,7 @@ export default function InventarioPage() {
   // Load initial data
   useEffect(() => {
     loadInventoryData(1)
+    loadProductCounts() // Load warehouse tab counts
   }, [])
   
   // Detect mobile screen size
@@ -370,52 +377,122 @@ export default function InventarioPage() {
     })
   }
 
-  // Warehouse filtering functions
-  const calculateProductCounts = () => {
-    if (useDummyData) {
-      // For dummy data, get counts from each business dataset
-      return {
+  // Load product counts for warehouse tabs
+  const loadProductCounts = async () => {
+    try {
+      const response = await fetch('/api/inventory/counts')
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
+        setProductCounts(result.data)
+        console.log('📊 Product counts loaded:', result.data)
+      } else {
+        console.error('Failed to load product counts:', result.error)
+        // Fallback to dummy data counts
+        setProductCounts({
+          egdc: getWarehouseData('egdc').length,
+          fami: getWarehouseData('fami').length,
+          osiel: getWarehouseData('osiel').length,
+          molly: getWarehouseData('molly').length
+        })
+      }
+    } catch (error) {
+      console.error('Error loading product counts:', error)
+      // Fallback to dummy data counts
+      setProductCounts({
         egdc: getWarehouseData('egdc').length,
         fami: getWarehouseData('fami').length,
         osiel: getWarehouseData('osiel').length,
         molly: getWarehouseData('molly').length
-      }
-    } else {
-      // For real EGDC data, only show EGDC count (others will use dummy data)
-      return {
-        egdc: allData.length, // All real data belongs to EGDC
-        fami: getWarehouseData('fami').length,
-        osiel: getWarehouseData('osiel').length,
-        molly: getWarehouseData('molly').length
-      }
+      })
     }
   }
 
   const handleWarehouseChange = (warehouse: WarehouseFilter) => {
     setActiveWarehouse(warehouse)
     
-    // EGDC is our own business with real database, others are suppliers with dummy data
+    // EGDC is our own business with real database, others are suppliers with real catalog data
     if (warehouse === 'egdc') {
       setUseDummyData(false)
       // Reload real EGDC data from database
       loadInventoryData()
     } else {
       setUseDummyData(true)
-      // Load dummy supplier data for the selected supplier business
-      const warehouseData = getWarehouseData(warehouse)
-      setAllData(warehouseData)
+      // Load real supplier catalog data from database
+      loadSupplierCatalogData(warehouse)
+    }
+  }
+
+  // New function to load real supplier catalog data
+  const loadSupplierCatalogData = async (warehouse: WarehouseFilter) => {
+    try {
+      setLoading(true)
+      setLoadingText(`Cargando catálogo de ${warehouse.toUpperCase()}...`)
+      
+      // Map warehouse names to tenant subdomains
+      const supplierMap: Record<string, string> = {
+        fami: 'fami',
+        osiel: 'osiel', 
+        molly: 'molly'
+      }
+      
+      const supplierSubdomain = supplierMap[warehouse]
+      if (!supplierSubdomain) {
+        throw new Error('Proveedor no encontrado')
+      }
+      
+      // Fetch supplier products from inventory API with supplier filter
+      const response = await fetch(`/api/inventory?supplier=${supplierSubdomain}&limit=1000`)
+      const result = await response.json()
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Error al cargar catálogo del proveedor')
+      }
+      
+      const supplierData: Product[] = result.data
+      
+      // Filter products that have inventory for this supplier
+      const filteredData = supplierData.filter(product => {
+        const inventory = getSupplierInventory(product, warehouse)
+        return inventory > 0
+      })
+      
+      setAllData(filteredData)
       
       // Extract unique values for filters from supplier data
-      const categories = new Set(warehouseData.map(item => item.categoria).filter(Boolean) as string[])
-      const brands = new Set(warehouseData.map(item => item.marca).filter(Boolean) as string[])
-      const models = new Set(warehouseData.map(item => item.modelo).filter(Boolean) as string[])
-      const colors = new Set(warehouseData.map(item => item.color).filter(Boolean) as string[])
-      const sizes = new Set(warehouseData.map(item => item.talla).filter(Boolean) as string[])
+      const categories = new Set(filteredData.map(item => item.categoria).filter(Boolean) as string[])
+      const brands = new Set(filteredData.map(item => item.marca).filter(Boolean) as string[])
+      const models = new Set(filteredData.map(item => item.modelo).filter(Boolean) as string[])
+      const colors = new Set(filteredData.map(item => item.color).filter(Boolean) as string[])
+      const sizes = new Set(filteredData.map(item => item.talla).filter(Boolean) as string[])
       
       setUniqueValues({ categories, brands, models, colors, sizes })
       
-      // Apply filters to the supplier data
+      // Apply filters to show supplier data
+      applyFilters(filteredData)
+      
+    } catch (error) {
+      console.error('Error loading supplier catalog:', error)
+      showToast(
+        error instanceof Error ? error.message : 'Error al cargar catálogo del proveedor',
+        'error'
+      )
+      // Fallback to dummy data if API fails
+      const warehouseData = getWarehouseData(warehouse)
+      setAllData(warehouseData)
       applyFilters(warehouseData, filters)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Helper function to get supplier inventory
+  const getSupplierInventory = (product: Product, warehouse: WarehouseFilter): number => {
+    switch (warehouse) {
+      case 'fami': return product.inv_fami || 0
+      case 'osiel': return product.inv_osiel || 0
+      case 'molly': return product.inv_molly || 0
+      default: return 0
     }
   }
 
@@ -1584,7 +1661,7 @@ export default function InventarioPage() {
               <WarehouseTabs
                 activeWarehouse={activeWarehouse}
                 onWarehouseChange={handleWarehouseChange}
-                productCounts={calculateProductCounts()}
+                productCounts={productCounts}
                 isDemoMode={useDummyData}
               />
 
@@ -1814,7 +1891,7 @@ export default function InventarioPage() {
             <WarehouseTabs
               activeWarehouse={activeWarehouse}
               onWarehouseChange={handleWarehouseChange}
-              productCounts={calculateProductCounts()}
+              productCounts={productCounts}
               isDemoMode={useDummyData}
             />
 

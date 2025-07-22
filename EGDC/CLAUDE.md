@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Current Project Status
 
 ✅ **FULLY FUNCTIONAL** - Complete SaaS multi-tenant platform  
-✅ **PRODUCTION DEPLOYED** - Live at inv.elgueydelcalzado.com with all core features  
+✅ **PRODUCTION DEPLOYED** - Live at inv.lospapatos.com with all core features  
 ✅ **DATABASE COMPLETE** - PostgreSQL with automated pricing, triggers, and audit trails  
 ✅ **UI/UX COMPLETE** - Modern, responsive interface with warehouse switching  
 ✅ **API ENDPOINTS** - REST API for inventory operations and supplier integration  
@@ -410,7 +410,7 @@ EGDC/
 - [x] Add comprehensive input validation to API routes ✅ COMPLETED
 - [x] Standardize error handling across all endpoints ✅ COMPLETED
 - [x] Implement error boundaries for component protection ✅ COMPLETED
-- [x] **PRODUCTION DEPLOYMENT**: Live at inv.elgueydelcalzado.com ✅ COMPLETED
+- [x] **PRODUCTION DEPLOYMENT**: Live at inv.lospapatos.com ✅ COMPLETED
 - [x] **GOOGLE DRIVE INTEGRATION**: Image preview functionality ✅ COMPLETED
 - [x] **BULK OPERATIONS**: UPSERT functionality for import/export ✅ COMPLETED
 - [x] **CODEBASE CLEANUP**: Removed 3,500+ lines of legacy code ✅ COMPLETED
@@ -467,7 +467,7 @@ This system implements a **B2B SaaS marketplace model** where:
 ### Development Status Summary
 
 **✅ PHASE 1 & 2 COMPLETED - PRODUCTION DEPLOYED**
-- **Live URL**: inv.elgueydelcalzado.com
+- **Live URL**: inv.lospapatos.com
 - **Status**: Fully functional multi-tenant SaaS platform
 - **Codebase**: Clean, optimized, and production-ready
 - **Performance**: 504 timeout fixes and bulk operation optimization

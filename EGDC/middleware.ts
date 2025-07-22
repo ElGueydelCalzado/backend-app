@@ -27,15 +27,24 @@ const TENANT_CONFIG = {
   }
 }
 
+function extractTenantFromPath(pathname: string): string | null {
+  // Extract tenant from path: /tenant/dashboard → tenant
+  const pathParts = pathname.split('/').filter(Boolean)
+  if (pathParts.length > 0 && isValidTenant(pathParts[0])) {
+    return pathParts[0]
+  }
+  return null
+}
+
 function extractSubdomain(hostname: string): string | null {
   // Handle different environments
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     return 'egdc' // Default to EGDC for local development
   }
   
-  // For production: subdomain.elgueydelcalzado.com
+  // For production: subdomain.lospapatos.com
   const parts = hostname.split('.')
-  if (parts.length >= 3 && hostname.includes('elgueydelcalzado.com')) {
+  if (parts.length >= 3 && hostname.includes('lospapatos.com')) {
     return parts[0] // Return the subdomain part
   }
   
@@ -71,7 +80,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // CENTRALIZED LOGIN PORTAL: login.elgueydelcalzado.com ONLY
+  // CENTRALIZED LOGIN PORTAL: login.lospapatos.com ONLY
   if (subdomain === 'login') {
     console.log('🚪 Centralized login portal accessed')
     
@@ -86,7 +95,7 @@ export default async function middleware(request: NextRequest) {
       const cleanSubdomain = tenantSubdomain.replace('preview-', '').replace('mock-', '')
       
       // Redirect to tenant subdomain
-      url.hostname = `${cleanSubdomain}.elgueydelcalzado.com`
+      url.hostname = `${cleanSubdomain}.lospapatos.com`
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
@@ -106,7 +115,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // TENANT SUBDOMAINS: egdc.elgueydelcalzado.com, fami.elgueydelcalzado.com, etc.
+  // TENANT SUBDOMAINS: egdc.lospapatos.com, fami.lospapatos.com, etc.
   if (subdomain && isValidTenant(subdomain)) {
     console.log('🏢 Tenant subdomain accessed:', subdomain)
     
@@ -116,9 +125,9 @@ export default async function middleware(request: NextRequest) {
     // If not authenticated, redirect to login portal
     if (!isAuthenticated && !url.pathname.startsWith('/api/auth')) {
       console.log('❌ Not authenticated, redirecting to login portal')
-      url.hostname = 'login.elgueydelcalzado.com'
+      url.hostname = 'login.lospapatos.com'
       url.pathname = '/login'
-      url.searchParams.set('redirect', `${subdomain}.elgueydelcalzado.com/inventario`)
+      url.searchParams.set('redirect', `${subdomain}.lospapatos.com/inventario`)
       return NextResponse.redirect(url)
     }
     
@@ -133,7 +142,7 @@ export default async function middleware(request: NextRequest) {
         })
         
         // Redirect to their correct tenant
-        url.hostname = `${userTenantSubdomain}.elgueydelcalzado.com`
+        url.hostname = `${userTenantSubdomain}.lospapatos.com`
         url.pathname = '/inventario'
         return NextResponse.redirect(url)
       }
@@ -148,19 +157,19 @@ export default async function middleware(request: NextRequest) {
     return addSecurityHeaders(response)
   }
   
-  // MAIN DOMAIN: elgueydelcalzado.com (Shopify store)
-  if (hostname === 'elgueydelcalzado.com' || (!subdomain && hostname.includes('elgueydelcalzado.com'))) {
+  // MAIN DOMAIN: lospapatos.com (Shopify store)
+  if (hostname === 'lospapatos.com' || (!subdomain && hostname.includes('lospapatos.com'))) {
     console.log('🏪 Main domain accessed - this should be Shopify store')
     // This should be handled by your DNS/Shopify, not this app
     // If someone reaches this Next.js app on the main domain, redirect to login
-    url.hostname = 'login.elgueydelcalzado.com'
+    url.hostname = 'login.lospapatos.com'
     return NextResponse.redirect(url)
   }
   
   // FALLBACK: Unknown subdomain or invalid access
   console.log('❓ Unknown access pattern:', { hostname, subdomain })
   
-  // No fallback redirect needed - login.elgueydelcalzado.com is working
+  // No fallback redirect needed - login.lospapatos.com is working
   return NextResponse.next()
 }
 

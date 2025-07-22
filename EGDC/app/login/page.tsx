@@ -66,7 +66,7 @@ function LoginPageContent() {
         // Get session to determine redirect
         const session = await getSession()
         if (session?.user?.tenant_subdomain) {
-          const redirectUrl = `https://${session.user.tenant_subdomain}.elgueydelcalzado.com/dashboard`
+          const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/dashboard`
           window.location.href = redirectUrl
         } else {
           router.push('/dashboard')
