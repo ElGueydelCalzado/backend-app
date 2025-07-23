@@ -37,17 +37,72 @@ function extractTenantFromPath(pathname: string): string | null {
 }
 
 function extractSubdomain(hostname: string): string | null {
+  console.log('🔍 extractSubdomain called with:', { 
+    hostname, 
+    length: hostname.length,
+    type: typeof hostname,
+    rawValue: JSON.stringify(hostname)
+  })
+  
+  // Clean hostname (remove any whitespace or special characters)
+  const cleanHostname = hostname.trim().toLowerCase()
+  console.log('🧹 Cleaned hostname:', { 
+    cleanHostname,
+    originalLength: hostname.length,
+    cleanedLength: cleanHostname.length,
+    areEqual: hostname === cleanHostname
+  })
+  
   // Handle different environments
-  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+  if (cleanHostname.includes('localhost') || cleanHostname.includes('127.0.0.1')) {
+    console.log('🏠 Local development detected, returning egdc')
     return 'egdc' // Default to EGDC for local development
   }
   
   // For production: subdomain.lospapatos.com
-  const parts = hostname.split('.')
-  if (parts.length >= 3 && hostname.includes('lospapatos.com')) {
-    return parts[0] // Return the subdomain part
+  const parts = cleanHostname.split('.')
+  console.log('📝 Hostname parts:', { 
+    parts, 
+    length: parts.length,
+    part0: parts[0],
+    part1: parts[1],
+    part2: parts[2]
+  })
+  
+  const hasLospapatos = cleanHostname.includes('lospapatos.com')
+  console.log('🔍 Lospapatos check:', { 
+    hasLospapatos, 
+    cleanHostname,
+    includesCheck: cleanHostname.includes('lospapatos.com'),
+    searchTerm: 'lospapatos.com'
+  })
+  
+  const lengthCheck = parts.length >= 3
+  console.log('📏 Length check:', {
+    partsLength: parts.length,
+    lengthCheck,
+    condition: `${parts.length} >= 3 = ${lengthCheck}`
+  })
+  
+  const finalCondition = lengthCheck && hasLospapatos
+  console.log('🎯 Final condition:', {
+    lengthCheck,
+    hasLospapatos,
+    finalCondition,
+    willExtract: finalCondition
+  })
+  
+  if (finalCondition) {
+    const subdomain = parts[0]
+    console.log('✅ Subdomain extracted:', { 
+      subdomain,
+      fromPart: parts[0],
+      allParts: parts
+    })
+    return subdomain
   }
   
+  console.log('❌ No subdomain extracted, returning null')
   return null
 }
 
