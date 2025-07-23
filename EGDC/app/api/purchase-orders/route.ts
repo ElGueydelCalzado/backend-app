@@ -4,6 +4,9 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getTenantContext, executeWithTenant } from '@/lib/tenant-context'
+import { getServerSession } from 'next-auth'
+import { authConfig } from '@/lib/auth-config'
+import { pool } from '@/lib/postgres-tenant-safe'
 
 // Interface for purchase order creation
 interface CreatePurchaseOrderRequest {
@@ -255,7 +258,7 @@ export async function POST(request: NextRequest) {
 // GET - Fetch purchase orders
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authConfig)
     if (!session?.user?.tenant_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -391,7 +394,7 @@ export async function GET(request: NextRequest) {
 // PUT - Update purchase order (for suppliers to confirm/update orders)
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authConfig)
     if (!session?.user?.tenant_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }

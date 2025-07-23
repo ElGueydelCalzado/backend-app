@@ -4,8 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-config'
-import { TenantSafePostgresManager } from '@/lib/postgres-tenant-safe'
+import { authConfig } from '@/lib/auth-config'
+import { TenantSafePostgresManager, pool } from '@/lib/postgres-tenant-safe'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -14,7 +14,7 @@ interface RouteParams {
 // GET - Fetch individual purchase order with full details
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authConfig)
     if (!session?.user?.tenant_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT - Update specific purchase order
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authConfig)
     if (!session?.user?.tenant_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -330,7 +330,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE - Cancel/Delete purchase order (only for pending orders)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authConfig)
     if (!session?.user?.tenant_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }

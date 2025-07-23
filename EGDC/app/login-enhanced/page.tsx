@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { 
@@ -12,7 +12,7 @@ import {
 type AuthMethod = 'email' | 'phone' | 'google' | 'apple' | 'magic-link'
 type UserType = 'retailer' | 'supplier' | null
 
-export default function EnhancedLoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -514,5 +514,20 @@ export default function EnhancedLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function EnhancedLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading login page...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
