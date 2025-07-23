@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, ChevronRight, ArrowLeft, Building, Package, CreditCard, Users, Settings, Rocket } from 'lucide-react'
 
@@ -57,7 +57,7 @@ interface IntegrationSettings {
   api_access: boolean
 }
 
-export default function SupplierOnboardingWizard() {
+function OnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState(0)
@@ -838,5 +838,20 @@ export default function SupplierOnboardingWizard() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SupplierOnboardingWizard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading onboarding wizard...</p>
+        </div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }
