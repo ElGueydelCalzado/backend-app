@@ -131,7 +131,11 @@ export default async function middleware(request: NextRequest) {
   
   // Skip authentication in preview environment
   if (process.env.SKIP_AUTH === 'true' || process.env.USE_MOCK_DATA === 'true') {
-    console.log('🎭 Skipping auth - preview/mock environment')
+    console.log('🎭 Skipping auth - preview/mock environment', {
+      SKIP_AUTH: process.env.SKIP_AUTH,
+      USE_MOCK_DATA: process.env.USE_MOCK_DATA,
+      VERCEL_ENV: process.env.VERCEL_ENV
+    })
     return NextResponse.next()
   }
   
@@ -151,16 +155,30 @@ export default async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const isAuthenticated = !!token
     
-    console.log('🔐 SIMPLE AUTH CHECK:', {
+    console.log('🔐 DETAILED AUTH CHECK:', {
       subdomain,
       pathname: url.pathname,
       isAuthenticated,
-      hasToken: !!token
+      hasToken: !!token,
+      tokenDetails: token ? {
+        sub: token.sub,
+        email: token.email,
+        tenant_subdomain: token.tenant_subdomain,
+        exp: token.exp
+      } : null,
+      cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_NEXTAUTH_COOKIES' : 'NO_NEXTAUTH_COOKIES',
+      authSecret: !!process.env.NEXTAUTH_SECRET
     })
     
-    // SIMPLIFIED: If not authenticated, redirect to login portal ONCE
+    // CRITICAL: If not authenticated, redirect to login portal
     if (!isAuthenticated && !url.pathname.startsWith('/api/auth')) {
-      console.log('❌ REDIRECT TO LOGIN - Simple redirect')
+      console.log('❌ REDIRECT TO LOGIN - User not authenticated')
+      console.log('❌ REDIRECT REASON:', {
+        token: !!token,
+        isApiAuth: url.pathname.startsWith('/api/auth'),
+        pathname: url.pathname,
+        redirecting: true
+      })
       
       // Create a clean redirect URL without causing loops
       const loginUrl = new URL('https://login.lospapatos.com/login')
