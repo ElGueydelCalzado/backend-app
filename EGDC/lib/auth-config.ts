@@ -174,8 +174,8 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // Redirect to the actual inventory interface (retailer dashboard)
-      return '/inventario'
+      // Redirect to the main dashboard with inventory interface
+      return '/dashboard'
     },
     
     async signIn({ user, account, profile }) {

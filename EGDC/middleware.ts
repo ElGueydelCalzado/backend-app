@@ -153,13 +153,13 @@ export default async function middleware(request: NextRequest) {
       hasToken: !!token,
       tokenTenantSubdomain: token?.tenant_subdomain,
       tokenEmail: token?.email,
-      isInventario: url.pathname === '/inventario'
+      isDashboard: url.pathname === '/dashboard'
     })
     
-    // If user is authenticated and trying to access inventario, redirect to their tenant
-    if (token?.tenant_subdomain && url.pathname === '/inventario') {
+    // If user is authenticated and trying to access dashboard, redirect to their tenant
+    if (token?.tenant_subdomain && url.pathname === '/dashboard') {
       const cleanSubdomain = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
-      const tenantUrl = `https://${cleanSubdomain}.lospapatos.com/inventario`
+      const tenantUrl = `https://${cleanSubdomain}.lospapatos.com/dashboard`
       
       console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
         email: token.email,
@@ -174,7 +174,7 @@ export default async function middleware(request: NextRequest) {
     
     // Otherwise, allow login portal to work normally
     console.log('🔄 Allowing login portal to proceed:', {
-      reason: !token ? 'No token' : url.pathname !== '/inventario' ? 'Wrong path' : 'No tenant subdomain'
+      reason: !token ? 'No token' : url.pathname !== '/dashboard' ? 'Wrong path' : 'No tenant subdomain'
     })
     return NextResponse.next()
   }
@@ -214,17 +214,12 @@ export default async function middleware(request: NextRequest) {
       
       // Create a clean redirect URL without causing loops
       const loginUrl = new URL('https://login.lospapatos.com/login')
-      loginUrl.searchParams.set('callbackUrl', `https://${subdomain}.lospapatos.com/inventario`)
+      loginUrl.searchParams.set('callbackUrl', `https://${subdomain}.lospapatos.com/dashboard`)
       
       return NextResponse.redirect(loginUrl)
     }
     
-    // If authenticated and trying to access /dashboard, redirect to /inventario
-    if (isAuthenticated && url.pathname === '/dashboard') {
-      console.log('🔄 Redirecting /dashboard to /inventario for proper inventory interface')
-      url.pathname = '/inventario'
-      return NextResponse.redirect(url)
-    }
+    // Dashboard is the main interface now - no redirects needed
     
     // If authenticated, allow access with tenant context
     const response = NextResponse.next()
