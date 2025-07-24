@@ -176,20 +176,9 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // After successful login, redirect to user's tenant subdomain
-      if (url.startsWith('/') || url.startsWith(baseUrl)) {
-        // This is a relative URL or same domain - let it proceed
-        return url
-      }
-      
-      // For external redirects, validate they're our tenant subdomains
-      if (url.includes('lospapatos.com')) {
-        console.log('✅ Allowing redirect to tenant subdomain:', url)
-        return url
-      }
-      
-      // Default fallback
-      return baseUrl
+      // Always redirect to dashboard after successful authentication
+      // This prevents redirect loops by having a consistent destination
+      return '/dashboard'
     },
     
     async signIn({ user, account, profile }) {
