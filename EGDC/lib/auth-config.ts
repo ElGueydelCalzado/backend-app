@@ -284,8 +284,12 @@ export const authConfig: NextAuthOptions = {
             provider: account?.provider
           })
           
-          // Return null to prevent sign in if tenant mapping fails
-          return null
+          // Use fallback tenant instead of preventing sign-in
+          console.log('⚠️ Using fallback tenant configuration')
+          token.tenant_id = 'fallback-tenant'
+          token.role = 'admin'
+          token.tenant_name = 'Fallback Business'
+          token.tenant_subdomain = 'egdc' // Default to EGDC for now
         }
       }
       

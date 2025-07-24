@@ -171,19 +171,20 @@ export default async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const isAuthenticated = !!token
     
-    console.log('🔐 DETAILED AUTH CHECK:', {
+    console.log('🔐 MIDDLEWARE TOKEN CHECK:', {
       subdomain,
       pathname: url.pathname,
-      isAuthenticated,
       hasToken: !!token,
-      tokenDetails: token ? {
+      isAuthenticated,
+      cookies: request.headers.get('cookie')?.substring(0, 100) + '...',
+      hasAuthSecret: !!process.env.NEXTAUTH_SECRET,
+      tokenPreview: token ? {
         sub: token.sub,
         email: token.email,
         tenant_subdomain: token.tenant_subdomain,
+        iat: token.iat,
         exp: token.exp
-      } : null,
-      cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_NEXTAUTH_COOKIES' : 'NO_NEXTAUTH_COOKIES',
-      authSecret: !!process.env.NEXTAUTH_SECRET
+      } : 'NO_TOKEN_FOUND'
     })
     
     // CRITICAL: If not authenticated, redirect to login portal
