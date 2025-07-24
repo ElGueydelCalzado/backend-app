@@ -27,6 +27,8 @@ import MobileImportExportModal from '@/components/MobileImportExportModal'
 import WarehouseTabs, { WarehouseFilter } from '@/components/WarehouseTabs'
 import { getWarehouseData } from '@/lib/dummy-warehouse-data'
 import Pagination from '@/components/Pagination'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 interface Filters {
   categories: Set<string>
@@ -85,6 +87,9 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 ]
 
 export default function InventarioPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  
   const [allData, setAllData] = useState<Product[]>([])
   const [originalView, setOriginalView] = useState<Product[]>([])
   const [editedView, setEditedView] = useState<Product[]>([])
@@ -92,6 +97,33 @@ export default function InventarioPage() {
   const [saving, setSaving] = useState(false)
   const [loadingText, setLoadingText] = useState('Cargando inventario...')
   const { toasts, showToast, removeToast } = useToast()
+  
+  // Client-side tenant redirect check
+  useEffect(() => {
+    const currentHostname = window.location.hostname
+    
+    console.log('🏠 Client-side tenant redirect check:', {
+      hostname: currentHostname,
+      session: !!session,
+      tenantSubdomain: session?.user?.tenant_subdomain,
+      sessionStatus: status
+    })
+    
+    // If user is on login portal but has a session with tenant, redirect to tenant
+    if (currentHostname === 'login.lospapatos.com' && session?.user?.tenant_subdomain) {
+      const tenantSubdomain = session.user.tenant_subdomain.replace('preview-', '').replace('mock-', '')
+      const tenantUrl = `https://${tenantSubdomain}.lospapatos.com/dashboard`
+      
+      console.log('🔄 CLIENT-SIDE REDIRECT to tenant:', {
+        from: currentHostname,
+        to: tenantUrl,
+        tenantSubdomain
+      })
+      
+      window.location.href = tenantUrl
+      return
+    }
+  }, [session, status])
   
   // Sidebar and column state
   const [sidebarState, setSidebarState] = useState<SidebarState>('collapsed')
