@@ -146,14 +146,22 @@ export default async function middleware(request: NextRequest) {
       searchParams: url.search
     })
     
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    // Try to get token with more thorough checking
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === 'production'
+    })
     
-    console.log('🔐 LOGIN PORTAL TOKEN CHECK:', {
+    console.log('🔐 LOGIN PORTAL TOKEN CHECK COMPREHENSIVE:', {
       pathname: url.pathname,
       hasToken: !!token,
       tokenTenantSubdomain: token?.tenant_subdomain,
       tokenEmail: token?.email,
-      isDashboard: url.pathname === '/dashboard'
+      isDashboard: url.pathname === '/dashboard',
+      cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_COOKIES' : 'NO_COOKIES',
+      userAgent: request.headers.get('user-agent')?.substring(0, 50),
+      timestamp: new Date().toISOString()
     })
     
     // If user is authenticated and trying to access dashboard, redirect to their tenant
@@ -170,6 +178,15 @@ export default async function middleware(request: NextRequest) {
       })
       
       return NextResponse.redirect(tenantUrl)
+    }
+    
+    // If no token but this is dashboard access, it might be a timing issue
+    if (!token && url.pathname === '/dashboard') {
+      console.log('⚠️ NO TOKEN FOUND ON DASHBOARD ACCESS - Possible timing issue:', {
+        hasNextAuthCookies: request.headers.get('cookie')?.includes('next-auth'),
+        cookieHeader: request.headers.get('cookie')?.substring(0, 200),
+        timestamp: new Date().toISOString()
+      })
     }
     
     // Otherwise, allow login portal to work normally
