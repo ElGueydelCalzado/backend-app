@@ -305,6 +305,39 @@ export const authConfig: NextAuthOptions = {
     maxAge: 24 * 60 * 60,
   },
   
+  cookies: {
+    sessionToken: {
+      name: 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.lospapatos.com' // Share cookies across all subdomains
+      }
+    },
+    callbackUrl: {
+      name: 'next-auth.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.lospapatos.com'
+      }
+    },
+    csrfToken: {
+      name: 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.lospapatos.com'
+      }
+    }
+  },
+  
   secret: process.env.NEXTAUTH_SECRET,
 }
 
