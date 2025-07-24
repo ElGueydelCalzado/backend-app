@@ -151,7 +151,7 @@ export default async function middleware(request: NextRequest) {
       
       // Redirect to tenant subdomain
       url.hostname = `${cleanSubdomain}.lospapatos.com`
-      url.pathname = '/inventario'
+      url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
     
@@ -182,7 +182,7 @@ export default async function middleware(request: NextRequest) {
       console.log('❌ Not authenticated, redirecting to login portal')
       url.hostname = 'login.lospapatos.com'
       url.pathname = '/login'
-      url.searchParams.set('redirect', `${subdomain}.lospapatos.com/inventario`)
+      url.searchParams.set('redirect', `${subdomain}.lospapatos.com/dashboard`)
       return NextResponse.redirect(url)
     }
     
@@ -198,7 +198,7 @@ export default async function middleware(request: NextRequest) {
         
         // Redirect to their correct tenant
         url.hostname = `${userTenantSubdomain}.lospapatos.com`
-        url.pathname = '/inventario'
+        url.pathname = '/dashboard'
         return NextResponse.redirect(url)
       }
     }
