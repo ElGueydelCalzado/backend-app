@@ -214,42 +214,10 @@ function LoginContent() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
           <p className="text-gray-600 mt-1">
-            Sign in to your {userType || 'business'} workspace
+            Sign in to your business workspace
           </p>
         </div>
 
-        {/* User Type Selection */}
-        {!userType && (
-          <div className="mb-6">
-            <p className="text-sm font-medium text-gray-700 mb-3">I am a:</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setUserType('retailer')}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 text-center transition-colors"
-              >
-                <div className="font-medium text-gray-900">Retailer</div>
-                <div className="text-xs text-gray-600">Buy wholesale</div>
-              </button>
-              <button
-                onClick={() => setUserType('supplier')}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 text-center transition-colors"
-              >
-                <div className="font-medium text-gray-900">Supplier</div>
-                <div className="text-xs text-gray-600">Sell wholesale</div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {userType && (
-          <button
-            onClick={() => setUserType(null)}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Change account type
-          </button>
-        )}
 
         {/* Error/Success Messages */}
         {error && (

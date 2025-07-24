@@ -143,8 +143,24 @@ export default async function middleware(request: NextRequest) {
   if (subdomain === 'login') {
     console.log('🚪 Centralized login portal accessed')
     
-    // ALWAYS allow the login portal to work - no redirects from here
-    // This prevents redirect loops
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    
+    // If user is authenticated and trying to access dashboard, redirect to their tenant
+    if (token?.tenant_subdomain && url.pathname === '/dashboard') {
+      const cleanSubdomain = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
+      const tenantUrl = `https://${cleanSubdomain}.lospapatos.com/dashboard`
+      
+      console.log('✅ Authenticated user on login portal - redirecting to tenant:', {
+        email: token.email,
+        tenant_subdomain: token.tenant_subdomain,
+        cleanSubdomain,
+        redirectUrl: tenantUrl
+      })
+      
+      return NextResponse.redirect(tenantUrl)
+    }
+    
+    // Otherwise, allow login portal to work normally
     return NextResponse.next()
   }
   

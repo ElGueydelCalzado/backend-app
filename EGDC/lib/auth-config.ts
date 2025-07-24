@@ -176,8 +176,8 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // Always redirect to dashboard after successful authentication
-      // This prevents redirect loops by having a consistent destination
+      // For now, just redirect to dashboard - tenant redirect will be handled by middleware
+      // This prevents redirect loops and lets middleware handle tenant routing
       return '/dashboard'
     },
     
