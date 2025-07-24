@@ -141,13 +141,38 @@ export default async function middleware(request: NextRequest) {
     
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     
+    // COMPREHENSIVE LOGIN PORTAL DEBUGGING
+    console.log('🔐 LOGIN PORTAL DEBUG:', {
+      pathname: url.pathname,
+      tokenExists: !!token,
+      tokenDetails: token ? {
+        sub: token.sub,
+        email: token.email,
+        name: token.name,
+        tenant_id: token.tenant_id,
+        tenant_subdomain: token.tenant_subdomain,
+        iat: token.iat,
+        exp: token.exp
+      } : null,
+      cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_NEXTAUTH_COOKIES' : 'NO_NEXTAUTH_COOKIES',
+      referer: request.headers.get('referer'),
+      timestamp: new Date().toISOString()
+    })
+    
     // If already authenticated, redirect to their tenant subdomain
     if (token?.tenant_subdomain) {
       const tenantSubdomain = token.tenant_subdomain
-      console.log('✅ Authenticated user, redirecting to tenant:', tenantSubdomain)
+      console.log('✅ AUTHENTICATED USER FOUND - Redirecting to tenant:', tenantSubdomain)
       
       // Clean subdomain (remove preview/mock prefixes)
       const cleanSubdomain = tenantSubdomain.replace('preview-', '').replace('mock-', '')
+      
+      console.log('🏢 TENANT REDIRECT:', {
+        from: 'login.lospapatos.com',
+        to: `${cleanSubdomain}.lospapatos.com/dashboard`,
+        originalTenantSubdomain: tenantSubdomain,
+        cleanSubdomain: cleanSubdomain
+      })
       
       // Redirect to tenant subdomain
       url.hostname = `${cleanSubdomain}.lospapatos.com`
@@ -177,9 +202,35 @@ export default async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const isAuthenticated = !!token
     
+    // COMPREHENSIVE AUTHENTICATION DEBUGGING
+    console.log('🔐 AUTHENTICATION DEBUG:', {
+      subdomain,
+      pathname: url.pathname,
+      tokenExists: !!token,
+      tokenDetails: token ? {
+        sub: token.sub,
+        email: token.email,
+        name: token.name,
+        tenant_id: token.tenant_id,
+        tenant_subdomain: token.tenant_subdomain,
+        iat: token.iat,
+        exp: token.exp
+      } : null,
+      isAuthenticated,
+      cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_NEXTAUTH_COOKIES' : 'NO_NEXTAUTH_COOKIES',
+      userAgent: request.headers.get('user-agent')?.substring(0, 50),
+      timestamp: new Date().toISOString()
+    })
+    
     // If not authenticated, redirect to login portal
     if (!isAuthenticated && !url.pathname.startsWith('/api/auth')) {
-      console.log('❌ Not authenticated, redirecting to login portal')
+      console.log('❌ REDIRECT TO LOGIN - Not authenticated')
+      console.log('❌ REDIRECT DETAILS:', {
+        from: `${subdomain}.lospapatos.com${url.pathname}`,
+        to: `login.lospapatos.com/login`,
+        redirect_param: `${subdomain}.lospapatos.com/dashboard`,
+        reason: 'No valid JWT token found'
+      })
       url.hostname = 'login.lospapatos.com'
       url.pathname = '/login'
       url.searchParams.set('redirect', `${subdomain}.lospapatos.com/dashboard`)

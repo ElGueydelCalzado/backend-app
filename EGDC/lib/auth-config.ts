@@ -241,6 +241,33 @@ export const authConfig: NextAuthOptions = {
         environment: process.env.VERCEL_ENV
       })
       
+      // COMPREHENSIVE JWT DEBUGGING
+      console.log('🔐 JWT CALLBACK DETAILED DEBUG:', {
+        hasUser: !!user,
+        hasAccount: !!account,
+        hasToken: !!token,
+        userDetails: user ? {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        } : null,
+        accountDetails: account ? {
+          provider: account.provider,
+          type: account.type,
+          providerAccountId: account.providerAccountId
+        } : null,
+        existingTokenDetails: {
+          sub: token.sub,
+          email: token.email,
+          name: token.name,
+          tenant_id: token.tenant_id,
+          tenant_subdomain: token.tenant_subdomain,
+          iat: token.iat,
+          exp: token.exp
+        },
+        timestamp: new Date().toISOString()
+      })
+      
       // On first sign in (when account and user are present)
       if (account && user?.email) {
         console.log('🚀 First sign in detected for:', user.email)
@@ -261,6 +288,12 @@ export const authConfig: NextAuthOptions = {
         } else {
           console.log('🏭 Production Environment: Using tenant mapping')
           try {
+            console.log('🔍 CALLING getOrCreateUser with:', {
+              email: user.email,
+              name: user.name,
+              providerAccountId: account.providerAccountId
+            })
+            
             // Use tenant mapping for production
             const userData = await getOrCreateUser(
               user.email,
@@ -268,23 +301,39 @@ export const authConfig: NextAuthOptions = {
               account.providerAccountId
             )
             
+            console.log('✅ TENANT MAPPING SUCCESSFUL:', {
+              input: { email: user.email, name: user.name },
+              output: {
+                tenant_id: userData.tenant_id,
+                role: userData.role,
+                tenant_name: userData.tenant_name,
+                tenant_subdomain: userData.tenant_subdomain
+              }
+            })
+            
             token.tenant_id = userData.tenant_id
             token.role = userData.role
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
             
-            console.log('✅ Tenant mapped:', {
+            console.log('✅ TOKEN UPDATED with tenant info:', {
               email: user.email,
               tenant_subdomain: userData.tenant_subdomain,
               tenant_name: userData.tenant_name
             })
           } catch (error) {
-            console.error('❌ Tenant mapping error:', error?.message)
+            console.error('❌ TENANT MAPPING ERROR:', {
+              error: error?.message,
+              stack: error?.stack,
+              email: user.email
+            })
             // Fallback - still provide session but mark as needs setup
             token.tenant_id = 'setup-required'
             token.role = 'admin'
             token.tenant_name = 'Setup Required'
             token.tenant_subdomain = 'setup'
+            
+            console.log('⚠️ USING FALLBACK TENANT CONFIG')
           }
         }
       }
