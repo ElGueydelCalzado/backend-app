@@ -119,15 +119,13 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
 
 export const authConfig: NextAuthOptions = {
   providers: [
-    // Production: Use Google OAuth
-    ...(process.env.VERCEL_ENV === 'production' ? [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      })
-    ] : []),
+    // Always enable Google OAuth for production and preview
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     
-    // Preview/Development: Use test credentials
+    // Preview/Development: Also include test credentials as fallback
     ...(process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development' ? [
       CredentialsProvider({
         id: 'test-account',
@@ -224,106 +222,70 @@ export const authConfig: NextAuthOptions = {
     },
     
     async jwt({ token, user, account }) {
-      console.log('🔍 JWT Callback:', {
-        isFirstSignIn: !!(account && user),
-        email: user?.email,
-        environment: process.env.VERCEL_ENV
-      })
+      const isFirstSignIn = !!(account && user)
       
-      // COMPREHENSIVE JWT DEBUGGING
-      console.log('🔐 JWT CALLBACK DETAILED DEBUG:', {
+      console.log('🔐 JWT CALLBACK START:', {
+        isFirstSignIn,
+        hasToken: !!token,
         hasUser: !!user,
         hasAccount: !!account,
-        hasToken: !!token,
-        userDetails: user ? {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        } : null,
-        accountDetails: account ? {
-          provider: account.provider,
-          type: account.type,
-          providerAccountId: account.providerAccountId
-        } : null,
-        existingTokenDetails: {
-          sub: token.sub,
-          email: token.email,
-          name: token.name,
-          tenant_id: token.tenant_id,
-          tenant_subdomain: token.tenant_subdomain,
-          iat: token.iat,
-          exp: token.exp
-        },
+        userEmail: user?.email,
+        accountProvider: account?.provider,
         timestamp: new Date().toISOString()
       })
       
       // On first sign in (when account and user are present)
-      if (account && user?.email) {
-        console.log('🚀 First sign in detected for:', user.email)
-        console.log('🌍 Environment:', process.env.VERCEL_ENV)
+      if (isFirstSignIn && user?.email) {
+        console.log('🚀 FIRST SIGN IN - Processing tenant mapping for:', user.email)
+        console.log('🌍 Environment check:', {
+          VERCEL_ENV: process.env.VERCEL_ENV,
+          NODE_ENV: process.env.NODE_ENV,
+          provider: account?.provider
+        })
         
-        // Environment-aware authentication
-        const isPreviewOrDev = process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development'
-        
-        if (isPreviewOrDev || account.provider === 'test-account') {
-          console.log('🎭 Preview/Dev Environment: Using mock tenant data')
-          // Mock tenant data for preview/dev - no database calls
-          token.tenant_id = `mock-${user.id}`
-          token.role = 'admin'
-          token.tenant_name = account.provider === 'test-account' 
-            ? 'Test Business (Preview)' 
-            : `${user.name}'s Preview Business`
-          token.tenant_subdomain = `preview-${user.id}`
-        } else {
-          console.log('🏭 Production Environment: Using tenant mapping')
-          try {
-            console.log('🔍 CALLING getOrCreateUser with:', {
-              email: user.email,
-              name: user.name,
-              providerAccountId: account.providerAccountId
-            })
+        try {
+          // Always use tenant mapping for Google OAuth
+          if (account?.provider === 'google') {
+            console.log('📱 Google OAuth - mapping to tenant')
             
-            // Use tenant mapping for production
             const userData = await getOrCreateUser(
               user.email,
               user.name || user.email,
               account.providerAccountId
             )
             
-            console.log('✅ TENANT MAPPING SUCCESSFUL:', {
-              input: { email: user.email, name: user.name },
-              output: {
-                tenant_id: userData.tenant_id,
-                role: userData.role,
-                tenant_name: userData.tenant_name,
-                tenant_subdomain: userData.tenant_subdomain
-              }
-            })
-            
+            // Set tenant information in token
             token.tenant_id = userData.tenant_id
-            token.role = userData.role
+            token.role = userData.role  
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
             
-            console.log('✅ TOKEN UPDATED with tenant info:', {
+            console.log('✅ TENANT MAPPED SUCCESSFULLY:', {
               email: user.email,
+              tenant_id: userData.tenant_id,
               tenant_subdomain: userData.tenant_subdomain,
-              tenant_name: userData.tenant_name
+              tenant_name: userData.tenant_name,
+              role: userData.role
             })
-          } catch (error) {
-            console.error('❌ TENANT MAPPING ERROR:', {
-              error: error?.message,
-              stack: error?.stack,
-              email: user.email
-            })
-            // Fallback - still provide session but mark as needs setup
-            token.tenant_id = 'setup-required'
-            token.role = 'admin'
-            token.tenant_name = 'Setup Required'
-            token.tenant_subdomain = 'setup'
             
-            console.log('⚠️ USING FALLBACK TENANT CONFIG')
+          } else if (account?.provider === 'test-account') {
+            console.log('🧪 Test account - using mock tenant')
+            token.tenant_id = 'test-tenant'
+            token.role = 'admin'
+            token.tenant_name = 'Test Business'
+            token.tenant_subdomain = 'test'
           }
+          
+        } catch (error) {
+          console.error('❌ CRITICAL: Tenant mapping failed:', {
+            error: error?.message,
+            stack: error?.stack,
+            email: user.email,
+            provider: account?.provider
+          })
+          
+          // Return null to prevent sign in if tenant mapping fails
+          return null
         }
       }
       
