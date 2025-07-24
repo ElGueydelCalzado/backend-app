@@ -66,10 +66,10 @@ function LoginPageContent() {
         // Get session to determine redirect
         const session = await getSession()
         if (session?.user?.tenant_subdomain) {
-          const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/dashboard`
+          const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/inventario`
           window.location.href = redirectUrl
         } else {
-          router.push('/dashboard')
+          router.push('/inventario')
         }
       }
     } catch (error) {
@@ -85,7 +85,7 @@ function LoginPageContent() {
 
     try {
       await signIn('google', {
-        callbackUrl: searchParams.get('redirect') || '/dashboard'
+        callbackUrl: searchParams.get('redirect') || '/inventario'
       })
     } catch (error) {
       setError('Google login failed. Please try again.')

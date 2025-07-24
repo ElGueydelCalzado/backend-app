@@ -151,7 +151,7 @@ export default async function middleware(request: NextRequest) {
       
       // Redirect to tenant subdomain
       url.hostname = `${cleanSubdomain}.lospapatos.com`
-      url.pathname = '/dashboard'
+      url.pathname = '/inventario'
       return NextResponse.redirect(url)
     }
     
