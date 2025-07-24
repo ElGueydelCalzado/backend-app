@@ -141,26 +141,41 @@ export default async function middleware(request: NextRequest) {
   
   // CENTRALIZED LOGIN PORTAL: login.lospapatos.com ONLY
   if (subdomain === 'login') {
-    console.log('🚪 Centralized login portal accessed')
+    console.log('🚪 Centralized login portal accessed:', {
+      pathname: url.pathname,
+      searchParams: url.search
+    })
     
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    
+    console.log('🔐 LOGIN PORTAL TOKEN CHECK:', {
+      pathname: url.pathname,
+      hasToken: !!token,
+      tokenTenantSubdomain: token?.tenant_subdomain,
+      tokenEmail: token?.email,
+      isDashboard: url.pathname === '/dashboard'
+    })
     
     // If user is authenticated and trying to access dashboard, redirect to their tenant
     if (token?.tenant_subdomain && url.pathname === '/dashboard') {
       const cleanSubdomain = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
       const tenantUrl = `https://${cleanSubdomain}.lospapatos.com/dashboard`
       
-      console.log('✅ Authenticated user on login portal - redirecting to tenant:', {
+      console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
         email: token.email,
         tenant_subdomain: token.tenant_subdomain,
         cleanSubdomain,
-        redirectUrl: tenantUrl
+        redirectUrl: tenantUrl,
+        timestamp: new Date().toISOString()
       })
       
       return NextResponse.redirect(tenantUrl)
     }
     
     // Otherwise, allow login portal to work normally
+    console.log('🔄 Allowing login portal to proceed:', {
+      reason: !token ? 'No token' : url.pathname !== '/dashboard' ? 'Wrong path' : 'No tenant subdomain'
+    })
     return NextResponse.next()
   }
   
