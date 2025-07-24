@@ -174,9 +174,8 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // For now, just redirect to dashboard - tenant redirect will be handled by middleware
-      // This prevents redirect loops and lets middleware handle tenant routing
-      return '/dashboard'
+      // Redirect to the actual inventory interface (retailer dashboard)
+      return '/inventario'
     },
     
     async signIn({ user, account, profile }) {
