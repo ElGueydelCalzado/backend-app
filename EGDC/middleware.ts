@@ -305,7 +305,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 
 export const config = {
   matcher: [
-    // Match all paths except API routes, static files, and auth
-    '/((?!api/auth|api/health|_next/static|_next/image|favicon.ico).*)',
+    // Match all paths except ALL API routes, static files, and auth
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
