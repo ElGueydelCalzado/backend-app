@@ -43,8 +43,8 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
     {
       id: 'inventario',
       label: 'Inventario',
-      href: createTenantUrl('/dashboard'), // Dashboard is the main inventory interface
-      active: isActivePath('/dashboard'),
+      href: createTenantUrl('/inventory'), // Inventory management interface
+      active: isActivePath('/inventory'),
       disabled: false
     },
     {
