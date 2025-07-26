@@ -6,7 +6,7 @@ import { getToken } from 'next-auth/jwt'
 // Tenant configuration mapping paths to tenant IDs
 const TENANT_CONFIG = {
   'egdc': {
-    tenant_id: '471e9c26-a232-46b3-a992-2932e5dfadf4',
+    tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
     name: 'EGDC',
     allowed_users: ['elweydelcalzado@gmail.com']
   },

@@ -51,7 +51,7 @@ function mapUserToTenant(email: string): { tenant_id: string, tenant_name: strin
   // EGDC - Main business owner
   if (email === 'elweydelcalzado@gmail.com') {
     return {
-      tenant_id: '471e9c26-a232-46b3-a992-2932e5dfadf4',
+      tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
       tenant_name: 'EGDC',
       tenant_subdomain: 'egdc'
     }
