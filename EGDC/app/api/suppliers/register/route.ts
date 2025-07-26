@@ -4,7 +4,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeWithTenant } from '@/lib/tenant-context'
 import { nanoid } from 'nanoid'
-import { addSupplierDomain } from '@/lib/vercel-domain-manager'
 
 interface SupplierRegistrationData {
   // Business Information
@@ -83,19 +82,19 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Generate unique subdomain
-    const baseSubdomain = registrationData.business_name
+    // Generate unique tenant slug for path-based routing
+    const baseTenantSlug = registrationData.business_name
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '')
       .substring(0, 15)
     
     const uniqueId = nanoid(6).toLowerCase()
-    const subdomain = `${baseSubdomain}${uniqueId}`
+    const tenantSlug = `${baseTenantSlug}${uniqueId}`
 
     console.log('📝 Creating supplier application:', {
       business_name: registrationData.business_name,
       contact_email: registrationData.contact_email,
-      subdomain,
+      tenant_slug: tenantSlug,
       estimated_products: registrationData.estimated_products
     })
 
@@ -130,14 +129,14 @@ export async function POST(request: NextRequest) {
         years_in_business, employee_count, annual_revenue, primary_markets,
         product_categories, estimated_products, minimum_order_amount,
         payment_terms, shipping_methods, tax_id, business_license,
-        certifications, proposed_subdomain, status, 
+        certifications, proposed_tenant_slug, status, 
         application_data, created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
         $15, $16, $17, $18, $19, $20, $21, $22, $23, 'pending',
         $24, NOW(), NOW()
       )
-      RETURNING id, business_name, contact_email, proposed_subdomain, status, created_at
+      RETURNING id, business_name, contact_email, proposed_tenant_slug, status, created_at
     `
 
     const applicationResult = await executeWithTenant(
@@ -166,7 +165,7 @@ export async function POST(request: NextRequest) {
         registrationData.tax_id,
         registrationData.business_license,
         JSON.stringify(registrationData.certifications),
-        subdomain,
+        tenantSlug,
         JSON.stringify(registrationData) // Store complete application data
       ],
       { skipTenantCheck: true }
@@ -177,7 +176,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Supplier application created:', {
       application_id: application.id,
       business_name: application.business_name,
-      subdomain: application.proposed_subdomain
+      tenant_slug: application.proposed_tenant_slug
     })
 
     // Send notification email (in a real app)
@@ -203,7 +202,7 @@ export async function POST(request: NextRequest) {
       data: {
         application_id: application.id,
         business_name: application.business_name,
-        subdomain: application.proposed_subdomain,
+        tenant_slug: application.proposed_tenant_slug,
         status: application.status,
         message: 'Application submitted successfully'
       },
@@ -247,12 +246,12 @@ async function approveSupplierApplication(applicationId: string) {
   // Create supplier tenant
   const createTenantQuery = `
     INSERT INTO tenants (
-      name, subdomain, email, plan, status, business_type, access_mode,
+      name, tenant_slug, email, plan, status, business_type, access_mode,
       supplier_settings, billing_status, created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
     )
-    RETURNING id, name, subdomain, status
+    RETURNING id, name, tenant_slug, status
   `
 
   const supplierSettings = {
@@ -282,7 +281,7 @@ async function approveSupplierApplication(applicationId: string) {
     createTenantQuery,
     [
       app.business_name,
-      app.proposed_subdomain,
+      app.proposed_tenant_slug,
       app.contact_email,
       'supplier_professional', // Default plan
       'active',
@@ -337,20 +336,13 @@ async function approveSupplierApplication(applicationId: string) {
 
   console.log('🎉 Supplier tenant created successfully:', {
     tenant_id: tenant.id,
-    subdomain: tenant.subdomain,
+    tenant_slug: tenant.tenant_slug,
     user_id: user.id,
     user_email: user.email
   })
 
-  // Automatically add domain to Vercel for SSL and routing
-  console.log('🌐 Adding supplier domain to Vercel...')
-  try {
-    await addSupplierDomain(tenant.subdomain)
-    console.log('✅ Supplier domain added to Vercel:', `${tenant.subdomain}.lospapatos.com`)
-  } catch (error) {
-    console.error('⚠️ Failed to add domain to Vercel (non-critical):', error)
-    // Don't fail tenant creation if domain addition fails
-  }
+  // Path-based routing - no domain management needed
+  console.log('🌐 Tenant will be accessible at path-based URL:', `/app/${tenant.tenant_slug}`)
 
   return {
     tenant,
@@ -375,7 +367,7 @@ export async function GET(request: NextRequest) {
 
     let query = `
       SELECT 
-        id, business_name, contact_email, proposed_subdomain, 
+        id, business_name, contact_email, proposed_tenant_slug, 
         status, created_at, approved_at, rejected_at
       FROM supplier_applications 
       WHERE 
@@ -415,7 +407,7 @@ export async function GET(request: NextRequest) {
         submitted_at: application.created_at,
         approved_at: application.approved_at,
         rejected_at: application.rejected_at,
-        subdomain: application.proposed_subdomain
+        tenant_slug: application.proposed_tenant_slug
       }
     })
 

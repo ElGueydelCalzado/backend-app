@@ -281,10 +281,10 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         tenant_id: application.tenant_id,
-        subdomain: application.tenant_subdomain,
+        tenant_slug: application.tenant_subdomain, // Now used as path slug in path-based architecture
         business_name: application.business_name,
-        workspace_url: `https://${application.tenant_subdomain}.inv.lospapatos.com`,
-        dashboard_url: `/dashboard?subdomain=${application.tenant_subdomain}&welcome=true`
+        workspace_url: `https://app.lospapatos.com/${application.tenant_subdomain}`,
+        dashboard_url: `/${application.tenant_subdomain}/dashboard?welcome=true`
       },
       message: 'Onboarding completed successfully! Your supplier workspace is ready.'
     })

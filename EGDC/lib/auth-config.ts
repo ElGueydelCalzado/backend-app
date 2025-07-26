@@ -46,6 +46,7 @@ declare module 'next-auth' {
 }
 
 // Map known users to specific tenants for production SaaS
+// Note: tenant_subdomain is now used as tenant path in path-based architecture
 function mapUserToTenant(email: string): { tenant_id: string, tenant_name: string, tenant_subdomain: string } {
   // EGDC - Main business owner
   if (email === 'elweydelcalzado@gmail.com') {
@@ -82,11 +83,11 @@ function mapUserToTenant(email: string): { tenant_id: string, tenant_name: strin
   }
   
   // Default for new users - create a new tenant
-  const subdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
+  const tenantPath = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
   return {
     tenant_id: `tenant-${Date.now()}`, // Will be replaced with real UUID
     tenant_name: email.split('@')[0] + ' Business',
-    tenant_subdomain: subdomain
+    tenant_subdomain: tenantPath // Used as path in path-based architecture
   }
 }
 
@@ -101,7 +102,7 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
   console.log('🏢 Tenant mapping for user:', {
     email,
     tenant_id: tenantMapping.tenant_id,
-    tenant_subdomain: tenantMapping.tenant_subdomain
+    tenant_path: tenantMapping.tenant_subdomain // Using as path in new architecture
   })
   
   // For now, return the mapped tenant directly
@@ -174,7 +175,36 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // Redirect to the main dashboard with inventory interface
+      // Parse the URL to check for callbackUrl parameter
+      try {
+        const urlObj = new URL(url, baseUrl)
+        const callbackUrl = urlObj.searchParams.get('callbackUrl')
+        
+        console.log('🔍 Redirect URL analysis:', {
+          originalUrl: url,
+          baseUrl,
+          callbackUrl,
+          hasCallbackUrl: !!callbackUrl
+        })
+        
+        // If there's a callbackUrl with a tenant path, use it
+        if (callbackUrl && (callbackUrl.includes('/egdc/') || callbackUrl.includes('/fami/') || callbackUrl.includes('/osiel/') || callbackUrl.includes('/molly/'))) {
+          console.log('✅ Using callbackUrl with tenant path:', callbackUrl)
+          return callbackUrl
+        }
+        
+        // If URL already contains tenant path, use it
+        if (url.includes('/egdc/') || url.includes('/fami/') || url.includes('/osiel/') || url.includes('/molly/')) {
+          console.log('✅ Tenant-specific URL detected, using:', url)
+          return url
+        }
+      } catch (error) {
+        console.log('⚠️ URL parsing error in redirect:', error)
+      }
+      
+      // For path-based architecture, redirect to generic dashboard
+      // The dashboard redirect component will handle tenant-specific routing
+      console.log('🔄 Redirecting to generic dashboard for tenant routing')
       return '/dashboard'
     },
     
@@ -214,7 +244,7 @@ export const authConfig: NextAuthOptions = {
         session.user.tenant_name = token.tenant_name as string || 'Unknown Tenant'
         session.user.tenant_subdomain = token.tenant_subdomain as string || 'unknown'
         
-        console.log('✅ Session ready for tenant:', token.tenant_subdomain)
+        console.log('✅ Session ready for tenant path:', token.tenant_subdomain)
       }
       
       return session
@@ -262,7 +292,7 @@ export const authConfig: NextAuthOptions = {
             console.log('✅ TENANT MAPPED SUCCESSFULLY:', {
               email: user.email,
               tenant_id: userData.tenant_id,
-              tenant_subdomain: userData.tenant_subdomain,
+              tenant_path: userData.tenant_subdomain, // Used as path in path-based architecture
               tenant_name: userData.tenant_name,
               role: userData.role
             })
@@ -292,7 +322,7 @@ export const authConfig: NextAuthOptions = {
         }
       }
       
-      console.log('✅ JWT token ready with tenant_subdomain:', token.tenant_subdomain)
+      console.log('✅ JWT token ready with tenant_path:', token.tenant_subdomain)
       return token
     },
   },
@@ -312,7 +342,7 @@ export const authConfig: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? '.lospapatos.com' : undefined
+        domain: process.env.NODE_ENV === 'production' ? 'app.lospapatos.com' : undefined
       }
     }
   },

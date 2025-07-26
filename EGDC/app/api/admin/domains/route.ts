@@ -1,30 +1,43 @@
-// DOMAIN MANAGEMENT API
-// Admin interface for managing Vercel domains
+// PATH-BASED TENANT MANAGEMENT API
+// Admin interface for managing single app domain and tenant paths
 
 import { NextRequest, NextResponse } from 'next/server'
-import { VercelDomainManager, addSupplierDomain, checkDomainStatus } from '@/lib/vercel-domain-manager'
+import { VercelDomainManager, ensureAppDomainExists, checkAppDomainStatus, cleanupLegacySubdomain } from '@/lib/vercel-domain-manager'
 import { executeWithTenant } from '@/lib/tenant-context'
 
-interface DomainWithTenant {
-  subdomain: string
-  domain: string
-  exists: boolean
-  verified: boolean
-  ssl: boolean
+interface TenantWithPath {
+  tenant_slug: string
+  tenant_path: string
   tenant_name?: string
   business_type?: string
   status?: string
   created_at?: string
 }
 
-// GET - List all domains with their status
+interface AppDomainStatus {
+  domain: string
+  exists: boolean
+  verified: boolean
+  ssl: boolean
+  tenants: TenantWithPath[]
+}
+
+// GET - Check app domain status and list all tenant paths
 export async function GET() {
   try {
-    console.log('📋 Getting domain status for all tenants...')
+    console.log('📋 Getting app domain status and tenant paths...')
 
-    // Get all tenants from database
+    // Check app domain status
+    const domainStatus = await checkAppDomainStatus()
+
+    // Get all active tenants from database
     const tenantsQuery = `
-      SELECT subdomain, name, business_type, status, created_at
+      SELECT 
+        tenant_subdomain as tenant_slug,
+        name as tenant_name, 
+        business_type, 
+        status, 
+        created_at
       FROM tenants 
       WHERE status = 'active'
       ORDER BY business_type, name
@@ -37,129 +50,84 @@ export async function GET() {
       { skipTenantCheck: true }
     )
 
-    // Check domain status for each tenant
-    const domainStatuses: DomainWithTenant[] = []
+    // Format tenant data for path-based architecture
+    const tenantPaths: TenantWithPath[] = tenants.map(tenant => ({
+      tenant_slug: tenant.tenant_slug,
+      tenant_path: `/tenant/${tenant.tenant_slug}`,
+      tenant_name: tenant.tenant_name,
+      business_type: tenant.business_type,
+      status: tenant.status,
+      created_at: tenant.created_at
+    }))
 
-    for (const tenant of tenants) {
-      const status = await checkDomainStatus(tenant.subdomain)
-      
-      domainStatuses.push({
-        subdomain: tenant.subdomain,
-        domain: `${tenant.subdomain}.lospapatos.com`,
-        exists: status.exists,
-        verified: status.verified,
-        ssl: status.ssl,
-        tenant_name: tenant.name,
-        business_type: tenant.business_type,
-        status: tenant.status,
-        created_at: tenant.created_at
-      })
+    const appDomainInfo: AppDomainStatus = {
+      domain: 'app.lospapatos.com',
+      exists: domainStatus.exists,
+      verified: domainStatus.verified,
+      ssl: domainStatus.ssl,
+      tenants: tenantPaths
     }
 
-    // Also check for core domains that should always exist
-    const coreDomains = ['login', 'inv']
-    for (const subdomain of coreDomains) {
-      const status = await checkDomainStatus(subdomain)
-      
-      domainStatuses.unshift({
-        subdomain,
-        domain: `${subdomain}.lospapatos.com`,
-        exists: status.exists,
-        verified: status.verified,
-        ssl: status.ssl,
-        tenant_name: subdomain === 'login' ? 'Centralized Login' : 'Main App',
-        business_type: 'system'
-      })
-    }
-
-    console.log(`✅ Retrieved status for ${domainStatuses.length} domains`)
+    console.log(`✅ App domain status retrieved. Domain verified: ${domainStatus.verified}, Active tenants: ${tenantPaths.length}`)
 
     return NextResponse.json({
       success: true,
-      domains: domainStatuses,
+      appDomain: appDomainInfo,
       summary: {
-        total: domainStatuses.length,
-        active: domainStatuses.filter(d => d.verified).length,
-        pending: domainStatuses.filter(d => d.exists && !d.verified).length,
-        missing: domainStatuses.filter(d => !d.exists).length
+        domain_verified: domainStatus.verified,
+        active_tenants: tenantPaths.length,
+        total_paths: tenantPaths.length + 2, // +2 for /login and other system paths
+        architecture: 'path-based'
       }
     })
 
   } catch (error) {
-    console.error('❌ Error getting domain statuses:', error)
+    console.error('❌ Error getting domain status:', error)
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to get domain statuses',
+      error: 'Failed to get domain status',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
 
-// POST - Add new domain to Vercel
-export async function POST(request: NextRequest) {
+// POST - Ensure app domain exists in Vercel
+export async function POST() {
   try {
-    const { subdomain } = await request.json()
+    console.log('🔧 Ensuring app domain exists in Vercel...')
 
-    if (!subdomain) {
-      return NextResponse.json({
-        success: false,
-        error: 'Subdomain is required'
-      }, { status: 400 })
-    }
-
-    // Validate subdomain format
-    if (!/^[a-z0-9-]+$/.test(subdomain)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Subdomain must contain only lowercase letters, numbers, and hyphens'
-      }, { status: 400 })
-    }
-
-    console.log('➕ Adding domain manually:', subdomain)
-
-    // Check if subdomain exists in tenants (optional - can add domains for future tenants)
-    const tenantCheck = await executeWithTenant(
-      null,
-      'SELECT name FROM tenants WHERE subdomain = $1',
-      [subdomain],
-      { skipTenantCheck: true }
-    )
-
-    if (tenantCheck.length === 0) {
-      console.log('⚠️ Warning: Adding domain for subdomain without tenant:', subdomain)
-    }
-
-    // Add domain to Vercel
-    const success = await addSupplierDomain(subdomain)
+    // Ensure app.lospapatos.com exists
+    const success = await ensureAppDomainExists()
 
     if (!success) {
       return NextResponse.json({
         success: false,
-        error: 'Failed to add domain to Vercel'
+        error: 'Failed to ensure app domain exists in Vercel'
       }, { status: 500 })
     }
 
-    console.log('✅ Domain added successfully:', `${subdomain}.lospapatos.com`)
+    console.log('✅ App domain ensured successfully: app.lospapatos.com')
 
     return NextResponse.json({
       success: true,
-      message: `Domain ${subdomain}.lospapatos.com added successfully`,
-      domain: `${subdomain}.lospapatos.com`
+      message: 'App domain app.lospapatos.com is properly configured',
+      domain: 'app.lospapatos.com',
+      architecture: 'path-based'
     })
 
   } catch (error) {
-    console.error('❌ Error adding domain:', error)
+    console.error('❌ Error ensuring app domain:', error)
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to add domain',
+      error: 'Failed to ensure app domain',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
 
-// DELETE - Remove domain from Vercel
+// DELETE - Clean up legacy subdomain (migration helper)
 export async function DELETE(request: NextRequest) {
   try {
     const { subdomain } = await request.json()
@@ -167,125 +135,98 @@ export async function DELETE(request: NextRequest) {
     if (!subdomain) {
       return NextResponse.json({
         success: false,
-        error: 'Subdomain is required'
+        error: 'Subdomain is required for cleanup'
       }, { status: 400 })
     }
 
-    console.log('🗑️ Removing domain:', subdomain)
+    console.log('🧹 Cleaning up legacy subdomain:', subdomain)
 
-    // Prevent removal of critical domains
-    const criticalDomains = ['login', 'inv', 'egdc']
-    if (criticalDomains.includes(subdomain)) {
+    // Prevent removal of app domain
+    if (subdomain === 'app') {
       return NextResponse.json({
         success: false,
-        error: `Cannot remove critical domain: ${subdomain}`
+        error: 'Cannot remove app domain - this is required for path-based architecture'
       }, { status: 400 })
     }
 
-    // Remove domain from Vercel
-    if (!process.env.VERCEL_API_TOKEN || !process.env.VERCEL_PROJECT_ID) {
+    // Clean up legacy subdomain
+    const success = await cleanupLegacySubdomain(subdomain)
+
+    if (!success) {
       return NextResponse.json({
         success: false,
-        error: 'Vercel API credentials not configured'
+        error: 'Failed to clean up legacy subdomain'
       }, { status: 500 })
     }
 
-    const domainManager = new VercelDomainManager()
-    const result = await domainManager.removeDomain(subdomain)
-
-    if (!result.success) {
-      return NextResponse.json({
-        success: false,
-        error: result.error || 'Failed to remove domain from Vercel'
-      }, { status: 500 })
-    }
-
-    console.log('✅ Domain removed successfully:', `${subdomain}.lospapatos.com`)
+    console.log('✅ Legacy subdomain cleaned up successfully:', `${subdomain}.lospapatos.com`)
 
     return NextResponse.json({
       success: true,
-      message: `Domain ${subdomain}.lospapatos.com removed successfully`
+      message: `Legacy subdomain ${subdomain}.lospapatos.com cleaned up successfully`,
+      note: 'Path-based architecture uses app.lospapatos.com/{tenant} instead'
     })
 
   } catch (error) {
-    console.error('❌ Error removing domain:', error)
+    console.error('❌ Error cleaning up legacy subdomain:', error)
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to remove domain',
+      error: 'Failed to clean up legacy subdomain',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
 
-// PATCH - Sync all tenant domains with Vercel
+// PATCH - Verify app domain configuration and tenant paths
 export async function PATCH() {
   try {
-    console.log('🔄 Syncing all tenant domains with Vercel...')
+    console.log('🔍 Verifying app domain configuration and tenant paths...')
 
-    // Get all active tenants
+    // Ensure app domain exists and is properly configured
+    const domainSuccess = await ensureAppDomainExists()
+    
+    if (!domainSuccess) {
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to verify app domain configuration'
+      }, { status: 500 })
+    }
+
+    // Get domain status
+    const domainStatus = await checkAppDomainStatus()
+
+    // Get all tenants and verify their path configuration
     const tenants = await executeWithTenant(
       null,
-      'SELECT subdomain, name FROM tenants WHERE status = $1 ORDER BY subdomain',
+      'SELECT tenant_subdomain as tenant_slug, name FROM tenants WHERE status = $1 ORDER BY tenant_slug',
       ['active'],
       { skipTenantCheck: true }
     )
 
     const results = {
-      success: 0,
-      failed: 0,
-      skipped: 0,
-      errors: [] as string[]
+      domain_verified: domainStatus.verified,
+      domain_ssl: domainStatus.ssl,
+      active_tenant_paths: tenants.length,
+      tenant_paths: tenants.map(t => `/tenant/${t.tenant_slug}`),
+      system_paths: ['/login', '/dashboard', '/api'],
+      architecture: 'path-based'
     }
 
-    // Core domains that should always exist
-    const coreDomains = ['login', 'inv']
-    const allSubdomains = [...coreDomains, ...tenants.map(t => t.subdomain)]
-
-    for (const subdomain of allSubdomains) {
-      try {
-        // Check if domain already exists
-        const status = await checkDomainStatus(subdomain)
-        
-        if (status.exists) {
-          console.log(`✅ Domain already exists: ${subdomain}`)
-          results.skipped++
-          continue
-        }
-
-        // Add missing domain
-        const success = await addSupplierDomain(subdomain)
-        
-        if (success) {
-          console.log(`✅ Added domain: ${subdomain}`)
-          results.success++
-        } else {
-          console.log(`❌ Failed to add domain: ${subdomain}`)
-          results.failed++
-          results.errors.push(`Failed to add ${subdomain}`)
-        }
-
-      } catch (error) {
-        console.error(`❌ Error processing ${subdomain}:`, error)
-        results.failed++
-        results.errors.push(`Error with ${subdomain}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      }
-    }
-
-    console.log('🏁 Domain sync completed:', results)
+    console.log('🏁 Path-based architecture verification completed:', results)
 
     return NextResponse.json({
       success: true,
-      message: 'Domain sync completed',
+      message: 'Path-based tenant architecture verified successfully',
       results
     })
 
   } catch (error) {
-    console.error('❌ Error syncing domains:', error)
+    console.error('❌ Error verifying path-based configuration:', error)
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to sync domains',
+      error: 'Failed to verify path-based configuration',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }

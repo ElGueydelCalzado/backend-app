@@ -29,12 +29,16 @@ function LoginPageContent() {
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
-    // Get redirect URL from query params
-    const redirect = searchParams.get('redirect')
+    // Get redirect URL from query params (callbackUrl is set by middleware)
+    const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect')
     const userTypeParam = searchParams.get('type') as UserType
     
     if (userTypeParam) {
       setUserType(userTypeParam)
+    }
+    
+    if (callbackUrl) {
+      console.log('🔍 Login page loaded with callbackUrl:', callbackUrl)
     }
     
     // Clear any existing error
@@ -63,13 +67,23 @@ function LoginPageContent() {
         setError(result.error)
       } else if (result?.ok) {
         setSuccess('Login successful!')
-        // Get session to determine redirect
-        const session = await getSession()
-        if (session?.user?.tenant_subdomain) {
-          const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/dashboard`
-          window.location.href = redirectUrl
+        // Get the callback URL from search params or use session to determine redirect
+        const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect')
+        
+        if (callbackUrl) {
+          console.log('🎯 Redirecting to callbackUrl:', callbackUrl)
+          window.location.href = callbackUrl
         } else {
-          router.push('/dashboard')
+          // Fallback: Get session to determine redirect - path-based architecture
+          const session = await getSession()
+          if (session?.user?.tenant_subdomain) {
+            const tenantPath = session.user.tenant_subdomain.replace('preview-', '').replace('mock-', '')
+            const redirectUrl = `http://localhost:3000/${tenantPath}/dashboard`
+            console.log('🎯 Redirecting to tenant dashboard:', redirectUrl)
+            window.location.href = redirectUrl
+          } else {
+            router.push('/dashboard')
+          }
         }
       }
     } catch (error) {
@@ -84,8 +98,13 @@ function LoginPageContent() {
     setError('')
 
     try {
+      // Get callbackUrl from search params (set by middleware)
+      const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/dashboard'
+      
+      console.log('🚀 Google login initiated with callbackUrl:', callbackUrl)
+      
       await signIn('google', {
-        callbackUrl: searchParams.get('redirect') || '/dashboard'
+        callbackUrl: callbackUrl
       })
     } catch (error) {
       setError('Google login failed. Please try again.')

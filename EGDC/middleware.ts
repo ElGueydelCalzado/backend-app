@@ -1,9 +1,9 @@
-// Multi-Tenant SaaS Middleware for Subdomain-Based Architecture
+// Multi-Tenant SaaS Middleware for Path-Based Architecture
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
-// Tenant configuration mapping subdomains to tenant IDs
+// Tenant configuration mapping paths to tenant IDs
 const TENANT_CONFIG = {
   'egdc': {
     tenant_id: '471e9c26-a232-46b3-a992-2932e5dfadf4',
@@ -28,82 +28,52 @@ const TENANT_CONFIG = {
 }
 
 function extractTenantFromPath(pathname: string): string | null {
+  console.log('🔍 extractTenantFromPath called with:', {
+    pathname,
+    pathParts: pathname.split('/').filter(Boolean)
+  })
+  
   // Extract tenant from path: /tenant/dashboard → tenant
   const pathParts = pathname.split('/').filter(Boolean)
+  
   if (pathParts.length > 0 && isValidTenant(pathParts[0])) {
-    return pathParts[0]
+    const tenant = pathParts[0]
+    console.log('✅ Tenant extracted from path:', {
+      tenant,
+      fromPath: pathname,
+      isValid: isValidTenant(tenant)
+    })
+    return tenant
   }
+  
+  console.log('❌ No valid tenant found in path:', pathname)
   return null
 }
 
-function extractSubdomain(hostname: string): string | null {
-  console.log('🔍 extractSubdomain called with:', { 
-    hostname, 
-    length: hostname.length,
-    type: typeof hostname,
-    rawValue: JSON.stringify(hostname)
+function isAppDomain(hostname: string): boolean {
+  console.log('🔍 isAppDomain called with:', {
+    hostname,
+    cleanHostname: hostname.trim().toLowerCase()
   })
   
-  // Clean hostname (remove any whitespace or special characters)
   const cleanHostname = hostname.trim().toLowerCase()
-  console.log('🧹 Cleaned hostname:', { 
+  
+  // Check for app.lospapatos.com or localhost for development
+  const isApp = cleanHostname === 'app.lospapatos.com' || 
+                cleanHostname.includes('localhost') || 
+                cleanHostname.includes('127.0.0.1')
+                
+  console.log('🎯 App domain check result:', {
     cleanHostname,
-    originalLength: hostname.length,
-    cleanedLength: cleanHostname.length,
-    areEqual: hostname === cleanHostname
+    isApp,
+    reasons: {
+      isAppDomain: cleanHostname === 'app.lospapatos.com',
+      isLocalhost: cleanHostname.includes('localhost'),
+      isLocal127: cleanHostname.includes('127.0.0.1')
+    }
   })
   
-  // Handle different environments
-  if (cleanHostname.includes('localhost') || cleanHostname.includes('127.0.0.1')) {
-    console.log('🏠 Local development detected, returning egdc')
-    return 'egdc' // Default to EGDC for local development
-  }
-  
-  // For production: subdomain.lospapatos.com
-  const parts = cleanHostname.split('.')
-  console.log('📝 Hostname parts:', { 
-    parts, 
-    length: parts.length,
-    part0: parts[0],
-    part1: parts[1],
-    part2: parts[2]
-  })
-  
-  const hasLospapatos = cleanHostname.includes('lospapatos.com')
-  console.log('🔍 Lospapatos check:', { 
-    hasLospapatos, 
-    cleanHostname,
-    includesCheck: cleanHostname.includes('lospapatos.com'),
-    searchTerm: 'lospapatos.com'
-  })
-  
-  const lengthCheck = parts.length >= 3
-  console.log('📏 Length check:', {
-    partsLength: parts.length,
-    lengthCheck,
-    condition: `${parts.length} >= 3 = ${lengthCheck}`
-  })
-  
-  const finalCondition = lengthCheck && hasLospapatos
-  console.log('🎯 Final condition:', {
-    lengthCheck,
-    hasLospapatos,
-    finalCondition,
-    willExtract: finalCondition
-  })
-  
-  if (finalCondition) {
-    const subdomain = parts[0]
-    console.log('✅ Subdomain extracted:', { 
-      subdomain,
-      fromPart: parts[0],
-      allParts: parts
-    })
-    return subdomain
-  }
-  
-  console.log('❌ No subdomain extracted, returning null')
-  return null
+  return isApp
 }
 
 function isValidTenant(subdomain: string): boolean {
@@ -120,13 +90,16 @@ export default async function middleware(request: NextRequest) {
     environment: process.env.VERCEL_ENV || 'development'
   })
   
-  // Extract subdomain for tenant detection
-  const subdomain = extractSubdomain(hostname)
+  // Extract tenant from path for path-based architecture
+  const tenant = extractTenantFromPath(url.pathname)
+  const isAppDomainAccess = isAppDomain(hostname)
   
   console.log('🏢 Tenant Detection:', {
-    subdomain,
-    isValidTenant: subdomain ? isValidTenant(subdomain) : false,
-    hostname
+    tenant,
+    isValidTenant: tenant ? isValidTenant(tenant) : false,
+    isAppDomainAccess,
+    hostname,
+    pathname: url.pathname
   })
   
   // Skip authentication in preview environment
@@ -139,11 +112,12 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // CENTRALIZED LOGIN PORTAL: login.lospapatos.com ONLY
-  if (subdomain === 'login') {
+  // CENTRALIZED LOGIN: app.lospapatos.com/login
+  if (isAppDomainAccess && url.pathname === '/login') {
     console.log('🚪 Centralized login portal accessed:', {
       pathname: url.pathname,
-      searchParams: url.search
+      searchParams: url.search,
+      hostname
     })
     
     // Try to get token with more thorough checking
@@ -158,21 +132,23 @@ export default async function middleware(request: NextRequest) {
       hasToken: !!token,
       tokenTenantSubdomain: token?.tenant_subdomain,
       tokenEmail: token?.email,
-      isDashboard: url.pathname === '/dashboard',
       cookies: request.headers.get('cookie')?.includes('next-auth') ? 'HAS_COOKIES' : 'NO_COOKIES',
       userAgent: request.headers.get('user-agent')?.substring(0, 50),
       timestamp: new Date().toISOString()
     })
     
-    // If user is authenticated and trying to access dashboard, redirect to their tenant
-    if (token?.tenant_subdomain && url.pathname === '/dashboard') {
-      const cleanSubdomain = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
-      const tenantUrl = `https://${cleanSubdomain}.lospapatos.com/dashboard`
+    // If user is authenticated, redirect to their tenant dashboard
+    if (token?.tenant_subdomain) {
+      const cleanTenant = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://app.lospapatos.com' 
+        : `http://${hostname}`
+      const tenantUrl = `${baseUrl}/${cleanTenant}/dashboard`
       
       console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
         email: token.email,
-        tenant_subdomain: token.tenant_subdomain,
-        cleanSubdomain,
+        tenant_path: token.tenant_subdomain, // Used as path in path-based architecture
+        cleanTenant,
         redirectUrl: tenantUrl,
         timestamp: new Date().toISOString()
       })
@@ -180,31 +156,24 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.redirect(tenantUrl)
     }
     
-    // If no token but this is dashboard access, it might be a timing issue
-    if (!token && url.pathname === '/dashboard') {
-      console.log('⚠️ NO TOKEN FOUND ON DASHBOARD ACCESS - Possible timing issue:', {
-        hasNextAuthCookies: request.headers.get('cookie')?.includes('next-auth'),
-        cookieHeader: request.headers.get('cookie')?.substring(0, 200),
-        timestamp: new Date().toISOString()
-      })
-    }
+    // No special dashboard handling needed in login path
     
     // Otherwise, allow login portal to work normally
     console.log('🔄 Allowing login portal to proceed:', {
-      reason: !token ? 'No token' : url.pathname !== '/dashboard' ? 'Wrong path' : 'No tenant subdomain'
+      reason: !token ? 'No token' : 'No tenant subdomain'
     })
     return NextResponse.next()
   }
   
-  // TENANT SUBDOMAINS: egdc.lospapatos.com, fami.lospapatos.com, etc.
-  if (subdomain && isValidTenant(subdomain)) {
-    console.log('🏢 Tenant subdomain accessed:', subdomain)
+  // TENANT PATHS: app.lospapatos.com/egdc, app.lospapatos.com/fami, etc.
+  if (isAppDomainAccess && tenant && isValidTenant(tenant)) {
+    console.log('🏢 Tenant path accessed:', tenant)
     
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const isAuthenticated = !!token
     
     console.log('🔐 MIDDLEWARE TOKEN CHECK:', {
-      subdomain,
+      tenant,
       pathname: url.pathname,
       hasToken: !!token,
       isAuthenticated,
@@ -213,7 +182,7 @@ export default async function middleware(request: NextRequest) {
       tokenPreview: token ? {
         sub: token.sub,
         email: token.email,
-        tenant_subdomain: token.tenant_subdomain,
+        tenant_path: token.tenant_subdomain, // Used as path in path-based architecture
         iat: token.iat,
         exp: token.exp
       } : 'NO_TOKEN_FOUND'
@@ -230,8 +199,11 @@ export default async function middleware(request: NextRequest) {
       })
       
       // Create a clean redirect URL without causing loops
-      const loginUrl = new URL('https://login.lospapatos.com/login')
-      loginUrl.searchParams.set('callbackUrl', `https://${subdomain}.lospapatos.com/dashboard`)
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://app.lospapatos.com' 
+        : `http://${hostname}`
+      const loginUrl = new URL(`${baseUrl}/login`)
+      loginUrl.searchParams.set('callbackUrl', `${baseUrl}/${tenant}/dashboard`)
       
       return NextResponse.redirect(loginUrl)
     }
@@ -240,26 +212,50 @@ export default async function middleware(request: NextRequest) {
     
     // If authenticated, allow access with tenant context
     const response = NextResponse.next()
-    response.headers.set('x-tenant-subdomain', subdomain)
-    response.headers.set('x-tenant-id', TENANT_CONFIG[subdomain as keyof typeof TENANT_CONFIG].tenant_id)
+    response.headers.set('x-tenant-path', tenant)
+    response.headers.set('x-tenant-id', TENANT_CONFIG[tenant as keyof typeof TENANT_CONFIG].tenant_id)
     
-    console.log('✅ Tenant access granted:', subdomain)
+    console.log('✅ Tenant access granted:', tenant)
     return addSecurityHeaders(response)
   }
   
   // MAIN DOMAIN: lospapatos.com (Shopify store)
-  if (hostname === 'lospapatos.com' || (!subdomain && hostname.includes('lospapatos.com'))) {
-    console.log('🏪 Main domain accessed - this should be Shopify store')
-    // This should be handled by your DNS/Shopify, not this app
-    // If someone reaches this Next.js app on the main domain, redirect to login
-    url.hostname = 'login.lospapatos.com'
-    return NextResponse.redirect(url)
+  if (hostname === 'lospapatos.com' || (!isAppDomainAccess && hostname.includes('lospapatos.com'))) {
+    console.log('🏪 Main domain or unknown domain accessed')
+    // Redirect to the login portal on app domain
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://app.lospapatos.com' 
+      : `http://${hostname}`
+    return NextResponse.redirect(`${baseUrl}/login`)
   }
   
-  // FALLBACK: Unknown subdomain or invalid access
-  console.log('❓ Unknown access pattern:', { hostname, subdomain })
+  // GENERIC DASHBOARD: app.lospapatos.com/dashboard (OAuth callback redirect)
+  // Let the dashboard component handle tenant routing for better session access
+  if (isAppDomainAccess && url.pathname === '/dashboard') {
+    console.log('🎯 Generic dashboard accessed - allowing dashboard component to handle tenant routing')
+    
+    // Don't redirect in middleware - let the client-side dashboard component handle it
+    // This avoids race conditions with JWT token availability after OAuth callback
+    const response = NextResponse.next()
+    response.headers.set('x-dashboard-mode', 'tenant-routing')
+    
+    console.log('✅ Allowing dashboard component to handle tenant routing')
+    return addSecurityHeaders(response)
+  }
   
-  // No fallback redirect needed - login.lospapatos.com is working
+  // FALLBACK: Unknown path or invalid access
+  console.log('❓ Unknown access pattern:', { hostname, tenant, pathname: url.pathname })
+  
+  // For app domain without valid tenant path, redirect to login
+  if (isAppDomainAccess && !tenant) {
+    console.log('🔄 App domain without tenant - redirecting to login')
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://app.lospapatos.com' 
+      : `http://${hostname}`
+    return NextResponse.redirect(`${baseUrl}/login`)
+  }
+  
+  // Unknown pattern - allow to proceed
   return NextResponse.next()
 }
 

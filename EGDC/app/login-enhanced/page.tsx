@@ -74,10 +74,11 @@ function LoginContent() {
       if (result?.error) {
         setError(result.error)
       } else if (result?.ok) {
-        // Get session to determine redirect
+        // Get session to determine redirect - path-based architecture
         const session = await getSession()
         if (session?.user?.tenant_subdomain) {
-          const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/dashboard`
+          const tenantPath = session.user.tenant_subdomain.replace('preview-', '').replace('mock-', '')
+          const redirectUrl = `https://app.lospapatos.com/${tenantPath}/dashboard`
           window.location.href = redirectUrl
         } else {
           router.push('/dashboard')
@@ -134,7 +135,8 @@ function LoginContent() {
         } else if (result?.ok) {
           const session = await getSession()
           if (session?.user?.tenant_subdomain) {
-            const redirectUrl = `https://${session.user.tenant_subdomain}.lospapatos.com/dashboard`
+            const tenantPath = session.user.tenant_subdomain.replace('preview-', '').replace('mock-', '')
+            const redirectUrl = `https://app.lospapatos.com/${tenantPath}/dashboard`
             window.location.href = redirectUrl
           } else {
             router.push('/dashboard')

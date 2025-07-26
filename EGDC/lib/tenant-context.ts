@@ -14,6 +14,7 @@ const pool = new Pool({
 })
 
 // Extended session type with tenant information
+// Note: tenant_subdomain now used as tenant_slug in path-based architecture
 export interface TenantSession {
   user: {
     id: string
@@ -22,13 +23,29 @@ export interface TenantSession {
     tenant_id: string
     role: string
     tenant_name: string
-    tenant_subdomain: string
+    tenant_subdomain: string // Used as tenant_slug in path-based URLs
   }
 }
 
 // Get tenant context from session
 export async function getTenantContext(req: NextRequest): Promise<TenantSession | null> {
   try {
+    // Check if SKIP_AUTH is enabled for development/testing
+    if (process.env.SKIP_AUTH === 'true' && process.env.NODE_ENV === 'development') {
+      console.log('🧪 SKIP_AUTH mode - providing default EGDC tenant context')
+      return {
+        user: {
+          id: 'test-user',
+          email: 'elweydelcalzado@gmail.com',
+          name: 'Test User',
+          tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
+          role: 'admin',
+          tenant_name: 'EGDC',
+          tenant_subdomain: 'egdc'
+        }
+      }
+    }
+
     const session = await getServerSession(authConfig) as TenantSession
     
     console.log('🔍 Session debug (v2):', {
@@ -111,7 +128,7 @@ export async function getTenantInfo(tenantId: string) {
       SELECT 
         id,
         name,
-        subdomain,
+        subdomain as tenant_slug, -- Used as path slug in path-based architecture
         email,
         plan,
         status,
@@ -127,9 +144,10 @@ export async function getTenantInfo(tenantId: string) {
 }
 
 // Create new tenant (for registration)
+// Note: subdomain parameter now used as tenant_slug for path-based routing
 export async function createTenant(data: {
   name: string
-  subdomain: string
+  subdomain: string // Used as tenant_slug in path-based architecture
   email: string
   plan?: string
 }) {
@@ -138,13 +156,13 @@ export async function createTenant(data: {
   try {
     await client.query('BEGIN')
     
-    // Check if subdomain is available
+    // Check if tenant slug is available
     const existing = await client.query(`
       SELECT 1 FROM tenants WHERE subdomain = $1
-    `, [data.subdomain])
+    `, [data.subdomain]) // Still using subdomain column but as tenant_slug
     
     if (existing.rows.length > 0) {
-      throw new Error('Subdomain already exists')
+      throw new Error('Tenant slug already exists')
     }
     
     // Create tenant
@@ -212,7 +230,7 @@ export async function getUserWithTenant(email: string) {
         u.google_id,
         u.status,
         t.name as tenant_name,
-        t.subdomain as tenant_subdomain,
+        t.subdomain as tenant_subdomain, -- Used as tenant_slug in path-based URLs
         t.plan as tenant_plan
       FROM users u
       JOIN tenants t ON u.tenant_id = t.id

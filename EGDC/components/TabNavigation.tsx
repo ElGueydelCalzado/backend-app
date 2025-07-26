@@ -4,61 +4,82 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 
+// Helper function to extract tenant from pathname
+function getTenantFromPath(pathname: string): string | null {
+  const pathParts = pathname.split('/').filter(Boolean)
+  // For path-based architecture: /tenant/page
+  return pathParts.length > 0 ? pathParts[0] : null
+}
+
 interface TabNavigationProps {
   currentTab?: string
 }
 
 export default function TabNavigation({ currentTab }: TabNavigationProps) {
   const pathname = usePathname()
+  const tenant = getTenantFromPath(pathname)
+  
+  // Create tenant-prefixed URLs for path-based architecture
+  const createTenantUrl = (path: string) => {
+    if (!tenant) return path // Fallback for root paths
+    return path === '/' ? `/${tenant}/dashboard` : `/${tenant}${path}`
+  }
+  
+  // Check if path matches current location (accounting for tenant prefix)
+  const isActivePath = (basePath: string) => {
+    if (!tenant) return pathname === basePath
+    const tenantPath = basePath === '/' ? `/${tenant}/dashboard` : `/${tenant}${basePath}`
+    return pathname === tenantPath || pathname.startsWith(tenantPath + '/')
+  }
   
   const tabs = [
     {
       id: 'resumen',
       label: 'Resumen',
-      href: '/',
-      active: pathname === '/',
+      href: createTenantUrl('/'),
+      active: isActivePath('/'),
       disabled: false
     },
     {
       id: 'inventario',
       label: 'Inventario',
-      href: '/inventario',
-      active: pathname === '/inventario',
+      href: createTenantUrl('/dashboard'), // Dashboard is the main inventory interface
+      active: isActivePath('/dashboard'),
       disabled: false
     },
     {
       id: 'ventas',
       label: 'Ventas',
-      href: '/ventas',
-      active: pathname === '/ventas',
+      href: createTenantUrl('/ventas'),
+      active: isActivePath('/ventas'),
       disabled: true
     },
     {
       id: 'compras',
       label: 'Compras',
-      href: '/compras',
-      active: pathname === '/compras',
+      href: createTenantUrl('/compras'),
+      active: isActivePath('/compras'),
       disabled: true
     },
     {
       id: 'clientes',
       label: 'Clientes',
-      href: '/clientes',
-      active: pathname === '/clientes',
+      href: createTenantUrl('/clientes'),
+      active: isActivePath('/clientes'),
       disabled: true
     },
     {
       id: 'analiticas',
       label: 'Analiticas',
-      href: '/analiticas',
-      active: pathname === '/analiticas',
+      href: createTenantUrl('/analiticas'),
+      active: isActivePath('/analiticas'),
       disabled: true
     },
     {
       id: 'finanzas',
       label: 'Finanzas',
-      href: '/finanzas',
-      active: pathname === '/finanzas',
+      href: createTenantUrl('/finanzas'),
+      active: isActivePath('/finanzas'),
       disabled: true
     }
   ]

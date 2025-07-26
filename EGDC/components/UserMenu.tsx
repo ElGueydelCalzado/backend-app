@@ -35,7 +35,7 @@ export default function UserMenu() {
             <p className="text-xs text-gray-500">{session.user.email}</p>
             <div className="mt-2 pt-2 border-t border-gray-100">
               <p className="text-xs text-blue-600 font-medium">{session.user.tenant_name}</p>
-              <p className="text-xs text-gray-500">{session.user.tenant_subdomain}.egdc.app</p>
+              <p className="text-xs text-gray-500">app.lospapatos.com/{session.user.tenant_subdomain}</p>
               <p className="text-xs text-green-600 capitalize">{session.user.role}</p>
             </div>
           </div>

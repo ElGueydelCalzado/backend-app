@@ -1,5 +1,5 @@
-// AUTOMATED VERCEL DOMAIN MANAGEMENT
-// Automatically add new supplier subdomains to Vercel when they register
+// VERCEL DOMAIN MANAGEMENT FOR PATH-BASED ARCHITECTURE
+// Manages the single app.lospapatos.com domain for multi-tenant path-based routing
 
 interface VercelDomainResponse {
   name: string
@@ -33,12 +33,13 @@ export class VercelDomainManager {
   }
 
   /**
-   * Add a new domain to Vercel project
+   * Ensure app.lospapatos.com domain exists in Vercel project
+   * In path-based architecture, we only need one domain
    */
-  async addDomain(subdomain: string): Promise<{ success: boolean; error?: string }> {
-    const domain = `${subdomain}.lospapatos.com`
+  async ensureAppDomain(): Promise<{ success: boolean; error?: string }> {
+    const domain = 'app.lospapatos.com'
     
-    console.log('🌐 Adding domain to Vercel:', domain)
+    console.log('🌐 Ensuring app domain exists in Vercel:', domain)
 
     try {
       const url = this.teamId 
@@ -76,7 +77,7 @@ export class VercelDomainManager {
 
       const domainResponse = data as VercelDomainResponse
       
-      console.log('✅ Domain added to Vercel:', domain)
+      console.log('✅ App domain confirmed in Vercel:', domain)
       console.log('📋 Domain details:', {
         name: domainResponse.name,
         verified: domainResponse.verified,
@@ -95,12 +96,12 @@ export class VercelDomainManager {
   }
 
   /**
-   * Remove a domain from Vercel project
+   * Remove a domain from Vercel project (legacy subdomain cleanup)
    */
-  async removeDomain(subdomain: string): Promise<{ success: boolean; error?: string }> {
+  async removeLegacySubdomain(subdomain: string): Promise<{ success: boolean; error?: string }> {
     const domain = `${subdomain}.lospapatos.com`
     
-    console.log('🗑️ Removing domain from Vercel:', domain)
+    console.log('🗑️ Removing legacy subdomain from Vercel:', domain)
 
     try {
       const url = this.teamId 
@@ -164,18 +165,50 @@ export class VercelDomainManager {
   }
 
   /**
-   * Check if domain is already added to Vercel
+   * Check if app domain exists in Vercel
    */
-  async domainExists(subdomain: string): Promise<boolean> {
+  async appDomainExists(): Promise<boolean> {
+    const domain = 'app.lospapatos.com'
+    const domains = await this.listDomains()
+    return domains.some(d => d.name === domain)
+  }
+
+  /**
+   * Check if legacy subdomain exists (for cleanup purposes)
+   */
+  async legacySubdomainExists(subdomain: string): Promise<boolean> {
     const domain = `${subdomain}.lospapatos.com`
     const domains = await this.listDomains()
     return domains.some(d => d.name === domain)
   }
 
   /**
-   * Get domain verification status
+   * Get app domain verification status
    */
-  async getDomainStatus(subdomain: string): Promise<{
+  async getAppDomainStatus(): Promise<{
+    exists: boolean
+    verified: boolean
+    ssl: boolean
+  }> {
+    const domain = 'app.lospapatos.com'
+    const domains = await this.listDomains()
+    const domainInfo = domains.find(d => d.name === domain)
+
+    if (!domainInfo) {
+      return { exists: false, verified: false, ssl: false }
+    }
+
+    return {
+      exists: true,
+      verified: domainInfo.verified,
+      ssl: domainInfo.verified // SSL is automatically provisioned when verified
+    }
+  }
+
+  /**
+   * Get legacy subdomain status (for migration/cleanup)
+   */
+  async getLegacySubdomainStatus(subdomain: string): Promise<{
     exists: boolean
     verified: boolean
     ssl: boolean
@@ -196,49 +229,92 @@ export class VercelDomainManager {
   }
 }
 
-// Helper function to add domain when supplier registers
-export async function addSupplierDomain(subdomain: string): Promise<boolean> {
+// Helper function to ensure app domain exists for path-based architecture
+export async function ensureAppDomainExists(): Promise<boolean> {
   if (!process.env.VERCEL_API_TOKEN || !process.env.VERCEL_PROJECT_ID) {
-    console.warn('⚠️ Vercel API credentials not configured, skipping domain addition')
-    return true // Don't fail supplier registration due to missing API config
+    console.warn('⚠️ Vercel API credentials not configured, skipping domain check')
+    return true // Don't fail due to missing API config
   }
 
   try {
     const domainManager = new VercelDomainManager()
     
-    // Check if domain already exists
-    const exists = await domainManager.domainExists(subdomain)
+    // Check if app domain already exists
+    const exists = await domainManager.appDomainExists()
     if (exists) {
-      console.log('✅ Domain already exists in Vercel:', subdomain)
+      console.log('✅ App domain already exists in Vercel: app.lospapatos.com')
       return true
     }
 
-    // Add domain to Vercel
-    const result = await domainManager.addDomain(subdomain)
+    // Ensure app domain exists in Vercel
+    const result = await domainManager.ensureAppDomain()
     
     if (!result.success) {
-      console.error('❌ Failed to add domain to Vercel:', result.error)
-      // Don't fail supplier registration due to Vercel domain issues
-      return true
+      console.error('❌ Failed to ensure app domain in Vercel:', result.error)
+      return false
     }
 
-    console.log('🎉 Successfully added supplier domain to Vercel:', subdomain)
+    console.log('🎉 Successfully ensured app domain exists in Vercel: app.lospapatos.com')
     return true
 
   } catch (error) {
-    console.error('❌ Error in addSupplierDomain:', error)
-    // Don't fail supplier registration due to domain management issues
-    return true
+    console.error('❌ Error in ensureAppDomainExists:', error)
+    return false
   }
 }
 
-// Helper function to check domain status
-export async function checkDomainStatus(subdomain: string) {
+// Legacy function for cleaning up old subdomain-based domains
+export async function cleanupLegacySubdomain(subdomain: string): Promise<boolean> {
+  if (!process.env.VERCEL_API_TOKEN || !process.env.VERCEL_PROJECT_ID) {
+    console.warn('⚠️ Vercel API credentials not configured, skipping cleanup')
+    return true
+  }
+
   try {
     const domainManager = new VercelDomainManager()
-    return await domainManager.getDomainStatus(subdomain)
+    
+    // Check if legacy domain exists
+    const exists = await domainManager.legacySubdomainExists(subdomain)
+    if (!exists) {
+      console.log('✅ Legacy subdomain does not exist:', subdomain)
+      return true
+    }
+
+    // Remove legacy subdomain
+    const result = await domainManager.removeLegacySubdomain(subdomain)
+    
+    if (!result.success) {
+      console.error('❌ Failed to remove legacy subdomain:', result.error)
+      return false
+    }
+
+    console.log('🎉 Successfully cleaned up legacy subdomain:', subdomain)
+    return true
+
   } catch (error) {
-    console.error('❌ Error checking domain status:', error)
+    console.error('❌ Error in cleanupLegacySubdomain:', error)
+    return false
+  }
+}
+
+// Helper function to check app domain status
+export async function checkAppDomainStatus() {
+  try {
+    const domainManager = new VercelDomainManager()
+    return await domainManager.getAppDomainStatus()
+  } catch (error) {
+    console.error('❌ Error checking app domain status:', error)
+    return { exists: false, verified: false, ssl: false }
+  }
+}
+
+// Helper function to check legacy subdomain status (for migration purposes)
+export async function checkLegacySubdomainStatus(subdomain: string) {
+  try {
+    const domainManager = new VercelDomainManager()
+    return await domainManager.getLegacySubdomainStatus(subdomain)
+  } catch (error) {
+    console.error('❌ Error checking legacy subdomain status:', error)
     return { exists: false, verified: false, ssl: false }
   }
 }
