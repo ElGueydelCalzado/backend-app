@@ -169,20 +169,26 @@ export default async function middleware(request: NextRequest) {
   if (isAppDomainAccess && tenant && isValidTenant(tenant)) {
     console.log('🏢 Tenant path accessed:', tenant)
     
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: process.env.NODE_ENV === 'production' ? 'next-auth.session-token' : 'next-auth.session-token'
+    })
     const isAuthenticated = !!token
     
-    console.log('🔐 MIDDLEWARE TOKEN CHECK:', {
+    console.log('🔐 MIDDLEWARE TOKEN CHECK (ENHANCED):', {
       tenant,
       pathname: url.pathname,
       hasToken: !!token,
       isAuthenticated,
-      cookies: request.headers.get('cookie')?.substring(0, 100) + '...',
       hasAuthSecret: !!process.env.NEXTAUTH_SECRET,
+      nodeEnv: process.env.NODE_ENV,
+      cookieHeader: request.headers.get('cookie') ? 'PRESENT' : 'MISSING',
+      cookieNames: request.headers.get('cookie')?.split(';').map(c => c.split('=')[0].trim()),
       tokenPreview: token ? {
         sub: token.sub,
         email: token.email,
-        tenant_path: token.tenant_subdomain, // Used as path in path-based architecture
+        tenant_subdomain: token.tenant_subdomain,
         iat: token.iat,
         exp: token.exp
       } : 'NO_TOKEN_FOUND'
@@ -191,10 +197,12 @@ export default async function middleware(request: NextRequest) {
     // CRITICAL: If not authenticated, redirect to login portal
     if (!isAuthenticated && !url.pathname.startsWith('/api/auth')) {
       console.log('❌ REDIRECT TO LOGIN - User not authenticated')
-      console.log('❌ REDIRECT REASON:', {
-        token: !!token,
+      console.log('❌ DETAILED REDIRECT REASON:', {
+        hasToken: !!token,
         isApiAuth: url.pathname.startsWith('/api/auth'),
         pathname: url.pathname,
+        hasSecret: !!process.env.NEXTAUTH_SECRET,
+        cookies: request.headers.get('cookie')?.split(';').map(c => c.split('=')[0].trim()),
         redirecting: true
       })
       
