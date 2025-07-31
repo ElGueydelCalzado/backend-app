@@ -89,6 +89,7 @@ declare module 'next-auth' {
       role: string
       tenant_name: string | null
       tenant_subdomain: string | null
+      business_type?: string | null
     }
     registration_required?: boolean
     error?: string
@@ -97,7 +98,7 @@ declare module 'next-auth' {
 
 // SECURITY: Database-driven tenant resolution instead of hardcoded mapping
 // Securely map users to tenants using database lookup
-async function getTenantForUser(email: string): Promise<{ tenant_id: string, tenant_name: string, tenant_subdomain: string } | null> {
+async function getTenantForUser(email: string): Promise<{ tenant_id: string, tenant_name: string, tenant_subdomain: string, business_type: string } | null> {
   const client = await getAuthPool().connect()
   
   try {
@@ -106,7 +107,8 @@ async function getTenantForUser(email: string): Promise<{ tenant_id: string, ten
       SELECT 
         u.tenant_id,
         t.name as tenant_name,
-        t.subdomain as tenant_subdomain
+        t.subdomain as tenant_subdomain,
+        t.business_type
       FROM users u
       JOIN tenants t ON u.tenant_id = t.id
       WHERE u.email = $1 AND u.status = 'active' AND t.status = 'active'
@@ -117,12 +119,14 @@ async function getTenantForUser(email: string): Promise<{ tenant_id: string, ten
       console.log('✅ Existing tenant found for user:', {
         email,
         tenant_id: tenant.tenant_id,
-        tenant_subdomain: tenant.tenant_subdomain
+        tenant_subdomain: tenant.tenant_subdomain,
+        business_type: tenant.business_type
       })
       return {
         tenant_id: tenant.tenant_id,
         tenant_name: tenant.tenant_name,
-        tenant_subdomain: tenant.tenant_subdomain
+        tenant_subdomain: tenant.tenant_subdomain,
+        business_type: tenant.business_type
       }
     }
     
@@ -156,7 +160,8 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
         u.role,
         u.google_id,
         t.name as tenant_name,
-        t.subdomain as tenant_subdomain
+        t.subdomain as tenant_subdomain,
+        t.business_type
       FROM users u
       JOIN tenants t ON u.tenant_id = t.id
       WHERE u.email = $1 AND u.status = 'active'
@@ -183,7 +188,8 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
         name: user.name,
         email: user.email,
         tenant_name: user.tenant_name,
-        tenant_subdomain: user.tenant_subdomain
+        tenant_subdomain: user.tenant_subdomain,
+        business_type: user.business_type
       }
     }
     
@@ -207,7 +213,8 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
         name: name,
         email: email,
         tenant_name: tenantInfo.tenant_name,
-        tenant_subdomain: tenantInfo.tenant_subdomain
+        tenant_subdomain: tenantInfo.tenant_subdomain,
+        business_type: tenantInfo.business_type
       }
     }
     
@@ -271,7 +278,8 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
         name: name,
         email: email,
         tenant_name: tenant.name,
-        tenant_subdomain: tenant.subdomain
+        tenant_subdomain: tenant.subdomain,
+        business_type: 'retailer' // Default for new users
       }
       
     } catch (error) {
@@ -359,6 +367,7 @@ export const authConfig: NextAuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+    newUser: '/signup',
   },
   
   callbacks: {
@@ -407,6 +416,7 @@ export const authConfig: NextAuthOptions = {
         session.user.role = token.role as string || 'user'
         session.user.tenant_name = token.tenant_name as string || null
         session.user.tenant_subdomain = token.tenant_subdomain as string || null
+        session.user.business_type = token.business_type as string || null
         
         // Add registration status to session
         if (token.registration_required) {
@@ -484,6 +494,7 @@ export const authConfig: NextAuthOptions = {
             token.role = userData.role  
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
+            token.business_type = userData.business_type
             
             console.log('✅ TENANT MAPPED SUCCESSFULLY:', {
               email: user.email,
@@ -499,6 +510,7 @@ export const authConfig: NextAuthOptions = {
             token.role = 'admin'
             token.tenant_name = 'Test Business'
             token.tenant_subdomain = 'test'
+            token.business_type = 'retailer'
           }
           
         } catch (error) {

@@ -107,18 +107,25 @@ export default function QuickStats({ products, filteredProducts }: QuickStatsPro
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-100/70 via-indigo-50 to-purple-100/70 rounded-xl shadow-xl border border-blue-200/50 p-4 sm:p-6 mb-6 backdrop-blur-sm">
+    <div className="egdc-card rounded-xl p-4 sm:p-6 mb-6 border" style={{ 
+      background: 'rgb(var(--theme-bg-elevated))',
+      borderColor: 'rgb(var(--theme-border-primary))',
+      boxShadow: 'var(--theme-shadow-lg)'
+    }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="mb-2 sm:mb-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center" style={{ color: 'rgb(var(--theme-text-primary))' }}>
             <span className="text-2xl mr-2 drop-shadow-sm">📊</span>
             Panel de Control
           </h2>
-          <p className="text-sm text-gray-700 mt-1 font-medium">Información de inventario en tiempo real</p>
+          <p className="text-sm mt-1 font-medium" style={{ color: 'rgb(var(--theme-text-secondary))' }}>Información de inventario en tiempo real</p>
         </div>
         {filteredProducts.length !== totalProducts && (
-          <div className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+          <div className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full" style={{
+            backgroundColor: 'rgba(var(--egdc-orange-primary), 0.1)',
+            color: 'var(--egdc-orange-primary)'
+          }}>
             Filtered: {filteredProducts.length} of {totalProducts}
           </div>
         )}
@@ -180,19 +187,27 @@ export default function QuickStats({ products, filteredProducts }: QuickStatsPro
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
         {/* Inventory by Location */}
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-5">
-          <h3 className="font-bold text-gray-900 mb-4 flex items-center text-lg">
+        <div className="rounded-xl shadow-md border p-4 sm:p-5" style={{ 
+          background: 'rgb(var(--theme-bg-elevated))',
+          borderColor: 'rgb(var(--theme-border-primary))'
+        }}>
+          <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: 'rgb(var(--theme-text-primary))' }}>
             <span className="text-xl mr-2">📍</span>
             Inventario por Ubicación
           </h3>
           <div className="space-y-3">
             {locationStats.map(location => (
-              <div key={location.name} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <span className="text-sm font-medium text-gray-700 flex items-center">
+              <div key={location.name} className="flex items-center justify-between p-2 rounded-lg hover:opacity-80 transition-all" style={{
+                backgroundColor: 'rgb(var(--theme-bg-muted))'
+              }}>
+                <span className="text-sm font-medium flex items-center" style={{ color: 'rgb(var(--theme-text-secondary))' }}>
                   <span className="text-lg mr-2">{location.icon}</span>
                   {location.name}
                 </span>
-                <span className="font-bold text-gray-900 bg-white px-2 py-1 rounded-md text-sm">
+                <span className="font-bold px-2 py-1 rounded-md text-sm" style={{
+                  color: 'rgb(var(--theme-text-primary))',
+                  backgroundColor: 'rgb(var(--theme-bg-elevated))'
+                }}>
                   {location.total.toLocaleString()}
                 </span>
               </div>
@@ -201,79 +216,130 @@ export default function QuickStats({ products, filteredProducts }: QuickStatsPro
         </div>
 
         {/* Platform Distribution */}
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-5">
-          <h3 className="font-bold text-gray-900 mb-4 flex items-center text-lg">
+        <div className="rounded-xl shadow-md border p-4 sm:p-5" style={{ 
+          background: 'rgb(var(--theme-bg-elevated))',
+          borderColor: 'rgb(var(--theme-border-primary))'
+        }}>
+          <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: 'rgb(var(--theme-text-primary))' }}>
             <span className="text-xl mr-2">🛒</span>
             Disponibilidad por Plataforma
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-              <span className="text-sm font-medium text-blue-800 flex items-center">
+            <div className="flex items-center justify-between p-2 rounded-lg hover:opacity-80 transition-all" style={{
+              backgroundColor: 'rgba(66, 153, 225, 0.1)'
+            }}>
+              <span className="text-sm font-medium flex items-center" style={{ color: 'rgb(var(--theme-info))' }}>
                 <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full mr-3"></span>
                 SHEIN
               </span>
-              <span className="font-bold text-blue-900 bg-white px-2 py-1 rounded-md text-sm">{platformStats.shein}</span>
+              <span className="font-bold px-2 py-1 rounded-md text-sm" style={{
+                color: 'rgb(var(--theme-text-primary))',
+                backgroundColor: 'rgb(var(--theme-bg-elevated))'
+              }}>{platformStats.shein}</span>
             </div>
-            <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-              <span className="text-sm font-medium text-green-800 flex items-center">
+            <div className="flex items-center justify-between p-2 rounded-lg hover:opacity-80 transition-all" style={{
+              backgroundColor: 'rgba(72, 187, 120, 0.1)'
+            }}>
+              <span className="text-sm font-medium flex items-center" style={{ color: 'rgb(var(--theme-success))' }}>
                 <span className="w-4 h-4 bg-gradient-to-r from-green-400 to-green-500 rounded-full mr-3"></span>
                 Shopify
               </span>
-              <span className="font-bold text-green-900 bg-white px-2 py-1 rounded-md text-sm">{platformStats.shopify}</span>
+              <span className="font-bold px-2 py-1 rounded-md text-sm" style={{
+                color: 'rgb(var(--theme-text-primary))',
+                backgroundColor: 'rgb(var(--theme-bg-elevated))'
+              }}>{platformStats.shopify}</span>
             </div>
-            <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-              <span className="text-sm font-medium text-yellow-800 flex items-center">
+            <div className="flex items-center justify-between p-2 rounded-lg hover:opacity-80 transition-all" style={{
+              backgroundColor: 'rgba(237, 137, 54, 0.1)'
+            }}>
+              <span className="text-sm font-medium flex items-center" style={{ color: 'rgb(var(--theme-warning))' }}>
                 <span className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full mr-3"></span>
                 MercadoLibre
               </span>
-              <span className="font-bold text-yellow-900 bg-white px-2 py-1 rounded-md text-sm">{platformStats.meli}</span>
+              <span className="font-bold px-2 py-1 rounded-md text-sm" style={{
+                color: 'rgb(var(--theme-text-primary))',
+                backgroundColor: 'rgb(var(--theme-bg-elevated))'
+              }}>{platformStats.meli}</span>
             </div>
-            <div className="flex items-center justify-between p-2 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors">
-              <span className="text-sm font-medium text-pink-800 flex items-center">
+            <div className="flex items-center justify-between p-2 rounded-lg hover:opacity-80 transition-all" style={{
+              backgroundColor: 'rgba(236, 72, 153, 0.1)'
+            }}>
+              <span className="text-sm font-medium flex items-center" style={{ color: '#ec4899' }}>
                 <span className="w-4 h-4 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full mr-3"></span>
                 TikTok
               </span>
-              <span className="font-bold text-pink-900 bg-white px-2 py-1 rounded-md text-sm">{platformStats.tiktok}</span>
+              <span className="font-bold px-2 py-1 rounded-md text-sm" style={{
+                color: 'rgb(var(--theme-text-primary))',
+                backgroundColor: 'rgb(var(--theme-bg-elevated))'
+              }}>{platformStats.tiktok}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Financial Overview */}
-      <div className="mt-4 sm:mt-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl shadow-md border border-emerald-100 p-4 sm:p-5">
-        <h3 className="font-bold text-gray-900 mb-4 flex items-center text-lg">
+      <div className="mt-4 sm:mt-6 rounded-xl shadow-md border p-4 sm:p-5" style={{ 
+        background: 'rgba(var(--theme-success), 0.05)',
+        borderColor: 'rgba(var(--theme-success), 0.2)'
+      }}>
+        <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: 'rgb(var(--theme-text-primary))' }}>
           <span className="text-xl mr-2">💰</span>
           Resumen Financiero
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-emerald-100">
-            <div className="text-xl sm:text-2xl font-bold text-emerald-600">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-            <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">Valor Total del Inventario</div>
+          <div className="rounded-lg p-4 text-center shadow-sm border" style={{
+            backgroundColor: 'rgb(var(--theme-bg-elevated))',
+            borderColor: 'rgb(var(--theme-border-primary))'
+          }}>
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(var(--theme-success))' }}>
+              ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-xs sm:text-sm mt-1 font-medium" style={{ color: 'rgb(var(--theme-text-secondary))' }}>
+              Valor Total del Inventario
+            </div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-emerald-100">
-            <div className="text-xl sm:text-2xl font-bold text-emerald-600">${averagePrice.toFixed(2)}</div>
-            <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">Costo Promedio por Producto</div>
+          <div className="rounded-lg p-4 text-center shadow-sm border" style={{
+            backgroundColor: 'rgb(var(--theme-bg-elevated))',
+            borderColor: 'rgb(var(--theme-border-primary))'
+          }}>
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(var(--theme-success))' }}>
+              ${averagePrice.toFixed(2)}
+            </div>
+            <div className="text-xs sm:text-sm mt-1 font-medium" style={{ color: 'rgb(var(--theme-text-secondary))' }}>
+              Costo Promedio por Producto
+            </div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-emerald-100">
-            <div className="text-xl sm:text-2xl font-bold text-emerald-600">
+          <div className="rounded-lg p-4 text-center shadow-sm border" style={{
+            backgroundColor: 'rgb(var(--theme-bg-elevated))',
+            borderColor: 'rgb(var(--theme-border-primary))'
+          }}>
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: 'rgb(var(--theme-success))' }}>
               ${totalInventory > 0 ? (totalValue / totalInventory).toFixed(2) : '0.00'}
             </div>
-            <div className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">Valor por Unidad</div>
+            <div className="text-xs sm:text-sm mt-1 font-medium" style={{ color: 'rgb(var(--theme-text-secondary))' }}>
+              Valor por Unidad
+            </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions - Only show for out of stock products */}
       {outOfStockProducts.length > 0 && (
-        <div className="mt-4 sm:mt-6 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-md p-4 sm:p-5">
-          <h3 className="font-bold text-orange-800 mb-3 flex items-center text-lg">
+        <div className="mt-4 sm:mt-6 rounded-xl shadow-md border p-4 sm:p-5" style={{
+          background: 'rgba(var(--theme-warning), 0.05)',
+          borderColor: 'rgba(var(--theme-warning), 0.2)'
+        }}>
+          <h3 className="font-bold mb-3 flex items-center text-lg" style={{ color: 'rgb(var(--theme-warning))' }}>
             <span className="text-xl mr-2">⚠️</span>
             Attention Required
           </h3>
           <div className="space-y-2">
-            <div className="flex items-center p-2 bg-red-100 border border-red-200 rounded-lg">
-              <span className="text-red-600 mr-2">❌</span>
-              <span className="text-sm font-medium text-red-800">
+            <div className="flex items-center p-2 border rounded-lg" style={{
+              backgroundColor: 'rgba(var(--theme-error), 0.1)',
+              borderColor: 'rgba(var(--theme-error), 0.2)'
+            }}>
+              <span className="mr-2" style={{ color: 'rgb(var(--theme-error))' }}>❌</span>
+              <span className="text-sm font-medium" style={{ color: 'rgb(var(--theme-error))' }}>
                 {outOfStockProducts.length} productos con 0 stock
               </span>
             </div>

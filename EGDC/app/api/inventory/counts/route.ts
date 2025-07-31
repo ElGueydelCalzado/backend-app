@@ -8,6 +8,7 @@ import { mockInventoryAPI } from '@/lib/mock-data'
 import { getDevelopmentConfig } from '@/lib/dev-utils'
 
 interface WarehouseCounts {
+  totalProducts: number  // Total products for the tenant
   egdc: number
   fami: number
   osiel: number
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
     if (shouldUseMockData) {
       console.log('🧪 Using mock data for product counts in development/preview')
       const mockCounts: WarehouseCounts = {
+        totalProducts: 23,  // Total mock products
         egdc: 10,
         fami: 4,
         osiel: 5,
@@ -55,13 +57,30 @@ export async function GET(request: NextRequest) {
 
     // Initialize counts
     const counts: WarehouseCounts = {
+      totalProducts: 0,  // Initialize totalProducts
       egdc: 0,
       fami: 0,
       osiel: 0,
       molly: 0
     }
 
-    // Get EGDC (own inventory) count
+    // Get tenant's total product count (all products for this tenant)
+    const totalProductsQuery = `
+      SELECT COUNT(*) as count
+      FROM products
+      WHERE tenant_id = $1
+    `
+    
+    const totalProductsResult = await executeWithTenant<{ count: string }>(
+      tenantContext.user.tenant_id,
+      totalProductsQuery,
+      [tenantContext.user.tenant_id]
+    )
+    
+    const totalProducts = parseInt(totalProductsResult[0]?.count || '0')
+    counts.totalProducts = totalProducts  // Set the totalProducts in counts object
+    
+    // Get EGDC (own inventory) count for warehouse breakdown
     const egdcCountQuery = `
       SELECT COUNT(*) as count
       FROM products
@@ -132,7 +151,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: counts,
-      message: `Product counts: EGDC ${counts.egdc}, FAMI ${counts.fami}, Osiel ${counts.osiel}, Molly ${counts.molly}`
+      message: `Product counts: Total ${counts.totalProducts}, EGDC ${counts.egdc}, FAMI ${counts.fami}, Osiel ${counts.osiel}, Molly ${counts.molly}`
     })
 
   } catch (error) {

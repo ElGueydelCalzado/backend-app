@@ -1,134 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authConfig } from '@/lib/auth-config'
+import { getToken } from 'next-auth/jwt'
 import { Pool } from 'pg'
 import { createSecureDatabaseConfig } from '@/lib/database-config'
 
-// Database connection for registration operations
-let pool: Pool | null = null
+const pool = new Pool(createSecureDatabaseConfig())
 
-function getRegistrationPool(): Pool {
-  if (!pool) {
-    pool = new Pool(createSecureDatabaseConfig())
-  }
-  return pool
-}
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Get current session to verify user is authenticated
-    const session = await getServerSession(authConfig)
+    // Get the user's token to see if they're authenticated
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    })
+
+    if (!token || !token.email) {
+      console.log('❌ No token or email found in complete-registration')
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Get signup preferences from localStorage (passed via URL params for server-side)
+    const url = new URL(request.url)
+    const accountType = url.searchParams.get('accountType') || 'retailer'
+    const username = url.searchParams.get('username') || ''
+
+    console.log('🔄 Complete registration for:', {
+      email: token.email,
+      accountType,
+      username
+    })
+
+    // Check if user already has a tenant
+    if (token.tenant_id && token.tenant_subdomain) {
+      console.log('✅ User already has tenant, redirecting to dashboard')
+      const businessRoute = token.business_type === 'supplier' ? 's' : 'r'
+      return NextResponse.redirect(new URL(`/${token.tenant_subdomain}/${businessRoute}/dashboard`, request.url))
+    }
+
+    // Create tenant and user in database
+    const client = await pool.connect()
     
-    if (!session?.user || !session.registration_required) {
-      return NextResponse.json({
-        success: false,
-        error: 'Unauthorized or registration not required'
-      }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { business_name, subdomain, plan } = body
-
-    // Validate required fields
-    if (!business_name || !subdomain || !plan) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing required fields: business_name, subdomain, plan'
-      }, { status: 400 })
-    }
-
-    // Validate subdomain format
-    const subdomainRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/
-    if (subdomain.length < 3 || subdomain.length > 20 || !subdomainRegex.test(subdomain)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid subdomain format. Must be 3-20 characters, lowercase letters, numbers, and hyphens only.'
-      }, { status: 400 })
-    }
-
-    const client = await getRegistrationPool().connect()
-
     try {
       await client.query('BEGIN')
 
-      // Check if subdomain is available
-      const existingTenant = await client.query(
-        'SELECT id FROM tenants WHERE subdomain = $1',
-        [subdomain]
-      )
-
-      if (existingTenant.rows.length > 0) {
-        return NextResponse.json({
-          success: false,
-          error: 'Subdomain already taken'
-        }, { status: 409 })
+      // Generate unique tenant subdomain
+      const baseSubdomain = username || token.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
+      let tenantSubdomain = baseSubdomain
+      let counter = 1
+      
+      while (true) {
+        const existing = await client.query(`
+          SELECT id FROM tenants WHERE subdomain = $1
+        `, [tenantSubdomain])
+        
+        if (existing.rows.length === 0) break
+        
+        tenantSubdomain = `${baseSubdomain}${counter}`
+        counter++
       }
 
       // Create tenant
       const newTenant = await client.query(`
         INSERT INTO tenants (name, subdomain, email, business_type, plan, status)
-        VALUES ($1, $2, $3, 'retailer', $4, 'active')
-        RETURNING id, name, subdomain
+        VALUES ($1, $2, $3, $4, 'starter', 'active')
+        RETURNING id, name, subdomain, business_type
       `, [
-        business_name,
-        subdomain,
-        session.user.email
+        `${token.name || token.email}'s Business`,
+        tenantSubdomain,
+        token.email,
+        accountType
       ])
 
       const tenant = newTenant.rows[0]
 
-      // Set RLS context for the new tenant
+      // Set tenant context for RLS
       await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [tenant.id])
 
-      // Create user in the new tenant
-      const newUser = await client.query(`
+      // Create user
+      await client.query(`
         INSERT INTO users (tenant_id, email, name, role, google_id, status)
         VALUES ($1, $2, $3, 'admin', $4, 'active')
-        RETURNING id
-      `, [
-        tenant.id,
-        session.user.email,
-        session.user.name,
-        session.user.id // Use session ID as Google ID
-      ])
+      `, [tenant.id, token.email, token.name, token.sub])
 
       await client.query('COMMIT')
 
-      console.log('✅ Registration completed successfully:', {
-        email: session.user.email,
+      console.log('✅ Registration completed:', {
         tenant_id: tenant.id,
         tenant_subdomain: tenant.subdomain,
-        user_id: newUser.rows[0].id
+        business_type: tenant.business_type
       })
 
-      // Return success with tenant info
-      return NextResponse.json({
-        success: true,
-        tenant: {
-          id: tenant.id,
-          name: tenant.name,
-          subdomain: tenant.subdomain
-        }
-      })
+      // Redirect to appropriate dashboard
+      const businessRoute = tenant.business_type === 'supplier' ? 's' : 'r'
+      return NextResponse.redirect(new URL(`/${tenant.subdomain}/${businessRoute}/dashboard`, request.url))
 
     } catch (error) {
       await client.query('ROLLBACK')
-      console.error('❌ Registration completion failed:', error)
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Registration completion failed. Please try again.'
-      }, { status: 500 })
-
+      console.error('❌ Registration failed:', error)
+      return NextResponse.redirect(new URL('/signup?error=registration_failed', request.url))
     } finally {
       client.release()
     }
 
   } catch (error) {
-    console.error('❌ Complete registration API error:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Internal server error'
-    }, { status: 500 })
+    console.error('❌ Complete registration error:', error)
+    return NextResponse.redirect(new URL('/signup?error=server_error', request.url))
   }
+}
+
+export async function POST(request: NextRequest) {
+  return GET(request) // Handle both GET and POST
 }

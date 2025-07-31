@@ -12,6 +12,7 @@ import LoadingScreen from '@/components/LoadingScreen'
 import ToastNotification, { useToast } from '@/components/ToastNotification'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import TabNavigation from '@/components/TabNavigation'
+import TenantSelector from '@/components/TenantSelector'
 import UnifiedSearchAndFilters from '@/components/UnifiedSearchAndFilters'
 import BulkUpdateModal from '@/components/BulkUpdateModal'
 import BulkDeleteConfirmModal from '@/components/BulkDeleteConfirmModal'
@@ -535,10 +536,11 @@ export default function TenantInventoryPage() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <TabNavigation currentTab="inventario" />
+        <TenantSelector currentTenant={tenant} />
       </header>
 
       {/* Main Content */}
-      <main className="flex flex-col h-[calc(100vh-120px)]">
+      <main className="flex flex-col h-[calc(100vh-160px)]">
         {/* Warehouse Tabs */}
         <WarehouseTabs
           activeWarehouse={activeWarehouse}
@@ -548,7 +550,7 @@ export default function TenantInventoryPage() {
         />
 
         {/* Search and Actions Bar */}
-        <div className="px-6 py-3 bg-white border-b border-gray-200">
+        <div className="px-6 py-4 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 max-w-2xl">
               <UnifiedSearchAndFilters
@@ -570,7 +572,7 @@ export default function TenantInventoryPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowImportExportModal(true)}
-                className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                className="egdc-btn egdc-btn-primary"
               >
                 <span>🔄</span>
                 Importar / Exportar
@@ -579,14 +581,14 @@ export default function TenantInventoryPage() {
                 <>
                   <button
                     onClick={() => setShowBulkUpdateModal(true)}
-                    className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                    className="egdc-btn egdc-btn-secondary"
                   >
                     <span>📝</span>
                     Editar {selectedProducts.size}
                   </button>
                   <button
                     onClick={() => setShowBulkDeleteModal(true)}
-                    className="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+                    className="egdc-btn egdc-btn-danger"
                     disabled={saving}
                   >
                     <span>🗑️</span>
@@ -595,6 +597,15 @@ export default function TenantInventoryPage() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Inventory Section Header */}
+        <div className="px-6 py-3 bg-white border-b border-gray-200">
+          <div className="egdc-section-header">
+            <h2 className="egdc-table-title">
+              📦 Inventario EGDC {totalItems} productos
+            </h2>
           </div>
         </div>
         
@@ -607,7 +618,7 @@ export default function TenantInventoryPage() {
             }}
             resetKeys={[editedView.length]}
             fallback={
-              <div className="bg-white rounded-xl shadow-lg border border-red-200 p-8 text-center h-full flex flex-col justify-center">
+              <div className="egdc-card p-8 text-center h-full flex flex-col justify-center border-red-200">
                 <div className="text-red-600 text-6xl mb-4">⚠️</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Error en la tabla</h3>
                 <p className="text-gray-600 mb-4">
@@ -615,36 +626,38 @@ export default function TenantInventoryPage() {
                 </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors inline-block mx-auto"
+                  className="egdc-btn egdc-btn-danger mx-auto"
                 >
                   Recargar página
                 </button>
               </div>
             }
           >
-            <InventoryTable
-              editedView={editedView}
-              onCellEdit={handleCellEdit}
-              onSave={() => {}} // Auto-save handles individual changes
-              onCancel={() => {}}
-              saving={saving}
-              columnConfig={columnConfig}
-              onAddRow={() => {}}
-              onRemoveRow={() => {}}
-              selectedProducts={selectedProducts}
-              onProductSelect={handleProductSelect}
-              onSelectAll={handleSelectAll}
-              autoSave={true}
-              onAutoSave={handleAutoSave}
-              isSupplierView={false}
-              supplierName="EGDC"
-              onBuyProduct={() => {}}
-            />
+            <div className="egdc-table">
+              <InventoryTable
+                editedView={editedView}
+                onCellEdit={handleCellEdit}
+                onSave={() => {}} // Auto-save handles individual changes
+                onCancel={() => {}}
+                saving={saving}
+                columnConfig={columnConfig}
+                onAddRow={() => {}}
+                onRemoveRow={() => {}}
+                selectedProducts={selectedProducts}
+                onProductSelect={handleProductSelect}
+                onSelectAll={handleSelectAll}
+                autoSave={true}
+                onAutoSave={handleAutoSave}
+                isSupplierView={false}
+                supplierName="EGDC"
+                onBuyProduct={() => {}}
+              />
+            </div>
           </ErrorBoundary>
         </div>
         
         {/* Pagination */}
-        <div className="flex-shrink-0 px-6 py-4 bg-white border-t shadow-sm">
+        <div className="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-200">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

@@ -27,6 +27,11 @@ export default async function middleware(request: NextRequest) {
   const tenant = extractTenantFromPath(url.pathname)
   const isAppDomainAccess = isAppDomain(hostname)
   
+  // Check for supplier/retailer routing patterns
+  const isSupplierRoute = url.pathname.includes('/s/')
+  const isRetailerRoute = url.pathname.includes('/r/')
+  const hasBusinessTypeRoute = isSupplierRoute || isRetailerRoute
+  
   // Prioritize hardcoded tenant validation first (for performance and reliability)
   let tenantValidation = { isValid: false, config: null }
   if (tenant) {
@@ -122,16 +127,22 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.redirect(registrationUrl)
     }
     
-    // If user is authenticated, redirect to their tenant dashboard
+    // If user is authenticated, redirect to their tenant dashboard based on business type
     if (token?.tenant_subdomain) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
-      const tenantUrl = `${baseUrl}/${cleanTenant}/dashboard`
+      
+      // Determine the business type route based on token or default to retailer
+      const businessType = token.business_type || 'retailer'
+      const businessRoute = businessType === 'supplier' ? 's' : 'r'
+      const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       
       console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
         email: token.email,
         tenant_path: token.tenant_subdomain, // Used as path in path-based architecture
         cleanTenant,
+        businessType,
+        businessRoute,
         redirectUrl: tenantUrl,
         timestamp: new Date().toISOString()
       })
@@ -214,7 +225,15 @@ export default async function middleware(request: NextRequest) {
       // Create a clean redirect URL without causing loops
       const baseUrl = getBaseUrl(hostname)
       const loginUrl = new URL(`${baseUrl}/login`)
-      loginUrl.searchParams.set('callbackUrl', `${baseUrl}/${tenant}/dashboard`)
+      
+      // Set callbackUrl based on business type route
+      if (hasBusinessTypeRoute) {
+        const businessRoute = isSupplierRoute ? 's' : 'r'
+        loginUrl.searchParams.set('callbackUrl', `${baseUrl}/${tenant}/${businessRoute}/dashboard`)
+      } else {
+        // Default fallback - let auth config handle routing
+        loginUrl.searchParams.set('callbackUrl', `${baseUrl}/${tenant}/dashboard`)
+      }
       
       return NextResponse.redirect(loginUrl)
     }
@@ -336,10 +355,14 @@ export default async function middleware(request: NextRequest) {
     if (token?.tenant_subdomain) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
-      const tenantUrl = `${baseUrl}/${cleanTenant}/dashboard`
+      
+      // Determine the business type route based on token or default to retailer
+      const businessType = token.business_type || 'retailer'
+      const businessRoute = businessType === 'supplier' ? 's' : 'r'
+      const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       
       // ANTI-LOOP: Ensure we're not redirecting to the same URL that referred us
-      if (referer && referer.includes(`/${cleanTenant}/dashboard`)) {
+      if (referer && (referer.includes(`/${cleanTenant}/s/dashboard`) || referer.includes(`/${cleanTenant}/r/dashboard`))) {
         console.warn('⚠️ Potential loop detected - allowing dashboard component to handle routing')
         return NextResponse.next()
       }
@@ -348,6 +371,8 @@ export default async function middleware(request: NextRequest) {
         email: token.email,
         tenant_path: token.tenant_subdomain,
         cleanTenant,
+        businessType,
+        businessRoute,
         redirectUrl: tenantUrl,
         redirectCount: redirectCount + 1
       })

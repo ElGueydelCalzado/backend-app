@@ -2,32 +2,89 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { 
   ShoppingCart, Package, Users, TrendingUp, 
   ArrowRight, CheckCircle2, Building, 
-  Truck, BarChart3, Zap
+  Truck, BarChart3, Zap, Chrome, Mail, AlertCircle,
+  Loader2
 } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
-  const [selectedType, setSelectedType] = useState<'retailer' | 'supplier' | null>(null)
+  const [accountType, setAccountType] = useState<'retailer' | 'supplier'>('retailer')
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleTypeSelection = (type: 'retailer' | 'supplier') => {
-    setSelectedType(type)
-    // Add a small delay for visual feedback
-    setTimeout(() => {
-      router.push(`/signup/${type}`)
-    }, 300)
+  const handleGoogleSignup = async () => {
+    setIsLoading(true)
+    setError('')
+
+    try {
+      // Store the account type selection in localStorage for after OAuth
+      localStorage.setItem('signup_account_type', accountType)
+      localStorage.setItem('signup_username', username)
+      
+      await signIn('google', {
+        callbackUrl: '/api/auth/complete-registration'
+      })
+    } catch (error) {
+      setError('Google signup failed. Please try again.')
+      setIsLoading(false)
+    }
+  }
+
+  const handleDirectSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!username || !email) {
+      setError('Username and email are required')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      // Create account via API
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          business_type: accountType
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Redirect to appropriate dashboard
+        const businessRoute = accountType === 'supplier' ? 's' : 'r'
+        router.push(`/${username}/${businessRoute}/dashboard`)
+      } else {
+        setError(data.error || 'Registration failed')
+      }
+    } catch (error) {
+      setError('Registration failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
                 <span className="text-white text-lg font-bold">EG</span>
               </div>
               <div>
@@ -40,7 +97,7 @@ export default function SignupPage() {
               <span className="text-sm text-gray-600">Already have an account?</span>
               <a 
                 href="/login" 
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-orange-600 hover:text-orange-700 font-medium"
               >
                 Sign In
               </a>
@@ -50,206 +107,170 @@ export default function SignupPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Join the Future of <span className="text-blue-600">B2B Commerce</span>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Create Your <span className="text-orange-600">Business Account</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Whether you're buying or selling wholesale, our platform connects businesses 
-            and streamlines operations for maximum efficiency and growth.
+          <p className="text-lg text-gray-600">
+            Get started with our B2B platform in just a few steps
           </p>
         </div>
 
-        {/* Account Type Selection */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Retailer Card */}
-          <div 
-            className={`relative bg-white rounded-2xl shadow-xl p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-              selectedType === 'retailer' ? 'ring-4 ring-blue-500 transform -translate-y-2' : ''
-            }`}
-            onClick={() => handleTypeSelection('retailer')}
-          >
-            <div className="absolute top-6 right-6">
-              {selectedType === 'retailer' ? (
-                <CheckCircle2 className="w-8 h-8 text-blue-600" />
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center" role="alert">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+            <span className="text-red-700">{error}</span>
+          </div>
+        )}
+
+        {/* Signup Form */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <form onSubmit={handleDirectSignup} className="space-y-6">
+            {/* Account Type Toggle */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Account Type
+              </label>
+              <div className="flex rounded-lg bg-gray-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setAccountType('retailer')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+                    accountType === 'retailer'
+                      ? 'bg-white text-orange-600 shadow-sm ring-1 ring-orange-200'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>Retailer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType('supplier')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+                    accountType === 'supplier'
+                      ? 'bg-white text-orange-600 shadow-sm ring-1 ring-orange-200'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Building className="w-4 h-4" />
+                  <span>Supplier</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Username Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Business Username (Subdomain)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="your-business-name"
+                  required
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                  .lospapatos.com
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                This will be your business URL: app.lospapatos.com/{username}
+              </p>
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Business Email
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="contact@yourbusiness.com"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Account Type Description */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              {accountType === 'retailer' ? (
+                <div className="flex items-start space-x-3">
+                  <ShoppingCart className="w-5 h-5 text-orange-600 mt-1" />
+                  <div>
+                    <h3 className="font-medium text-gray-900">Retailer Account</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Perfect for buying wholesale products from suppliers. Access product catalogs, 
+                      place orders, and manage your inventory.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                <ArrowRight className="w-8 h-8 text-gray-400" />
+                <div className="flex items-start space-x-3">
+                  <Building className="w-5 h-5 text-orange-600 mt-1" />
+                  <div>
+                    <h3 className="font-medium text-gray-900">Supplier Account</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Perfect for selling wholesale products to retailers. Manage your catalog, 
+                      process orders, and connect with buyers.
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4">
-                <ShoppingCart className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">I'm a Retailer</h2>
-              <p className="text-gray-600">
-                Buy wholesale products directly from suppliers and manufacturers
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Package className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-gray-700">Browse supplier catalogs</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-gray-700">Compare prices and terms</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-gray-700">Place orders instantly</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-gray-700">Track inventory and sales</span>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-gray-900 mb-2">Perfect for:</h3>
-              <div className="flex flex-wrap gap-2">
-                {['Shoe Stores', 'Fashion Retailers', 'Online Merchants', 'Distributors'].map((tag) => (
-                  <span key={tag} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Supplier Card */}
-          <div 
-            className={`relative bg-white rounded-2xl shadow-xl p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-              selectedType === 'supplier' ? 'ring-4 ring-green-500 transform -translate-y-2' : ''
-            }`}
-            onClick={() => handleTypeSelection('supplier')}
-          >
-            <div className="absolute top-6 right-6">
-              {selectedType === 'supplier' ? (
-                <CheckCircle2 className="w-8 h-8 text-green-600" />
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading || !username || !email}
+              className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  Creating Account...
+                </>
               ) : (
-                <ArrowRight className="w-8 h-8 text-gray-400" />
+                <>
+                  Create Account
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
               )}
-            </div>
+            </button>
+          </form>
 
-            <div className="mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-4">
-                <Building className="w-8 h-8 text-white" />
+          {/* Divider */}
+          <div className="my-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">I'm a Supplier</h2>
-              <p className="text-gray-600">
-                Sell wholesale products to retailers and expand your market reach
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Package className="w-4 h-4 text-green-600" />
-                </div>
-                <span className="text-gray-700">Manage product catalogs</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-green-600" />
-                </div>
-                <span className="text-gray-700">Connect with retailers</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Truck className="w-4 h-4 text-green-600" />
-                </div>
-                <span className="text-gray-700">Process orders efficiently</span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </div>
-                <span className="text-gray-700">Grow your business</span>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-gray-900 mb-2">Perfect for:</h3>
-              <div className="flex flex-wrap gap-2">
-                {['Manufacturers', 'Wholesalers', 'Distributors', 'Brands'].map((tag) => (
-                  <span key={tag} className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
-                    {tag}
-                  </span>
-                ))}
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 text-gray-500 bg-white">Or continue with</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Features Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-            Why Choose Our Platform?
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Lightning Fast</h3>
-              <p className="text-gray-600 text-sm">
-                Process orders and manage inventory in real-time with our optimized platform
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Data-Driven</h3>
-              <p className="text-gray-600 text-sm">
-                Make informed decisions with comprehensive analytics and reporting tools
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Connected</h3>
-              <p className="text-gray-600 text-sm">
-                Build stronger relationships with integrated communication and collaboration tools
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">
-            Not sure which option is right for you?
-          </p>
-          <a 
-            href="mailto:support@lospapatos.com" 
-            className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+          {/* Google OAuth Button */}
+          <button
+            onClick={handleGoogleSignup}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <span>Contact our team for guidance</span>
-            <ArrowRight className="w-4 h-4" />
-          </a>
+            <Chrome className="w-5 h-5 text-gray-600" />
+            <span className="font-medium text-gray-900">Continue with Google</span>
+          </button>
         </div>
       </div>
     </div>

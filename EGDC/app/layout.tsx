@@ -9,6 +9,7 @@ import './globals.css'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Providers } from './providers'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import PWAInstallPrompt, { PWAUpdatePrompt } from '@/components/PWAInstallPrompt'
 import OfflineManager from '@/components/OfflineManager'
 import PerformanceOptimizer from '@/components/PerformanceOptimizer'
@@ -88,19 +89,21 @@ export default function RootLayout({
         ></div>
         
         <Providers>
-          <PerformanceOptimizer>
-            <AccessibilityProvider>
-              <OfflineManager>
-                <ErrorBoundary level="app">
-                  <div id="main-content" tabIndex={-1}>
-                    {children}
-                  </div>
-                  <PWAInstallPrompt />
-                  <PWAUpdatePrompt />
-                </ErrorBoundary>
-              </OfflineManager>
-            </AccessibilityProvider>
-          </PerformanceOptimizer>
+          <ThemeProvider>
+            <PerformanceOptimizer>
+              <AccessibilityProvider>
+                <OfflineManager>
+                  <ErrorBoundary level="app">
+                    <div id="main-content" tabIndex={-1}>
+                      {children}
+                    </div>
+                    <PWAInstallPrompt />
+                    <PWAUpdatePrompt />
+                  </ErrorBoundary>
+                </OfflineManager>
+              </AccessibilityProvider>
+            </PerformanceOptimizer>
+          </ThemeProvider>
         </Providers>
         
         {/* Service Worker Registration */}

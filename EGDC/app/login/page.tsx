@@ -267,9 +267,9 @@ function LoginPageContent() {
             Don't have an account?{' '}
             <a 
               href="/signup" 
-              className="text-blue-400 hover:text-blue-300 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
+              className="text-orange-400 hover:text-orange-300 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
             >
-              Sign up here
+              Create your business account
             </a>
           </p>
           
