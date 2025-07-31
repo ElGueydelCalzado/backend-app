@@ -4,14 +4,14 @@ import { getServerSession } from 'next-auth'
 import { authConfig } from './auth-config'
 import { NextRequest } from 'next/server'
 
-// Database connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+// SECURITY: Secure database connection pool for tenant context operations
+import { createSecureDatabaseConfig, validateDatabaseConfig } from './database-config'
+
+// Validate configuration on startup
+validateDatabaseConfig()
+
+// Database connection pool with secure SSL configuration
+const pool = new Pool(createSecureDatabaseConfig())
 
 // Extended session type with tenant information
 // Note: tenant_subdomain now used as tenant_slug in path-based architecture
@@ -30,22 +30,7 @@ export interface TenantSession {
 // Get tenant context from session
 export async function getTenantContext(req: NextRequest): Promise<TenantSession | null> {
   try {
-    // Check if SKIP_AUTH is enabled for development/testing
-    if (process.env.SKIP_AUTH === 'true' && process.env.NODE_ENV === 'development') {
-      console.log('🧪 SKIP_AUTH mode - providing default EGDC tenant context')
-      return {
-        user: {
-          id: 'test-user',
-          email: 'elweydelcalzado@gmail.com',
-          name: 'Test User',
-          tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
-          role: 'admin',
-          tenant_name: 'EGDC',
-          tenant_subdomain: 'egdc'
-        }
-      }
-    }
-
+    // SECURITY: Authentication bypass removed - all environments require proper authentication
     const session = await getServerSession(authConfig) as TenantSession
     
     console.log('🔍 Session debug (v2):', {

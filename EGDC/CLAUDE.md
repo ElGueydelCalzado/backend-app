@@ -4,22 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**EGDC** is a **production-ready Next.js 15 SaaS multi-tenant inventory management platform** for footwear businesses, built with TypeScript and PostgreSQL. It's a complete B2B marketplace featuring real-time inventory tracking, automated pricing calculations, supplier integration, comprehensive multi-business warehouse management, automated tenant provisioning, and centralized authentication.
+**Los Papatos** is a **comprehensive 3-part footwear ecosystem** combining B2B SaaS, B2B2C e-commerce, and affiliate marketing into a unified platform. Built with Next.js 15, TypeScript, and PostgreSQL, it serves retailers, suppliers, consumers, and affiliates through integrated but distinct applications.
 
-**🌐 NEW DOMAIN**: Successfully migrated to **lospapatos.com** with automated subdomain provisioning for multi-tenant SaaS architecture.
+**🌐 ECOSYSTEM DOMAINS**: 
+- **lospapatos.com** → Consumer E-commerce Store  
+- **app.lospapatos.com** → Business Management Hub  
+- **auth.lospapatos.com** → Unified Authentication Portal
 
 ## Current Project Status - JANUARY 2025
 
-✅ **PRODUCTION SaaS PLATFORM** - Complete multi-tenant B2B marketplace  
-✅ **DOMAIN MIGRATED** - All systems running on **lospapatos.com** architecture  
-✅ **CENTRALIZED AUTH** - **login.lospapatos.com** for all users  
-✅ **AUTOMATED TENANTS** - Automatic subdomain creation for new suppliers  
-✅ **B2B MARKETPLACE** - Purchase orders between retailers and suppliers  
-✅ **DYNAMIC COLUMNS** - Real-time customizable product fields  
-✅ **ADVANCED AUTH** - Google OAuth + test credentials + multi-provider ready  
-✅ **ADMIN DASHBOARD** - Domain management and tenant administration  
-✅ **COMPREHENSIVE TESTING** - 7/7 core functionality tests passing  
-✅ **CODEBASE OPTIMIZED** - Clean architecture with legacy code identified for cleanup  
+🎯 **ECOSYSTEM TRANSFORMATION IN PROGRESS** - Expanding B2B platform into comprehensive 3-part footwear ecosystem
+
+### **✅ COMPLETED FOUNDATION**
+- ✅ **B2B SaaS Platform** - Multi-tenant inventory management operational
+- ✅ **Domain Architecture** - **lospapatos.com** with automated provisioning
+- ✅ **Centralized Auth** - **login.lospapatos.com** authentication system
+- ✅ **Database Foundation** - PostgreSQL with tenant isolation (2,511 products)
+- ✅ **Purchase Orders** - B2B marketplace between retailers/suppliers
+- ✅ **Automated Pricing** - Database-calculated pricing algorithms
+- ✅ **Testing Suite** - 7/7 core functionality tests passing
+
+### **🔄 ECOSYSTEM EXPANSION PLAN**
+- 🔄 **Consumer Store** - E-commerce platform at **lospapatos.com**
+- 🔄 **Affiliate Program** - Commission-based referral system
+- 🔄 **Business Hub** - Enhanced B2B platform at **app.lospapatos.com**
+- 🔄 **Unified Auth** - Multi-tier authentication at **auth.lospapatos.com**  
 
 ## Development Commands
 
@@ -109,56 +118,78 @@ git push origin --delete feature/descriptive-name
 - **Icons**: Lucide React 0.525.0
 - **Development**: ESLint, PostCSS, Autoprefixer
 
-### **🏗️ Multi-Tenant SaaS Architecture**
+### **🏗️ 3-Part Ecosystem Architecture**
 
 ```
-login.lospapatos.com     → Centralized Authentication Portal
-├── egdc.lospapatos.com  → EGDC Retailer (Full Access)
-├── fami.lospapatos.com  → FAMI Supplier (Catalog + Orders)
-├── osiel.lospapatos.com → Osiel Supplier (Catalog + Orders)
-└── molly.lospapatos.com → Molly Supplier (Catalog + Orders)
+auth.lospapatos.com               → Unified Authentication Hub
+├── /consumer                     → Consumer login & registration
+├── /business                     → B2B authentication (retailers/suppliers)  
+└── /affiliate                    → Affiliate program authentication
+
+lospapatos.com                    → Consumer E-commerce Store
+├── /                             → Product catalog & shopping
+├── /account                      → Consumer dashboard  
+├── /affiliate                    → Affiliate program portal
+└── /api/public                   → Public e-commerce API
+
+app.lospapatos.com                → Business Management Hub
+├── /r/{workspace}/               → Retailer Backend (private - you only)
+│   ├── /inventory                → Advanced inventory management
+│   ├── /suppliers                → Supplier relationship management
+│   ├── /orders                   → Consumer order fulfillment
+│   └── /analytics                → Business intelligence
+└── /s/{supplier-name}/           → Supplier SaaS Workspaces
+    ├── /catalog                  → Product catalog management
+    ├── /orders                   → B2B & B2C order management
+    ├── /customers                → Customer analytics
+    └── /billing                  → Subscription management
 ```
 
-**Domain Architecture:**
-- **Centralized Login**: `login.lospapatos.com` handles all authentication
-- **Tenant Workspaces**: `{tenant}.lospapatos.com` for business-specific access
-- **Automated Provisioning**: New suppliers get subdomains automatically via Vercel API
-- **Middleware Routing**: Smart routing based on subdomain and session
+**Ecosystem Architecture:**
+- **Consumer Store**: Public e-commerce at `lospapatos.com`
+- **Business Hub**: B2B applications at `app.lospapatos.com`
+- **Unified Auth**: All user types at `auth.lospapatos.com`
+- **Smart Routing**: Context-aware authentication and workspace access
 
-### Key Features Implemented
+### Ecosystem Features Overview
 
-#### 🔥 **Multi-Tenant B2B SaaS Platform**
-- **Automated Tenant Creation**: New suppliers get full workspace setup automatically
-- **Centralized Authentication**: Single login portal for all users with tenant resolution
-- **Subdomain Routing**: Intelligent middleware routing with session validation
-- **Cross-Tenant B2B**: Purchase orders between retailers and suppliers
-- **Row Level Security**: Complete database isolation between tenants
-- **Domain Management**: Automated Vercel domain provisioning and SSL certificates
-- **Real-time Dashboard**: Admin interface for tenant and domain management
+#### 🏪 **Consumer E-commerce Store (lospapatos.com)**
+- **Product Catalog**: Advanced search, filtering, and recommendations
+- **Shopping Experience**: Cart, wishlist, quick checkout, guest checkout
+- **User Accounts**: Order history, loyalty points, birthday discounts
+- **Affiliate Integration**: Referral tracking and commission management
+- **Mobile Optimization**: Progressive Web App (PWA) capabilities
+- **Payment Methods**: Stripe, PayPal, OXXO, bank transfers
+- **Inventory Sync**: Real-time stock updates from business systems
 
-#### 🎯 **Advanced Inventory Management**
-- **Real-time Table Editing**: Direct cell editing with auto-save functionality
-- **Automated Pricing System**: Database-calculated prices with platform-specific formulas
-- **Dynamic Columns System**: Real-time customizable product fields per tenant
-- **Multi-warehouse Inventory**: Independent inventory tracking across locations
-- **Comprehensive Search**: Advanced filtering with hierarchical categories
-- **Bulk Operations**: UPSERT-based import/export with conflict resolution
-- **Google Drive Integration**: Product image galleries with preview modal
+#### 🏢 **Business Management Hub (app.lospapatos.com)**
+- **Retailer Backend** (`/r/{workspace}/`):
+  - Advanced inventory management with automated pricing
+  - Supplier relationship and purchase order management
+  - Consumer order fulfillment and shipping
+  - Business intelligence and analytics dashboard
+  - Multi-warehouse inventory coordination
 
-#### 📊 **B2B Marketplace Functionality**
-- **Supplier Catalogs**: Read-only product views with wholesale pricing
-- **Purchase Order System**: Complete order lifecycle management
-- **Cross-Tenant Orders**: Retailers can order from multiple suppliers
-- **Inventory Impact**: Automatic inventory updates upon order fulfillment
-- **Supplier Notifications**: Automated order confirmations and updates
+- **Supplier SaaS Workspaces** (`/s/{supplier}/`):
+  - Product catalog management with B2C integration
+  - B2B and B2C order processing
+  - Customer analytics and relationship management
+  - Subscription billing and usage tracking
+  - API access for third-party integrations
 
-#### 🎨 **Modern UI/UX System**
-- **Responsive Design**: Mobile-first design across all components
-- **Component Library**: 30+ TypeScript React components
-- **Loading States**: Comprehensive loading animations and states
-- **Toast Notifications**: Modern feedback system with queue management
-- **Error Boundaries**: App-level error handling and recovery
-- **Accessibility**: ARIA labels and keyboard navigation support
+#### 🔐 **Unified Authentication System (auth.lospapatos.com)**
+- **Multi-Tier Users**: Consumers, affiliates, retailers, suppliers
+- **Single Sign-On**: OAuth integration (Google, Apple, Facebook)
+- **Smart Routing**: Context-aware workspace redirection
+- **Role Management**: Granular permissions across user types
+- **Security**: Enterprise-grade authentication with 2FA support
+
+#### 💰 **Revenue Streams Integration**
+- **B2C E-commerce**: Product sales margins (30-60%)
+- **B2B SaaS Subscriptions**: Supplier workspace fees ($99-$499/month)
+- **Affiliate Commissions**: Performance-based referral fees (3-8%)
+- **Transaction Fees**: B2B purchase order processing (2-3%)
+- **Premium Features**: Advanced analytics, API access, integrations
 
 ### Database Schema
 

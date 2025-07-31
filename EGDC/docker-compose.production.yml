@@ -1,0 +1,356 @@
+# ENTERPRISE PRODUCTION DOCKER COMPOSE
+# High availability configuration with load balancing, monitoring, and disaster recovery
+
+version: '3.8'
+
+networks:
+  egdc_frontend:
+    driver: bridge
+  egdc_backend:
+    driver: bridge
+    internal: true
+  egdc_monitoring:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_cache:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+services:
+  # Load Balancer / Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - egdc_frontend
+    depends_on:
+      - app-1
+      - app-2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application instances (for load balancing)
+  app-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://egdc_user:${POSTGRES_PASSWORD}@postgres:5432/egdc_production
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - SHOPIFY_ACCESS_TOKEN=${SHOPIFY_ACCESS_TOKEN}
+      - MERCADOLIBRE_CLIENT_ID=${MERCADOLIBRE_CLIENT_ID}
+    networks:
+      - egdc_frontend
+      - egdc_backend
+      - egdc_monitoring
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  app-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://egdc_user:${POSTGRES_PASSWORD}@postgres:5432/egdc_production
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - SHOPIFY_ACCESS_TOKEN=${SHOPIFY_ACCESS_TOKEN}
+      - MERCADOLIBRE_CLIENT_ID=${MERCADOLIBRE_CLIENT_ID}
+    networks:
+      - egdc_frontend
+      - egdc_backend
+      - egdc_monitoring
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Database with replication
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=egdc_production
+      - POSTGRES_USER=egdc_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/production-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - egdc_backend
+    restart: unless-stopped
+    command: |
+      postgres 
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U egdc_user -d egdc_production"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    command: |
+      redis-server 
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    networks:
+      - egdc_backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-lifecycle'
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # Grafana for monitoring dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+
+  # cAdvisor for container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  # Backup service
+  backup:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:ro
+      - ./backups:/backups
+    networks:
+      - egdc_backend
+    restart: "no"
+    environment:
+      - POSTGRES_USER=egdc_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=egdc_production
+    command: |
+      sh -c '
+        while true; do
+          pg_dump -h postgres -U egdc_user egdc_production | gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
+          find /backups -name "backup_*.sql.gz" -mtime +7 -delete
+          sleep 21600
+        done
+      '
+
+  # Log aggregation
+  fluentd:
+    image: fluent/fluentd:latest
+    volumes:
+      - ./logging/fluentd.conf:/fluentd/etc/fluent.conf:ro
+      - /var/log:/var/log:ro
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    ports:
+      - "24224:24224"
+
+  # Elasticsearch for log storage
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - egdc_monitoring
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+  # Health check service
+  healthcheck:
+    image: alpine:latest
+    volumes:
+      - ./scripts/healthcheck.sh:/healthcheck.sh:ro
+    networks:
+      - egdc_frontend
+      - egdc_monitoring
+    restart: unless-stopped
+    command: |
+      sh -c '
+        apk add --no-cache curl
+        chmod +x /healthcheck.sh
+        while true; do
+          /healthcheck.sh
+          sleep 30
+        done
+      '

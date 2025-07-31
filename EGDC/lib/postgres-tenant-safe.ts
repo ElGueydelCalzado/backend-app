@@ -3,17 +3,14 @@
 
 import { Pool } from 'pg'
 
-// Database connection configuration
-const config = {
-  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-}
+// SECURITY: Secure database connection configuration for tenant-safe operations
+import { createSecureDatabaseConfig, validateDatabaseConfig } from './database-config'
 
-// Create a connection pool
-const pool = new Pool(config)
+// Validate configuration on startup
+validateDatabaseConfig()
+
+// Create a secure connection pool with proper SSL configuration
+const pool = new Pool(createSecureDatabaseConfig())
 
 // Handle pool errors
 pool.on('error', (err, client) => {
@@ -187,7 +184,7 @@ export class TenantSafePostgresManager {
     
     if (excludeId) {
       conditions.push(`id != $${paramIndex}`)
-      params.push(excludeId)
+      params.push(excludeId.toString())
       paramIndex++
     }
     

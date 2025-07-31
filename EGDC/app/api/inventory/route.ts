@@ -2,12 +2,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getTenantContext, executeWithTenant } from '@/lib/tenant-context'
 import { mockInventoryAPI } from '@/lib/mock-data'
+import { getDevelopmentConfig } from '@/lib/dev-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Use mock data in preview environment
-    if (process.env.USE_MOCK_DATA === 'true') {
-      console.log('Using mock data for preview...')
+    // SECURITY: Use consolidated development mode check
+    const devConfig = getDevelopmentConfig()
+    const shouldUseMockData = (devConfig.isPreview || devConfig.testModeEnabled) && 
+                              process.env.USE_MOCK_DATA === 'true'
+    
+    if (shouldUseMockData) {
+      console.log('🧪 Using mock data for development/preview environment')
       const mockResult = await mockInventoryAPI.getProducts()
       return NextResponse.json({
         success: true,
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest) {
           hasNextPage: false,
           hasPreviousPage: false
         },
-        message: `Mock data: ${mockResult.data.length} products`
+        message: `Mock data: ${mockResult.data.length} products (${devConfig.isPreview ? 'preview' : 'dev'} mode)`
       })
     }
 

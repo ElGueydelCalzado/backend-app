@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getTenantContext, executeWithTenant } from '@/lib/tenant-context'
 import { mockInventoryAPI } from '@/lib/mock-data'
+import { getDevelopmentConfig } from '@/lib/dev-utils'
 
 interface WarehouseCounts {
   egdc: number
@@ -15,9 +16,13 @@ interface WarehouseCounts {
 
 export async function GET(request: NextRequest) {
   try {
-    // Use mock data in preview environment
-    if (process.env.USE_MOCK_DATA === 'true') {
-      console.log('Using mock data for product counts...')
+    // SECURITY: Use consolidated development mode check
+    const devConfig = getDevelopmentConfig()
+    const shouldUseMockData = (devConfig.isPreview || devConfig.testModeEnabled) && 
+                              process.env.USE_MOCK_DATA === 'true'
+    
+    if (shouldUseMockData) {
+      console.log('🧪 Using mock data for product counts in development/preview')
       const mockCounts: WarehouseCounts = {
         egdc: 10,
         fami: 4,
@@ -27,7 +32,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: mockCounts,
-        message: 'Mock product counts'
+        message: `Mock product counts (${devConfig.isPreview ? 'preview' : 'dev'} mode)`
       })
     }
 

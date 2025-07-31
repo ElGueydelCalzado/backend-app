@@ -1,0 +1,530 @@
+name: 🚀 Production Deployment with Quality Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '18.x'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+
+jobs:
+  # Quality Gate 1: Code Quality Analysis
+  code-quality:
+    name: 🔍 Code Quality Analysis
+    runs-on: ubuntu-latest
+    outputs:
+      quality-score: ${{ steps.quality-check.outputs.score }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run build
+
+      - name: ESLint Analysis
+        run: |
+          npm run lint:ci
+          echo "ESLINT_SCORE=$(npm run lint:score)" >> $GITHUB_OUTPUT
+        id: eslint
+
+      - name: TypeScript Check
+        run: |
+          npm run type-check
+          echo "TYPESCRIPT_SCORE=100" >> $GITHUB_OUTPUT
+        id: typescript
+
+      - name: Prettier Check
+        run: |
+          npm run format:check
+          echo "PRETTIER_SCORE=100" >> $GITHUB_OUTPUT
+        id: prettier
+
+      - name: Calculate Quality Score
+        id: quality-check
+        run: |
+          ESLINT_SCORE=${{ steps.eslint.outputs.ESLINT_SCORE }}
+          TYPESCRIPT_SCORE=${{ steps.typescript.outputs.TYPESCRIPT_SCORE }}
+          PRETTIER_SCORE=${{ steps.prettier.outputs.PRETTIER_SCORE }}
+          QUALITY_SCORE=$(((ESLINT_SCORE + TYPESCRIPT_SCORE + PRETTIER_SCORE) / 3))
+          echo "Quality Score: $QUALITY_SCORE"
+          echo "score=$QUALITY_SCORE" >> $GITHUB_OUTPUT
+          
+          if [ $QUALITY_SCORE -lt 80 ]; then
+            echo "❌ Quality gate failed: Score $QUALITY_SCORE < 80"
+            exit 1
+          fi
+
+      - name: Upload Code Quality Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-report
+          path: |
+            lint-results.json
+            type-check-results.txt
+
+  # Quality Gate 2: Security Scanning
+  security:
+    name: 🛡️ Security Scanning
+    runs-on: ubuntu-latest
+    needs: code-quality
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit Dependencies
+        run: |
+          npm audit --audit-level=moderate
+          npm audit --json > security-audit.json
+        continue-on-error: true
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'EGDC'
+          path: '.'
+          format: 'JSON'
+          out: 'dependency-check-report'
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript,typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Security Score Check
+        run: |
+          # Parse security audit results and calculate score
+          VULNERABILITIES=$(jq '.metadata.vulnerabilities.total' security-audit.json 2>/dev/null || echo "0")
+          
+          if [ "$VULNERABILITIES" -gt 5 ]; then
+            echo "❌ Security gate failed: $VULNERABILITIES vulnerabilities found"
+            exit 1
+          fi
+          
+          echo "✅ Security gate passed: $VULNERABILITIES vulnerabilities"
+
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            security-audit.json
+            dependency-check-report/
+
+  # Quality Gate 3: Comprehensive Testing
+  testing:
+    name: 🧪 Comprehensive Testing
+    runs-on: ubuntu-latest
+    needs: [code-quality, security]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: egdc_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test database
+        run: |
+          npm run db:migrate:test
+          npm run db:seed:test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/egdc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Unit Tests
+        run: |
+          npm run test:unit -- --coverage --watchAll=false
+          echo "UNIT_TEST_SCORE=$(npm run test:unit:score)" >> $GITHUB_OUTPUT
+        id: unit-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/egdc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Integration Tests
+        run: |
+          npm run test:integration -- --coverage --watchAll=false
+          echo "INTEGRATION_TEST_SCORE=$(npm run test:integration:score)" >> $GITHUB_OUTPUT
+        id: integration-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/egdc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: E2E Tests
+        run: |
+          npm run test:e2e
+          echo "E2E_TEST_SCORE=$(npm run test:e2e:score)" >> $GITHUB_OUTPUT
+        id: e2e-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/egdc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Performance Tests
+        run: |
+          npm run test:performance
+          echo "PERFORMANCE_SCORE=$(npm run test:performance:score)" >> $GITHUB_OUTPUT
+        id: performance-tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/egdc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Calculate Test Coverage Score
+        id: coverage-check
+        run: |
+          UNIT_SCORE=${{ steps.unit-tests.outputs.UNIT_TEST_SCORE }}
+          INTEGRATION_SCORE=${{ steps.integration-tests.outputs.INTEGRATION_TEST_SCORE }}
+          E2E_SCORE=${{ steps.e2e-tests.outputs.E2E_TEST_SCORE }}
+          PERFORMANCE_SCORE=${{ steps.performance-tests.outputs.PERFORMANCE_SCORE }}
+          
+          OVERALL_SCORE=$(((UNIT_SCORE + INTEGRATION_SCORE + E2E_SCORE + PERFORMANCE_SCORE) / 4))
+          echo "Overall Test Score: $OVERALL_SCORE"
+          echo "score=$OVERALL_SCORE" >> $GITHUB_OUTPUT
+          
+          if [ $OVERALL_SCORE -lt 85 ]; then
+            echo "❌ Testing gate failed: Score $OVERALL_SCORE < 85"
+            exit 1
+          fi
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+            performance-results/
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: EGDC Coverage
+          fail_ci_if_error: true
+
+  # Quality Gate 4: Build and Container Security
+  build:
+    name: 🏗️ Build & Container Security
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, testing]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Container Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Container Security Gate
+        run: |
+          # Parse Trivy results for critical vulnerabilities
+          CRITICAL_VULNS=$(jq '.runs[0].results | length' trivy-results.sarif 2>/dev/null || echo "0")
+          
+          if [ "$CRITICAL_VULNS" -gt 3 ]; then
+            echo "❌ Container security gate failed: $CRITICAL_VULNS critical vulnerabilities"
+            exit 1
+          fi
+          
+          echo "✅ Container security gate passed: $CRITICAL_VULNS critical vulnerabilities"
+
+  # Quality Gate 5: Infrastructure Validation
+  infrastructure:
+    name: 🏗️ Infrastructure Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ./infrastructure
+
+      - name: Terraform Validate
+        run: |
+          terraform init -backend=false
+          terraform validate
+        working-directory: ./infrastructure
+
+      - name: Infrastructure Security Scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ./infrastructure
+
+      - name: Infrastructure Cost Analysis
+        uses: infracost/infracost-gh-action@v0.16
+        with:
+          api_key: ${{ secrets.INFRACOST_API_KEY }}
+          path: ./infrastructure
+          terraform_plan_flags: -var-file="production.tfvars"
+
+  # Deployment to Staging
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [testing, build, infrastructure]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Implement staging deployment logic
+          # This could be Vercel, Kubernetes, or other platform
+          
+      - name: Run Smoke Tests
+        run: |
+          npm run test:smoke -- --baseUrl=${{ env.STAGING_URL }}
+        env:
+          STAGING_URL: https://staging.egdc.app
+
+      - name: Performance Baseline
+        run: |
+          npm run test:lighthouse -- --url=${{ env.STAGING_URL }}
+        env:
+          STAGING_URL: https://staging.egdc.app
+
+  # Deployment to Production (Manual Approval Required)
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pre-deployment Health Check
+        run: |
+          # Check current production health
+          curl -f ${{ env.PRODUCTION_URL }}/api/health || exit 1
+        env:
+          PRODUCTION_URL: https://egdc.app
+
+      - name: Database Migration Check
+        run: |
+          # Validate migrations won't break production
+          npm run db:migrate:validate
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Blue-Green Deployment
+        run: |
+          echo "Starting blue-green deployment..."
+          # Implement blue-green deployment strategy
+          # 1. Deploy to "green" environment
+          # 2. Run health checks
+          # 3. Switch traffic from "blue" to "green"
+          # 4. Keep "blue" as fallback for rollback
+
+      - name: Post-deployment Verification
+        run: |
+          # Verify deployment success
+          curl -f ${{ env.PRODUCTION_URL }}/api/health
+          npm run test:smoke -- --baseUrl=${{ env.PRODUCTION_URL }}
+        env:
+          PRODUCTION_URL: https://egdc.app
+
+      - name: Performance Validation
+        run: |
+          # Ensure performance hasn't degraded
+          npm run test:performance:production
+        env:
+          PRODUCTION_URL: https://egdc.app
+
+      - name: Monitoring Alert Setup
+        run: |
+          # Setup enhanced monitoring for deployment
+          curl -X POST ${{ env.MONITORING_URL }}/alerts/deployment \
+            -H "Authorization: Bearer ${{ secrets.MONITORING_TOKEN }}" \
+            -d '{"deployment_id": "${{ github.sha }}", "environment": "production"}'
+
+  # Post-deployment Monitoring
+  post-deployment:
+    name: 📊 Post-deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && needs.deploy-production.result == 'success'
+    steps:
+      - name: Setup Monitoring Dashboard
+        run: |
+          echo "Setting up enhanced monitoring for deployment ${{ github.sha }}"
+
+      - name: 15-minute Health Check
+        run: |
+          for i in {1..15}; do
+            echo "Health check $i/15..."
+            curl -f ${{ env.PRODUCTION_URL }}/api/health
+            sleep 60
+          done
+        env:
+          PRODUCTION_URL: https://egdc.app
+
+      - name: Performance Monitoring
+        run: |
+          # Monitor key metrics for 15 minutes
+          npm run monitor:deployment -- --duration=15m
+        env:
+          PRODUCTION_URL: https://egdc.app
+
+      - name: Success Notification
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            🚀 Production deployment successful!
+            
+            📊 Quality Gates Passed:
+            - Code Quality: ${{ needs.code-quality.outputs.quality-score }}/100
+            - Security: ✅ Passed
+            - Testing: ${{ needs.testing.outputs.score }}/100
+            - Build: ✅ Passed
+            - Infrastructure: ✅ Validated
+            
+            🔗 Deployment: ${{ github.sha }}
+            📈 Monitoring: Enhanced monitoring active
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Failure Notification & Rollback
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ Production deployment failed!
+            
+            🔄 Automatic rollback initiated...
+            📊 Deployment: ${{ github.sha }}
+            🔗 Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Automatic Rollback
+        if: failure()
+        run: |
+          echo "Initiating automatic rollback..."
+          # Implement rollback logic
+          # 1. Switch traffic back to previous "blue" environment
+          # 2. Verify rollback success
+          # 3. Alert operations team

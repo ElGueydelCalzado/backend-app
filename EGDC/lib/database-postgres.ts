@@ -1,14 +1,14 @@
 import { Pool, PoolClient } from 'pg'
 import { Product, ChangeLog } from './types'
 
-// PostgreSQL connection pool - disable SSL for GCP Cloud SQL compatibility
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL?.replace('?sslmode=require', ''),
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+// SECURITY: Secure PostgreSQL connection pool with proper SSL configuration
+import { createSecureDatabaseConfig, validateDatabaseConfig } from './database-config'
+
+// Validate configuration on startup
+validateDatabaseConfig()
+
+// PostgreSQL connection pool with secure SSL configuration
+const pool = new Pool(createSecureDatabaseConfig())
 
 // Database utilities for PostgreSQL
 export class DatabaseManager {

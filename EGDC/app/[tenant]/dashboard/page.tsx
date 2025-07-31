@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import LoadingScreen from '@/components/LoadingScreen'
 import TabNavigation from '@/components/TabNavigation'
+import NewRetailerOnboarding from '@/components/NewRetailerOnboarding'
 
 // Main Dashboard Component for Multi-Tenant Architecture
 export default function TenantDashboard() {
@@ -13,6 +14,8 @@ export default function TenantDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [isNewUser, setIsNewUser] = useState(false)
 
   const tenant = params.tenant as string
 
@@ -30,11 +33,31 @@ export default function TenantDashboard() {
       return
     }
 
+    // Check if this is a new user (for onboarding)
+    // If tenant is not 'egdc' (our main business), show onboarding for new retailers
+    if (tenant !== 'egdc') {
+      // Check if user should see onboarding (simple heuristic: new tenants)
+      const shouldShowOnboarding = !localStorage.getItem(`onboarding-completed-${tenant}`)
+      setShowOnboarding(shouldShowOnboarding)
+      setIsNewUser(shouldShowOnboarding)
+    }
+
     setLoading(false)
   }, [session, status, tenant, router])
 
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(`onboarding-completed-${tenant}`, 'true')
+    setShowOnboarding(false)
+    setIsNewUser(false)
+  }
+
   if (loading) {
     return <LoadingScreen text="Cargando dashboard..." />
+  }
+
+  // Show onboarding for new retailers
+  if (showOnboarding && isNewUser) {
+    return <NewRetailerOnboarding onComplete={handleOnboardingComplete} />
   }
 
   return (

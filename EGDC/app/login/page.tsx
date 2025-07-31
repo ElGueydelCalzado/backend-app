@@ -17,7 +17,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   
   // Form state
-  const [authMethod, setAuthMethod] = useState<AuthMethod>('credentials')
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('google')
   const [userType, setUserType] = useState<UserType>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -77,8 +77,11 @@ function LoginPageContent() {
           // Fallback: Get session to determine redirect - path-based architecture
           const session = await getSession()
           if (session?.user?.tenant_subdomain) {
-            const tenantPath = session.user.tenant_subdomain.replace('preview-', '').replace('mock-', '')
-            const redirectUrl = `http://localhost:3000/${tenantPath}/dashboard`
+            // Use centralized tenant utilities
+            const { cleanTenantSubdomain, getBaseUrl } = await import('@/lib/tenant-utils')
+            const tenantPath = cleanTenantSubdomain(session.user.tenant_subdomain)
+            const baseUrl = getBaseUrl()
+            const redirectUrl = `${baseUrl}/${tenantPath}/dashboard`
             console.log('🎯 Redirecting to tenant dashboard:', redirectUrl)
             window.location.href = redirectUrl
           } else {
@@ -113,40 +116,45 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        {/* Header */}
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-xl p-8">
+        {/* Brand section hidden as requested */}
+        <div className="hidden">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-2xl font-bold">EG</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
+          <p className="text-gray-300 mt-1">
             Sign in to your business workspace
           </p>
+        </div>
+        
+        {/* Accessible heading for screen readers */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white sr-only">Login to Your Account</h1>
         </div>
 
 
         {/* Error/Success Messages */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
-            <span className="text-red-700 text-sm">{error}</span>
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-600 rounded-lg flex items-center" role="alert" aria-live="polite">
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
+            <span className="text-red-200 text-sm">{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center">
-            <CheckCircle2 className="w-5 h-5 text-green-600 mr-3" />
-            <span className="text-green-700 text-sm">{success}</span>
+          <div className="mb-4 p-3 bg-green-900/50 border border-green-600 rounded-lg flex items-center" role="alert" aria-live="polite">
+            <CheckCircle2 className="w-5 h-5 text-green-400 mr-3" />
+            <span className="text-green-200 text-sm">{success}</span>
           </div>
         )}
 
-        {/* Authentication Method Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
+        {/* Authentication Method Tabs - Google first as requested */}
+        <div className="flex border-b border-gray-600 mb-6">
           {[
-            { id: 'credentials', label: 'Test Login', icon: Lock },
-            { id: 'google', label: 'Google', icon: Chrome }
+            { id: 'google', label: 'Google', icon: Chrome },
+            { id: 'credentials', label: 'Test Login', icon: Lock }
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -157,8 +165,8 @@ function LoginPageContent() {
               }}
               className={`flex-1 py-2 px-3 flex items-center justify-center space-x-2 border-b-2 text-sm font-medium transition-colors ${
                 authMethod === id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-400 text-blue-400'
+                  : 'border-transparent text-white hover:text-blue-300'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -171,7 +179,7 @@ function LoginPageContent() {
         {authMethod === 'credentials' && (
           <form onSubmit={handleCredentialsLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 Username
               </label>
               <div className="relative">
@@ -180,7 +188,7 @@ function LoginPageContent() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                   placeholder="test"
                   required
                 />
@@ -188,7 +196,7 @@ function LoginPageContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 Password
               </label>
               <div className="relative">
@@ -197,21 +205,22 @@ function LoginPageContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                   placeholder="password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            <div className="text-sm text-white bg-gray-700/50 p-3 rounded-lg border border-gray-600">
               <p><strong>Demo credentials:</strong></p>
               <p>Username: test</p>
               <p>Password: password</p>
@@ -240,13 +249,13 @@ function LoginPageContent() {
             <button
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Chrome className="w-5 h-5 text-gray-600" />
-              <span className="font-medium text-gray-900">Continue with Google</span>
+              <Chrome className="w-5 h-5 text-gray-300" />
+              <span className="font-medium text-white">Continue with Google</span>
             </button>
             
-            <div className="text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
+            <div className="text-sm text-white bg-gray-700/50 p-3 rounded-lg border border-gray-600">
               <p>Production Google OAuth for business owners</p>
             </div>
           </div>
@@ -254,21 +263,21 @@ function LoginPageContent() {
 
         {/* Footer Links */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-white">
             Don't have an account?{' '}
             <a 
               href="/signup" 
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-blue-400 hover:text-blue-300 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
             >
               Sign up here
             </a>
           </p>
           
           <div className="flex justify-center space-x-6 mt-4 text-sm">
-            <a href="/forgot-password" className="text-gray-500 hover:text-gray-700">
+            <a href="/forgot-password" className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded">
               Forgot password?
             </a>
-            <a href="/help" className="text-gray-500 hover:text-gray-700">
+            <a href="/help" className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded">
               Need help?
             </a>
           </div>
@@ -280,10 +289,10 @@ function LoginPageContent() {
 
 export default function EnhancedLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
       <div className="text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-        <p className="text-gray-600">Loading...</p>
+        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
+        <p className="text-white">Loading...</p>
       </div>
     </div>}>
       <LoginPageContent />

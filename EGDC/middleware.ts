@@ -2,83 +2,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-
-// Tenant configuration mapping paths to tenant IDs
-const TENANT_CONFIG = {
-  'egdc': {
-    tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
-    name: 'EGDC',
-    allowed_users: ['elweydelcalzado@gmail.com']
-  },
-  'fami': {
-    tenant_id: 'fami-tenant-id',
-    name: 'FAMI',
-    allowed_users: ['fami@example.com'] // Will be real when they register
-  },
-  'osiel': {
-    tenant_id: 'osiel-tenant-id', 
-    name: 'Osiel',
-    allowed_users: ['osiel@example.com'] // Will be real when they register
-  },
-  'molly': {
-    tenant_id: 'molly-tenant-id',
-    name: 'Molly', 
-    allowed_users: ['molly@example.com'] // Will be real when they register
-  }
-}
-
-function extractTenantFromPath(pathname: string): string | null {
-  console.log('🔍 extractTenantFromPath called with:', {
-    pathname,
-    pathParts: pathname.split('/').filter(Boolean)
-  })
-  
-  // Extract tenant from path: /tenant/dashboard → tenant
-  const pathParts = pathname.split('/').filter(Boolean)
-  
-  if (pathParts.length > 0 && isValidTenant(pathParts[0])) {
-    const tenant = pathParts[0]
-    console.log('✅ Tenant extracted from path:', {
-      tenant,
-      fromPath: pathname,
-      isValid: isValidTenant(tenant)
-    })
-    return tenant
-  }
-  
-  console.log('❌ No valid tenant found in path:', pathname)
-  return null
-}
-
-function isAppDomain(hostname: string): boolean {
-  console.log('🔍 isAppDomain called with:', {
-    hostname,
-    cleanHostname: hostname.trim().toLowerCase()
-  })
-  
-  const cleanHostname = hostname.trim().toLowerCase()
-  
-  // Check for app.lospapatos.com or localhost for development
-  const isApp = cleanHostname === 'app.lospapatos.com' || 
-                cleanHostname.includes('localhost') || 
-                cleanHostname.includes('127.0.0.1')
-                
-  console.log('🎯 App domain check result:', {
-    cleanHostname,
-    isApp,
-    reasons: {
-      isAppDomain: cleanHostname === 'app.lospapatos.com',
-      isLocalhost: cleanHostname.includes('localhost'),
-      isLocal127: cleanHostname.includes('127.0.0.1')
-    }
-  })
-  
-  return isApp
-}
-
-function isValidTenant(subdomain: string): boolean {
-  return subdomain in TENANT_CONFIG
-}
+import { 
+  extractTenantFromPath, 
+  isAppDomain, 
+  isValidTenant, 
+  isValidTenantFromDatabase,
+  getTenantConfig,
+  cleanTenantSubdomain,
+  getBaseUrl,
+  TENANT_CONFIG 
+} from './lib/tenant-utils'
 
 export default async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
@@ -94,23 +27,42 @@ export default async function middleware(request: NextRequest) {
   const tenant = extractTenantFromPath(url.pathname)
   const isAppDomainAccess = isAppDomain(hostname)
   
+  // Prioritize hardcoded tenant validation first (for performance and reliability)
+  let tenantValidation = { isValid: false, config: null }
+  if (tenant) {
+    // First check hardcoded tenants (fast path)
+    const isLegacyValid = isValidTenant(tenant)
+    if (isLegacyValid) {
+      tenantValidation = { 
+        isValid: true, 
+        config: { 
+          id: TENANT_CONFIG[tenant as keyof typeof TENANT_CONFIG].tenant_id,
+          name: TENANT_CONFIG[tenant as keyof typeof TENANT_CONFIG].name 
+        } 
+      }
+    } else {
+      // Fall back to database validation for dynamic tenants (if needed)
+      tenantValidation = await isValidTenantFromDatabase(tenant)
+    }
+  }
+  
   console.log('🏢 Tenant Detection:', {
     tenant,
-    isValidTenant: tenant ? isValidTenant(tenant) : false,
+    isValidTenant: tenantValidation.isValid,
+    legacyValidation: tenant ? isValidTenant(tenant) : false,
     isAppDomainAccess,
+    hostname,
+    pathname: url.pathname,
+    tenantConfig: tenantValidation.config ? { id: tenantValidation.config.id, name: tenantValidation.config.name } : null
+  })
+  
+  // SECURITY: Authentication bypass removed for production security
+  // Authentication is now required for all environments
+  console.log('🔐 Security: Authentication required for all requests', {
+    environment: process.env.VERCEL_ENV || 'development',
     hostname,
     pathname: url.pathname
   })
-  
-  // Skip authentication in preview environment
-  if (process.env.SKIP_AUTH === 'true' || process.env.USE_MOCK_DATA === 'true') {
-    console.log('🎭 Skipping auth - preview/mock environment', {
-      SKIP_AUTH: process.env.SKIP_AUTH,
-      USE_MOCK_DATA: process.env.USE_MOCK_DATA,
-      VERCEL_ENV: process.env.VERCEL_ENV
-    })
-    return NextResponse.next()
-  }
   
   // CENTRALIZED LOGIN: app.lospapatos.com/login
   if (isAppDomainAccess && url.pathname === '/login') {
@@ -120,12 +72,32 @@ export default async function middleware(request: NextRequest) {
       hostname
     })
     
-    // Try to get token with more thorough checking
-    const token = await getToken({ 
+    // Try to get token with environment-specific cookie handling
+    let token = await getToken({ 
       req: request, 
       secret: process.env.NEXTAUTH_SECRET,
+      cookieName: 'next-auth.session-token',
       secureCookie: process.env.NODE_ENV === 'production'
     })
+    
+    // Fallback for production environments with secure cookies
+    if (!token && process.env.NODE_ENV === 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: '__Secure-next-auth.session-token',
+        secureCookie: true
+      })
+    }
+    
+    // Development fallback
+    if (!token && process.env.NODE_ENV !== 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        secureCookie: false
+      })
+    }
     
     console.log('🔐 LOGIN PORTAL TOKEN CHECK COMPREHENSIVE:', {
       pathname: url.pathname,
@@ -139,10 +111,8 @@ export default async function middleware(request: NextRequest) {
     
     // If user is authenticated, redirect to their tenant dashboard
     if (token?.tenant_subdomain) {
-      const cleanTenant = token.tenant_subdomain.toString().replace('preview-', '').replace('mock-', '')
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://app.lospapatos.com' 
-        : `http://${hostname}`
+      const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
+      const baseUrl = getBaseUrl(hostname)
       const tenantUrl = `${baseUrl}/${cleanTenant}/dashboard`
       
       console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
@@ -166,14 +136,36 @@ export default async function middleware(request: NextRequest) {
   }
   
   // TENANT PATHS: app.lospapatos.com/egdc, app.lospapatos.com/fami, etc.
-  if (isAppDomainAccess && tenant && isValidTenant(tenant)) {
-    console.log('🏢 Tenant path accessed:', tenant)
+  if (isAppDomainAccess && tenant && tenantValidation.isValid) {
+    console.log('🏢 Tenant path accessed:', tenant, 'Config:', tenantValidation.config ? { id: tenantValidation.config.id, name: tenantValidation.config.name } : 'legacy')
     
-    const token = await getToken({ 
+    // CRITICAL: Use environment-specific cookie handling
+    // Try both secure and non-secure cookie names for better compatibility
+    let token = await getToken({ 
       req: request, 
       secret: process.env.NEXTAUTH_SECRET,
-      cookieName: process.env.NODE_ENV === 'production' ? 'next-auth.session-token' : 'next-auth.session-token'
+      cookieName: 'next-auth.session-token',
+      secureCookie: process.env.NODE_ENV === 'production'
     })
+    
+    // Fallback: try with __Secure- prefix for production environments  
+    if (!token && process.env.NODE_ENV === 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: '__Secure-next-auth.session-token',
+        secureCookie: true
+      })
+    }
+    
+    // Development fallback: try without security restrictions
+    if (!token && process.env.NODE_ENV !== 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        secureCookie: false
+      })
+    }
     const isAuthenticated = !!token
     
     console.log('🔐 MIDDLEWARE TOKEN CHECK (ENHANCED):', {
@@ -207,9 +199,7 @@ export default async function middleware(request: NextRequest) {
       })
       
       // Create a clean redirect URL without causing loops
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://app.lospapatos.com' 
-        : `http://${hostname}`
+      const baseUrl = getBaseUrl(hostname)
       const loginUrl = new URL(`${baseUrl}/login`)
       loginUrl.searchParams.set('callbackUrl', `${baseUrl}/${tenant}/dashboard`)
       
@@ -221,9 +211,14 @@ export default async function middleware(request: NextRequest) {
     // If authenticated, allow access with tenant context
     const response = NextResponse.next()
     response.headers.set('x-tenant-path', tenant)
-    response.headers.set('x-tenant-id', TENANT_CONFIG[tenant as keyof typeof TENANT_CONFIG].tenant_id)
     
-    console.log('✅ Tenant access granted:', tenant)
+    // Use database config when available, fallback to legacy config
+    const tenantId = tenantValidation.config?.id || 
+                     (TENANT_CONFIG[tenant as keyof typeof TENANT_CONFIG]?.tenant_id) || 
+                     'unknown'
+    response.headers.set('x-tenant-id', tenantId)
+    
+    console.log('✅ Tenant access granted:', tenant, 'with ID:', tenantId)
     return addSecurityHeaders(response)
   }
   
@@ -231,24 +226,88 @@ export default async function middleware(request: NextRequest) {
   if (hostname === 'lospapatos.com' || (!isAppDomainAccess && hostname.includes('lospapatos.com'))) {
     console.log('🏪 Main domain or unknown domain accessed')
     // Redirect to the login portal on app domain
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://app.lospapatos.com' 
-      : `http://${hostname}`
+    const baseUrl = getBaseUrl(hostname)
     return NextResponse.redirect(`${baseUrl}/login`)
   }
   
   // GENERIC DASHBOARD: app.lospapatos.com/dashboard (OAuth callback redirect)
-  // Let the dashboard component handle tenant routing for better session access
+  // Check authentication and redirect directly to tenant dashboard to avoid redirect loops
   if (isAppDomainAccess && url.pathname === '/dashboard') {
-    console.log('🎯 Generic dashboard accessed - allowing dashboard component to handle tenant routing')
+    console.log('🎯 Generic dashboard accessed - checking auth and redirecting to tenant')
     
-    // Don't redirect in middleware - let the client-side dashboard component handle it
-    // This avoids race conditions with JWT token availability after OAuth callback
-    const response = NextResponse.next()
-    response.headers.set('x-dashboard-mode', 'tenant-routing')
+    // ANTI-LOOP PROTECTION: Check for redirect loops via headers
+    const referer = request.headers.get('referer')
+    const redirectCount = parseInt(request.headers.get('x-redirect-count') || '0', 10)
     
-    console.log('✅ Allowing dashboard component to handle tenant routing')
-    return addSecurityHeaders(response)
+    if (redirectCount > 5) {
+      console.error('🚫 REDIRECT LOOP DETECTED - Breaking cycle')
+      const baseUrl = getBaseUrl(hostname)
+      return NextResponse.redirect(`${baseUrl}/login?error=redirect_loop`)
+    }
+    
+    // Try to get token to determine if user is authenticated
+    let token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: 'next-auth.session-token',
+      secureCookie: process.env.NODE_ENV === 'production'
+    })
+    
+    // Fallback for production environments with secure cookies
+    if (!token && process.env.NODE_ENV === 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: '__Secure-next-auth.session-token',
+        secureCookie: true
+      })
+    }
+    
+    // Development fallback
+    if (!token && process.env.NODE_ENV !== 'production') {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET,
+        secureCookie: false
+      })
+    }
+    
+    console.log('🔐 GENERIC DASHBOARD TOKEN CHECK:', {
+      hasToken: !!token,
+      tokenTenantSubdomain: token?.tenant_subdomain,
+      tokenEmail: token?.email,
+      referer,
+      redirectCount
+    })
+    
+    // If user has token with tenant info, redirect immediately to avoid loops
+    if (token?.tenant_subdomain) {
+      const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
+      const baseUrl = getBaseUrl(hostname)
+      const tenantUrl = `${baseUrl}/${cleanTenant}/dashboard`
+      
+      // ANTI-LOOP: Ensure we're not redirecting to the same URL that referred us
+      if (referer && referer.includes(`/${cleanTenant}/dashboard`)) {
+        console.warn('⚠️ Potential loop detected - allowing dashboard component to handle routing')
+        return NextResponse.next()
+      }
+      
+      console.log('✅ REDIRECTING FROM GENERIC DASHBOARD TO TENANT:', {
+        email: token.email,
+        tenant_path: token.tenant_subdomain,
+        cleanTenant,
+        redirectUrl: tenantUrl
+      })
+      
+      const response = NextResponse.redirect(tenantUrl)
+      response.headers.set('x-redirect-count', String(redirectCount + 1))
+      return response
+    }
+    
+    // If no token or tenant info, redirect to login
+    console.log('❌ No authentication or tenant info - redirecting to login')
+    const baseUrl = getBaseUrl(hostname)
+    return NextResponse.redirect(`${baseUrl}/login`)
   }
   
   // FALLBACK: Unknown path or invalid access
@@ -257,9 +316,7 @@ export default async function middleware(request: NextRequest) {
   // For app domain without valid tenant path, redirect to login
   if (isAppDomainAccess && !tenant) {
     console.log('🔄 App domain without tenant - redirecting to login')
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://app.lospapatos.com' 
-      : `http://${hostname}`
+    const baseUrl = getBaseUrl(hostname)
     return NextResponse.redirect(`${baseUrl}/login`)
   }
   

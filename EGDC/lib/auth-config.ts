@@ -4,23 +4,71 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import type { NextAuthOptions } from 'next-auth'
 import { Pool } from 'pg'
 
-// Database connection for auth operations
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') 
-    ? false 
-    : { rejectUnauthorized: false }
-})
+// SECURITY: Secure database connection for auth operations
+import { createSecureDatabaseConfig, validateDatabaseConfig } from './database-config'
+// ENHANCED: Comprehensive environment validation
+import { config as envConfig, validation as envValidation } from './env-validation'
 
-// DISABLED FOR MINIMAL TEST - no database connections
-// pool.connect()
-//   .then(client => {
-//     console.log('✅ Auth database connection established')
-//     client.release()
-//   })
-//   .catch(err => {
-//     console.error('❌ Auth database connection failed:', err)
-//   })
+// Lazy initialization - only validate during runtime, not build time
+let pool: Pool | null = null
+let isInitialized = false
+
+// Lazy database connection initialization
+function getAuthPool(): Pool {
+  if (!pool) {
+    // Only validate during runtime when actually needed
+    validateDatabaseConfig()
+    
+    // Ensure environment is properly configured before proceeding
+    if (!envValidation.isValid) {
+      console.error('💥 Cannot initialize auth config with invalid environment')
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Authentication configuration failed: Invalid environment variables')
+      }
+    }
+
+    pool = new Pool(createSecureDatabaseConfig())
+  }
+  return pool
+}
+
+// Test database connection with proper error handling
+async function validateAuthDatabaseConnection() {
+  try {
+    const authPool = getAuthPool()
+    const client = await authPool.connect()
+    console.log('✅ Auth database connection established successfully')
+    
+    // Test basic query to ensure connection is working
+    await client.query('SELECT 1')
+    console.log('✅ Auth database query test passed')
+    
+    client.release()
+    return true
+  } catch (error) {
+    console.error('❌ Auth database connection failed:', {
+      error: error.message,
+      code: error.code,
+      detail: error.detail
+    })
+    
+    // In production, we should fail fast if database is unavailable
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Critical: Auth database connection failed - ${error.message}`)
+    }
+    
+    return false
+  }
+}
+
+// Initialize connection validation
+validateAuthDatabaseConnection().catch(error => {
+  console.error('💥 Critical database error during auth config initialization:', error)
+  // Don't crash in development, but log the error prominently
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1)
+  }
+})
 
 // Extended user type with tenant information
 declare module 'next-auth' {
@@ -29,6 +77,7 @@ declare module 'next-auth' {
     role: string
     tenant_name: string
     tenant_subdomain: string
+    business_type?: string
   }
   
   interface Session {
@@ -45,49 +94,46 @@ declare module 'next-auth' {
   }
 }
 
-// Map known users to specific tenants for production SaaS
-// Note: tenant_subdomain is now used as tenant path in path-based architecture
-function mapUserToTenant(email: string): { tenant_id: string, tenant_name: string, tenant_subdomain: string } {
-  // EGDC - Main business owner
-  if (email === 'elweydelcalzado@gmail.com') {
-    return {
-      tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
-      tenant_name: 'EGDC',
-      tenant_subdomain: 'egdc'
-    }
-  }
+// SECURITY: Database-driven tenant resolution instead of hardcoded mapping
+// Securely map users to tenants using database lookup
+async function getTenantForUser(email: string): Promise<{ tenant_id: string, tenant_name: string, tenant_subdomain: string } | null> {
+  const client = await getAuthPool().connect()
   
-  // Future customers - will be real when they register
-  if (email === 'fami@example.com') {
-    return {
-      tenant_id: 'fami-tenant-id',
-      tenant_name: 'FAMI',
-      tenant_subdomain: 'fami'
+  try {
+    // First, check if user already exists and get their tenant
+    const existingUser = await client.query(`
+      SELECT 
+        u.tenant_id,
+        t.name as tenant_name,
+        t.subdomain as tenant_subdomain
+      FROM users u
+      JOIN tenants t ON u.tenant_id = t.id
+      WHERE u.email = $1 AND u.status = 'active' AND t.status = 'active'
+    `, [email])
+    
+    if (existingUser.rows.length > 0) {
+      const tenant = existingUser.rows[0]
+      console.log('✅ Existing tenant found for user:', {
+        email,
+        tenant_id: tenant.tenant_id,
+        tenant_subdomain: tenant.tenant_subdomain
+      })
+      return {
+        tenant_id: tenant.tenant_id,
+        tenant_name: tenant.tenant_name,
+        tenant_subdomain: tenant.tenant_subdomain
+      }
     }
-  }
-  
-  if (email === 'osiel@example.com') {
-    return {
-      tenant_id: 'osiel-tenant-id', 
-      tenant_name: 'Osiel',
-      tenant_subdomain: 'osiel'
-    }
-  }
-  
-  if (email === 'molly@example.com') {
-    return {
-      tenant_id: 'molly-tenant-id',
-      tenant_name: 'Molly',
-      tenant_subdomain: 'molly'
-    }
-  }
-  
-  // Default for new users - create a new tenant
-  const tenantPath = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).substring(7)
-  return {
-    tenant_id: `tenant-${Date.now()}`, // Will be replaced with real UUID
-    tenant_name: email.split('@')[0] + ' Business',
-    tenant_subdomain: tenantPath // Used as path in path-based architecture
+    
+    // If no existing user found, this is a new user - they need to register first
+    console.log('❌ No existing tenant found for user:', email)
+    return null
+    
+  } catch (error) {
+    console.error('❌ Database error in getTenantForUser:', error)
+    return null
+  } finally {
+    client.release()
   }
 }
 
@@ -95,26 +141,168 @@ function mapUserToTenant(email: string): { tenant_id: string, tenant_name: strin
 async function getOrCreateUser(email: string, name: string, googleId: string) {
   console.log('🔍 getOrCreateUser called:', { email, name, googleId })
   
-  // For EGDC (main business), use hardcoded tenant mapping
-  // This ensures consistent tenant_id for production
-  const tenantMapping = mapUserToTenant(email)
+  const client = await getAuthPool().connect()
   
-  console.log('🏢 Tenant mapping for user:', {
-    email,
-    tenant_id: tenantMapping.tenant_id,
-    tenant_path: tenantMapping.tenant_subdomain // Using as path in new architecture
-  })
-  
-  // For now, return the mapped tenant directly
-  // In the future, this will query/create in the tenants/users tables
-  return {
-    id: googleId,
-    tenant_id: tenantMapping.tenant_id,
-    role: 'admin', // All OAuth users are admins of their tenant
-    name: name,
-    email: email,
-    tenant_name: tenantMapping.tenant_name,
-    tenant_subdomain: tenantMapping.tenant_subdomain
+  try {
+    // First, check if user already exists WITHOUT RLS context
+    // This initial query needs to work across all tenants to find the user's tenant
+    const existingUser = await client.query(`
+      SELECT 
+        u.id,
+        u.tenant_id,
+        u.email,
+        u.name,
+        u.role,
+        u.google_id,
+        t.name as tenant_name,
+        t.subdomain as tenant_subdomain
+      FROM users u
+      JOIN tenants t ON u.tenant_id = t.id
+      WHERE u.email = $1 AND u.status = 'active'
+    `, [email])
+    
+    if (existingUser.rows.length > 0) {
+      const user = existingUser.rows[0]
+      console.log('✅ Existing user found:', user.email, 'tenant:', user.tenant_subdomain)
+      
+      // CRITICAL: Set RLS context for the user's tenant
+      await setTenantContext(user.tenant_id, client)
+      
+      // Update Google ID and last login with RLS context set
+      await client.query(`
+        UPDATE users 
+        SET google_id = $1, last_login = NOW(), updated_at = NOW()
+        WHERE id = $2
+      `, [googleId, user.id])
+      
+      return {
+        id: googleId,
+        tenant_id: user.tenant_id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        tenant_name: user.tenant_name,
+        tenant_subdomain: user.tenant_subdomain
+      }
+    }
+    
+    // SECURITY: No more hardcoded tenant logic - all users must be properly registered
+    // Check if this is a returning user who should be granted access
+    const tenantInfo = await getTenantForUser(email)
+    if (tenantInfo) {
+      console.log('🏢 Returning user login - using existing tenant:', tenantInfo.tenant_subdomain)
+      
+      // Update user login information
+      await client.query(`
+        UPDATE users 
+        SET google_id = $1, last_login = NOW(), updated_at = NOW()
+        WHERE email = $2 AND tenant_id = $3
+      `, [googleId, email, tenantInfo.tenant_id])
+      
+      return {
+        id: googleId,
+        tenant_id: tenantInfo.tenant_id,
+        role: 'admin', // Will be fetched from DB in production
+        name: name,
+        email: email,
+        tenant_name: tenantInfo.tenant_name,
+        tenant_subdomain: tenantInfo.tenant_subdomain
+      }
+    }
+    
+    // For new users, create tenant and user automatically
+    console.log('🆕 Creating new tenant and user for:', email)
+    
+    await client.query('BEGIN')
+    
+    try {
+      // Generate unique tenant subdomain from email
+      const baseSubdomain = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
+      let tenantSubdomain = baseSubdomain
+      let counter = 1
+      
+      // Ensure subdomain is unique
+      while (true) {
+        const existing = await client.query(`
+          SELECT id FROM tenants WHERE subdomain = $1
+        `, [tenantSubdomain])
+        
+        if (existing.rows.length === 0) break
+        
+        tenantSubdomain = `${baseSubdomain}${counter}`
+        counter++
+      }
+      
+      // Create new tenant
+      const newTenant = await client.query(`
+        INSERT INTO tenants (name, subdomain, email, business_type, plan, status)
+        VALUES ($1, $2, $3, 'retailer', 'starter', 'active')
+        RETURNING id, name, subdomain
+      `, [
+        `${name}'s Business`, // Business name from user's name
+        tenantSubdomain,
+        email
+      ])
+      
+      const tenant = newTenant.rows[0]
+      console.log('✅ Created new tenant:', tenant.subdomain, 'ID:', tenant.id)
+      
+      // CRITICAL: Set RLS context for the new tenant
+      await setTenantContext(tenant.id, client)
+      
+      // Create new user with RLS context set
+      const newUser = await client.query(`
+        INSERT INTO users (tenant_id, email, name, role, google_id, status)
+        VALUES ($1, $2, $3, 'admin', $4, 'active')
+        RETURNING id
+      `, [tenant.id, email, name, googleId])
+      
+      console.log('✅ Created new user:', email, 'in tenant:', tenant.subdomain)
+      
+      await client.query('COMMIT')
+      
+      console.log('✅ Transaction committed successfully - tenant and user created')
+      
+      return {
+        id: googleId,
+        tenant_id: tenant.id,
+        role: 'admin',
+        name: name,
+        email: email,
+        tenant_name: tenant.name,
+        tenant_subdomain: tenant.subdomain
+      }
+      
+    } catch (error) {
+      console.error('💥 CRITICAL ERROR during tenant creation - initiating rollback:', {
+        error: error.message,
+        code: error.code,
+        detail: error.detail,
+        email,
+        name,
+        googleId
+      })
+      
+      try {
+        await client.query('ROLLBACK')
+        console.log('✅ Database transaction rolled back successfully')
+      } catch (rollbackError) {
+        console.error('💥 CRITICAL: Rollback failed!', {
+          originalError: error.message,
+          rollbackError: rollbackError.message
+        })
+        
+        // This is a critical state - we need to alert monitoring systems
+        // In production, this should trigger alerts
+        throw new Error(`Transaction rollback failed: ${rollbackError.message}. Original error: ${error.message}`)
+      }
+      
+      // Re-throw original error after successful rollback
+      throw new Error(`Tenant creation failed: ${error.message}`)
+    }
+    
+  } finally {
+    client.release()
   }
 }
 
@@ -143,7 +331,7 @@ export const authConfig: NextAuthOptions = {
             placeholder: 'password' 
           }
         },
-        async authorize(credentials) {
+        async authorize(credentials, req) {
           console.log('🧪 Test credentials auth attempt:', credentials?.username)
           
           // Simple test auth for previews
@@ -155,7 +343,8 @@ export const authConfig: NextAuthOptions = {
               tenant_id: 'test-tenant',
               role: 'admin',
               tenant_name: 'Test Business',
-              tenant_subdomain: 'test'
+              tenant_subdomain: 'test',
+              business_type: 'retailer'
             }
           }
           
@@ -187,14 +376,14 @@ export const authConfig: NextAuthOptions = {
           hasCallbackUrl: !!callbackUrl
         })
         
-        // If there's a callbackUrl with a tenant path, use it
-        if (callbackUrl && (callbackUrl.includes('/egdc/') || callbackUrl.includes('/fami/') || callbackUrl.includes('/osiel/') || callbackUrl.includes('/molly/'))) {
+        // If there's a callbackUrl with a tenant path pattern, use it
+        if (callbackUrl && callbackUrl.match(/\/[a-zA-Z0-9\-_]+\/dashboard/)) {
           console.log('✅ Using callbackUrl with tenant path:', callbackUrl)
           return callbackUrl
         }
         
-        // If URL already contains tenant path, use it
-        if (url.includes('/egdc/') || url.includes('/fami/') || url.includes('/osiel/') || url.includes('/molly/')) {
+        // If URL already contains tenant path pattern, use it
+        if (url.match(/\/[a-zA-Z0-9\-_]+\/dashboard/)) {
           console.log('✅ Tenant-specific URL detected, using:', url)
           return url
         }
@@ -313,12 +502,10 @@ export const authConfig: NextAuthOptions = {
             provider: account?.provider
           })
           
-          // Use fallback tenant instead of preventing sign-in
-          console.log('⚠️ Using fallback tenant configuration')
-          token.tenant_id = 'fallback-tenant'
-          token.role = 'admin'
-          token.tenant_name = 'Fallback Business'
-          token.tenant_subdomain = 'egdc' // Default to EGDC for now
+          // SECURITY: Fail authentication instead of using fallback tenant
+          // This prevents unauthorized access to any tenant
+          console.log('🚫 Authentication failed - no fallback tenant allowed')
+          throw new Error(`Authentication failed: Unable to resolve tenant for user ${user.email}`)
         }
       }
       
@@ -352,7 +539,7 @@ export const authConfig: NextAuthOptions = {
 
 // Helper function to get tenant context for API routes
 export async function getTenantContext(userId: string) {
-  const client = await pool.connect()
+  const client = await getAuthPool().connect()
   
   try {
     const result = await client.query(`
@@ -366,21 +553,44 @@ export async function getTenantContext(userId: string) {
       WHERE u.id = $1
     `, [userId])
     
-    return result.rows[0] || null
+    const context = result.rows[0] || null
+    
+    // CRITICAL: Set RLS context if we found the user's tenant
+    if (context?.tenant_id) {
+      await setTenantContext(context.tenant_id, client)
+      console.log('✅ Tenant context set for API operations:', {
+        userId,
+        tenant_id: context.tenant_id,
+        tenant_subdomain: context.tenant_subdomain
+      })
+    }
+    
+    return context
   } finally {
     client.release()
   }
 }
 
-// Helper function to set tenant context for RLS
-export async function setTenantContext(tenantId: string) {
-  const client = await pool.connect()
+// Helper function to set tenant context for RLS - ENHANCED VERSION
+export async function setTenantContext(tenantId: string, client?: any) {
+  const dbClient = client || await getAuthPool().connect()
   
   try {
-    await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [tenantId])
-    return client
+    console.log('🔐 Setting RLS tenant context:', { tenantId })
+    await dbClient.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [tenantId])
+    console.log('✅ RLS tenant context set successfully')
+    
+    if (!client) {
+      return dbClient
+    }
   } catch (error) {
-    client.release()
+    console.error('❌ Failed to set RLS tenant context:', { 
+      tenantId, 
+      error: error.message 
+    })
+    if (!client) {
+      dbClient.release()
+    }
     throw error
   }
 }
