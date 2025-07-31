@@ -85,11 +85,12 @@ declare module 'next-auth' {
       id: string
       name: string
       email: string
-      tenant_id: string
+      tenant_id: string | null
       role: string
-      tenant_name: string
-      tenant_subdomain: string
+      tenant_name: string | null
+      tenant_subdomain: string | null
     }
+    registration_required?: boolean
     error?: string
   }
 }
@@ -396,23 +397,30 @@ export const authConfig: NextAuthOptions = {
     async session({ session, token }) {
       console.log('🔍 Session Callback:', {
         email: session?.user?.email,
-        environment: process.env.VERCEL_ENV
+        environment: process.env.VERCEL_ENV,
+        registrationRequired: token?.registration_required
       })
       
       if (session?.user && token) {
         session.user.id = token.sub as string
-        session.user.tenant_id = token.tenant_id as string || 'unknown'
+        session.user.tenant_id = token.tenant_id as string || null
         session.user.role = token.role as string || 'user'
-        session.user.tenant_name = token.tenant_name as string || 'Unknown Tenant'
-        session.user.tenant_subdomain = token.tenant_subdomain as string || 'unknown'
+        session.user.tenant_name = token.tenant_name as string || null
+        session.user.tenant_subdomain = token.tenant_subdomain as string || null
         
-        console.log('✅ Session ready for tenant path:', token.tenant_subdomain)
+        // Add registration status to session
+        if (token.registration_required) {
+          session.registration_required = true
+          console.log('🚧 Session flagged for pending registration:', session.user.email)
+        } else {
+          console.log('✅ Session ready for tenant path:', token.tenant_subdomain)
+        }
       }
       
       return session
     },
     
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       const isFirstSignIn = !!(account && user)
       
       console.log('🔐 JWT CALLBACK START:', {
@@ -422,8 +430,34 @@ export const authConfig: NextAuthOptions = {
         hasAccount: !!account,
         userEmail: user?.email,
         accountProvider: account?.provider,
+        trigger,
+        registrationRequired: token?.registration_required,
         timestamp: new Date().toISOString()
       })
+      
+      // Handle token refresh for users who completed registration
+      if (trigger === 'update' && token?.registration_required && token?.email) {
+        console.log('🔄 JWT refresh triggered - checking if registration completed:', token.email)
+        
+        try {
+          const tenantInfo = await getTenantForUser(token.email as string)
+          if (tenantInfo) {
+            console.log('✅ Registration completed! Updating token with tenant info:', tenantInfo)
+            
+            token.tenant_id = tenantInfo.tenant_id
+            token.role = 'admin'
+            token.tenant_name = tenantInfo.tenant_name
+            token.tenant_subdomain = tenantInfo.tenant_subdomain
+            token.registration_required = false
+            
+            console.log('✅ Token updated with completed registration info')
+          } else {
+            console.log('⏳ Registration still pending for:', token.email)
+          }
+        } catch (error) {
+          console.error('❌ Error checking registration status:', error)
+        }
+      }
       
       // On first sign in (when account and user are present)
       if (isFirstSignIn && user?.email) {
@@ -475,10 +509,19 @@ export const authConfig: NextAuthOptions = {
             provider: account?.provider
           })
           
-          // SECURITY: Fail authentication instead of using fallback tenant
-          // This prevents unauthorized access to any tenant
-          console.log('🚫 Authentication failed - no fallback tenant allowed')
-          throw new Error(`Authentication failed: Unable to resolve tenant for user ${user.email}`)
+          // ENHANCED: Instead of throwing error, create a "pending registration" token
+          // This allows the user to be authenticated but directs them to complete registration
+          console.log('🚧 Creating pending registration token for new user:', user.email)
+          
+          token.tenant_id = null
+          token.role = 'pending'
+          token.tenant_name = null
+          token.tenant_subdomain = null
+          token.registration_required = true
+          token.email = user.email
+          token.name = user.name
+          
+          console.log('✅ Pending registration token created - user will be directed to complete registration')
         }
       }
       

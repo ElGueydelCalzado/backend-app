@@ -109,6 +109,19 @@ export default async function middleware(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
     
+    // Check if user needs to complete registration
+    if (token && token.registration_required) {
+      console.log('🚧 REDIRECTING USER TO COMPLETE REGISTRATION:', {
+        email: token.email,
+        role: token.role,
+        timestamp: new Date().toISOString()
+      })
+      
+      const baseUrl = getBaseUrl(hostname)
+      const registrationUrl = `${baseUrl}/register?email=${encodeURIComponent(token.email)}`
+      return NextResponse.redirect(registrationUrl)
+    }
+    
     // If user is authenticated, redirect to their tenant dashboard
     if (token?.tenant_subdomain) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
@@ -302,9 +315,22 @@ export default async function middleware(request: NextRequest) {
       hasToken: !!token,
       tokenTenantSubdomain: token?.tenant_subdomain,
       tokenEmail: token?.email,
+      registrationRequired: token?.registration_required,
       referer,
       redirectCount
     })
+    
+    // Check if user needs to complete registration first
+    if (token && token.registration_required) {
+      console.log('🚧 REDIRECTING FROM GENERIC DASHBOARD TO REGISTRATION:', {
+        email: token.email,
+        timestamp: new Date().toISOString()
+      })
+      
+      const baseUrl = getBaseUrl(hostname)
+      const registrationUrl = `${baseUrl}/register?email=${encodeURIComponent(token.email)}`
+      return NextResponse.redirect(registrationUrl)
+    }
     
     // If user has token with tenant info, redirect immediately to avoid loops
     if (token?.tenant_subdomain) {
