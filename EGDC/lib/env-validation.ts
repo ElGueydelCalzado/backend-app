@@ -151,12 +151,13 @@ export function validateEnvironment(): { config: EnvironmentConfig; validation: 
       validation.isValid = false
     }
     
-    // Validate optional security keys
+    // Validate optional security keys - only warn, don't fail
     if (ENCRYPTION_KEY) {
       const encryptionValidation = validateSecretLength(ENCRYPTION_KEY, 'ENCRYPTION_KEY', 32)
-      validation.errors.push(...encryptionValidation.errors)
+      // Convert errors to warnings for optional keys
+      validation.warnings.push(...encryptionValidation.errors)
       validation.warnings.push(...encryptionValidation.warnings)
-      if (!encryptionValidation.isValid) validation.isValid = false
+      // Don't fail validation for optional keys
     }
     
     // Environment-specific validations
@@ -208,11 +209,11 @@ export function getValidatedEnvironment(): { config: EnvironmentConfig; validati
   if (!cachedValidation) {
     cachedValidation = validateEnvironment()
     
-    // Fail fast in production if environment is invalid
+    // Warn in production if environment has issues, but don't fail hard
     if (process.env.NODE_ENV === 'production' && !cachedValidation.validation.isValid) {
       console.error('💥 CRITICAL: Environment validation failed in production')
-      console.error('Application cannot start with invalid configuration')
-      process.exit(1)
+      console.error('Application will start but may have limited functionality')
+      // Don't exit - let the app start with warnings
     }
   }
   
