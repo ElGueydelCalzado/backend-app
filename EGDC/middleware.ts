@@ -235,14 +235,40 @@ export default async function middleware(request: NextRequest) {
   if (isAppDomainAccess && url.pathname === '/dashboard') {
     console.log('🎯 Generic dashboard accessed - checking auth and redirecting to tenant')
     
-    // ANTI-LOOP PROTECTION: Check for redirect loops via headers
+    // ENHANCED ANTI-LOOP PROTECTION: Check for redirect loops via multiple methods
     const referer = request.headers.get('referer')
     const redirectCount = parseInt(request.headers.get('x-redirect-count') || '0', 10)
+    const userAgent = request.headers.get('user-agent') || ''
     
-    if (redirectCount > 5) {
-      console.error('🚫 REDIRECT LOOP DETECTED - Breaking cycle')
+    // Check for circular redirects
+    const dashboardPattern = /\/dashboard(\?|$)/
+    const tenantDashboardPattern = /\/[a-zA-Z0-9\-_]+\/dashboard(\?|$)/
+    
+    if (redirectCount > 3) {
+      console.error('🚫 REDIRECT LOOP DETECTED - Breaking cycle', {
+        redirectCount,
+        referer,
+        pathname: url.pathname,
+        userAgent: userAgent.substring(0, 50)
+      })
       const baseUrl = getBaseUrl(hostname)
       return NextResponse.redirect(`${baseUrl}/login?error=redirect_loop`)
+    }
+    
+    // Additional protection: if referer is also a dashboard route, be more careful
+    if (referer && (dashboardPattern.test(referer) || tenantDashboardPattern.test(referer))) {
+      console.warn('⚠️ Dashboard-to-dashboard redirect detected', {
+        referer,
+        currentPath: url.pathname,
+        redirectCount
+      })
+      
+      // If we've seen this pattern multiple times, break the loop
+      if (redirectCount > 1) {
+        console.error('🚫 Breaking dashboard redirect cycle')
+        const baseUrl = getBaseUrl(hostname)
+        return NextResponse.redirect(`${baseUrl}/login?error=dashboard_loop`)
+      }
     }
     
     // Try to get token to determine if user is authenticated
@@ -296,11 +322,14 @@ export default async function middleware(request: NextRequest) {
         email: token.email,
         tenant_path: token.tenant_subdomain,
         cleanTenant,
-        redirectUrl: tenantUrl
+        redirectUrl: tenantUrl,
+        redirectCount: redirectCount + 1
       })
       
       const response = NextResponse.redirect(tenantUrl)
       response.headers.set('x-redirect-count', String(redirectCount + 1))
+      response.headers.set('x-redirect-source', 'generic-dashboard')
+      response.headers.set('x-redirect-target', cleanTenant)
       return response
     }
     

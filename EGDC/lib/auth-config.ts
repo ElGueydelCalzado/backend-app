@@ -364,37 +364,10 @@ export const authConfig: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔄 NextAuth redirect called:', { url, baseUrl })
       
-      // Parse the URL to check for callbackUrl parameter
-      try {
-        const urlObj = new URL(url, baseUrl)
-        const callbackUrl = urlObj.searchParams.get('callbackUrl')
-        
-        console.log('🔍 Redirect URL analysis:', {
-          originalUrl: url,
-          baseUrl,
-          callbackUrl,
-          hasCallbackUrl: !!callbackUrl
-        })
-        
-        // If there's a callbackUrl with a tenant path pattern, use it
-        if (callbackUrl && callbackUrl.match(/\/[a-zA-Z0-9\-_]+\/dashboard/)) {
-          console.log('✅ Using callbackUrl with tenant path:', callbackUrl)
-          return callbackUrl
-        }
-        
-        // If URL already contains tenant path pattern, use it
-        if (url.match(/\/[a-zA-Z0-9\-_]+\/dashboard/)) {
-          console.log('✅ Tenant-specific URL detected, using:', url)
-          return url
-        }
-      } catch (error) {
-        console.log('⚠️ URL parsing error in redirect:', error)
-      }
-      
-      // For path-based architecture, redirect to generic dashboard
-      // The dashboard redirect component will handle tenant-specific routing
-      console.log('🔄 Redirecting to generic dashboard for tenant routing')
-      return '/dashboard'
+      // SIMPLIFIED REDIRECT LOGIC to prevent loops
+      // Let middleware handle all tenant routing - just return base URL
+      console.log('🔄 Simplified redirect - letting middleware handle tenant routing')
+      return baseUrl
     },
     
     async signIn({ user, account, profile }) {

@@ -4,29 +4,30 @@
  */
 
 // Legacy tenant configuration mapping (for backward compatibility and fallback)
+// NOTE: These tenant_ids should be actual UUIDs from the database when available
 export const TENANT_CONFIG = {
   'egdc': {
-    tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588',
+    tenant_id: 'e6c8ef7d-f8cf-4670-8166-583011284588', // Valid UUID from database
     name: 'EGDC',
     allowed_users: ['elweydelcalzado@gmail.com']
   },
   'elweydelcalzado': {
-    tenant_id: 'elweydelcalzado-dynamic-tenant',
+    tenant_id: '550e8400-e29b-41d4-a716-446655440001', // Valid UUID placeholder - should be replaced with actual DB UUID
     name: 'El Guey del Calzado',
     allowed_users: ['elweydelcalzado@gmail.com']
   },
   'fami': {
-    tenant_id: 'fami-tenant-id',
+    tenant_id: '550e8400-e29b-41d4-a716-446655440002', // Valid UUID placeholder - should be replaced with actual DB UUID
     name: 'FAMI',
     allowed_users: ['fami@example.com']
   },
   'osiel': {
-    tenant_id: 'osiel-tenant-id', 
+    tenant_id: '550e8400-e29b-41d4-a716-446655440003', // Valid UUID placeholder - should be replaced with actual DB UUID
     name: 'Osiel',
     allowed_users: ['osiel@example.com']
   },
   'molly': {
-    tenant_id: 'molly-tenant-id',
+    tenant_id: '550e8400-e29b-41d4-a716-446655440004', // Valid UUID placeholder - should be replaced with actual DB UUID
     name: 'Molly', 
     allowed_users: ['molly@example.com']
   }
