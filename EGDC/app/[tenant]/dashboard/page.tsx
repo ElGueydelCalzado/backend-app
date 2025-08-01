@@ -44,6 +44,14 @@ export default function TenantDashboard() {
       return
     }
 
+    // IMMEDIATE REDIRECT: This route should redirect to business-type specific dashboard
+    // For EGDC (retailer), redirect to /egdc/r/dashboard
+    if (tenant === 'egdc') {
+      console.log('🔄 Redirecting EGDC to retailer dashboard')
+      router.push(`/egdc/r/dashboard`)
+      return
+    }
+
     // FLEXIBLE TENANT VALIDATION: Allow similar tenant names and clean matching
     const userTenant = session.user?.tenant_subdomain?.toLowerCase()
     const currentTenant = tenant?.toLowerCase()
