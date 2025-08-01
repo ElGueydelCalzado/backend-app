@@ -18,7 +18,8 @@ export default function DashboardRedirect() {
       if (testConfig) {
         logDevModeWarning()
         console.log('🧪 Development mode active - redirecting to test tenant')
-        router.push(`/${testConfig.tenant_subdomain}/dashboard`)
+        // Use retailer route (r) for test tenants
+        router.push(`/${testConfig.tenant_subdomain}/r/dashboard`)
         return
       }
     }
@@ -39,7 +40,11 @@ export default function DashboardRedirect() {
     if (session.user?.tenant_subdomain) {
       // ANTI-LOOP PROTECTION: Check if we're already on the correct tenant path
       const tenantPath = cleanTenantSubdomain(session.user.tenant_subdomain)
-      const tenantUrl = `/${tenantPath}/dashboard`
+      
+      // Determine the business type route based on session data or default to retailer
+      const businessType = session.user.business_type || 'retailer'
+      const businessRoute = businessType === 'supplier' ? 's' : 'r'
+      const tenantUrl = `/${tenantPath}/${businessRoute}/dashboard`
       
       // Prevent redirect if we're in a potential loop scenario
       if (window.location.pathname === '/dashboard' && window.location.href.includes(tenantPath)) {
@@ -51,6 +56,8 @@ export default function DashboardRedirect() {
         from: '/dashboard',
         to: tenantUrl,
         tenant: tenantPath,
+        businessType,
+        businessRoute,
         originalSubdomain: session.user.tenant_subdomain,
         currentHref: window.location.href
       })

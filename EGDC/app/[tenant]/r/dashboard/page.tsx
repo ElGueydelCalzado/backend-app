@@ -154,181 +154,140 @@ export default function RetailerDashboard() {
       {/* Main Dashboard Content */}
       <main className="container mx-auto px-6 py-8">
         <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-2">
-            <ShoppingCart className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">
-              Retailer Dashboard - {session?.user?.tenant_name || 'EGDC'}
-            </h1>
-          </div>
-          <p className="text-gray-600">
-            Manage your inventory and wholesale purchases
+          <h1 className="text-3xl font-bold text-gray-900">
+            Dashboard - {session?.user?.tenant_name || 'EGDC'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Bienvenido a tu sistema de gestión de inventario
           </p>
         </div>
 
-        {/* Retailer Stats Cards */}
+        {/* Dashboard Stats Cards - Exact Old App Design */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Products Card */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="egdc-stats-card">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Products</div>
-                <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="egdc-stats-label">Total Productos</div>
+                <div className="egdc-stats-number">
                   {statsLoading ? '...' : stats.totalProducts.toLocaleString()}
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-600" />
+              <div className="egdc-stats-icon products">
+                📦
               </div>
             </div>
           </div>
 
           {/* In Stock Card */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="egdc-stats-card">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">In Stock</div>
-                <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="egdc-stats-label">En Stock</div>
+                <div className="egdc-stats-number">
                   {statsLoading ? '...' : stats.inStock.toLocaleString()}
                 </div>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-green-600" />
+              <div className="egdc-stats-icon stock">
+                📊
               </div>
             </div>
           </div>
 
           {/* Low Stock Card */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="egdc-stats-card">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Low Stock</div>
-                <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="egdc-stats-label">Stock Bajo</div>
+                <div className="egdc-stats-number">
                   {statsLoading ? '...' : stats.lowStock.toLocaleString()}
                 </div>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-orange-600" />
+              <div className="egdc-stats-icon warning">
+                ⚠️
               </div>
             </div>
           </div>
 
           {/* Total Value Card */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="egdc-stats-card">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Value</div>
-                <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="egdc-stats-label">Valor Total</div>
+                <div className="egdc-stats-number">
                   {statsLoading ? '...' : stats.totalValue}
                 </div>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="egdc-stats-icon revenue">
+                💰
               </div>
             </div>
           </div>
         </div>
 
-        {/* Two-Column Layout */}
+        {/* Two-Column Layout - Exact Old App Design */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column: Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <ShoppingCart className="w-5 h-5 mr-2 text-blue-600" />
-              Retailer Actions
-            </h2>
+          <div className="egdc-card p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
             <div className="space-y-4">
               <button
                 onClick={() => router.push(`/${tenant}/inventory`)}
-                className="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors text-left"
+                className="egdc-quick-action"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
+                <div className="egdc-quick-action-icon">📦</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">View Inventory</div>
-                  <div className="text-sm text-gray-500">Manage products and stock</div>
+                  <div className="egdc-quick-action-title">Ver Inventario</div>
+                  <div className="egdc-quick-action-desc">Gestionar productos y stock</div>
                 </div>
               </button>
               
               <button
                 onClick={() => router.push(`/${tenant}/inventory`)}
-                className="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors text-left"
+                className="egdc-quick-action"
               >
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                  <Plus className="w-5 h-5 text-green-600" />
-                </div>
+                <div className="egdc-quick-action-icon">➕</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Add Product</div>
-                  <div className="text-sm text-gray-500">Add new product to catalog</div>
+                  <div className="egdc-quick-action-title">Nuevo Producto</div>
+                  <div className="egdc-quick-action-desc">Agregar producto al catálogo</div>
                 </div>
               </button>
 
-              <button className="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors text-left">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <Building className="w-5 h-5 text-purple-600" />
-                </div>
+              <button className="egdc-quick-action">
+                <div className="egdc-quick-action-icon">📊</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Browse Suppliers</div>
-                  <div className="text-sm text-gray-500">Find new wholesale suppliers</div>
-                </div>
-              </button>
-
-              <button className="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 transition-colors text-left">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-                  <BarChart3 className="w-5 h-5 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">Reports</div>
-                  <div className="text-sm text-gray-500">View analytics and statistics</div>
+                  <div className="egdc-quick-action-title">Reportes</div>
+                  <div className="egdc-quick-action-desc">Ver análisis y estadísticas</div>
                 </div>
               </button>
             </div>
           </div>
 
           {/* Right Column: Recent Activity */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-              Recent Activity
-            </h2>
+          <div className="egdc-card p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Actividad Reciente</h2>
             <div className="space-y-4">
-              <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
+              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="egdc-quick-action-icon text-blue-600">📦</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Products updated</div>
-                  <div className="text-sm text-gray-500 mt-1">15 products modified 2 hours ago</div>
+                  <div className="font-medium text-gray-900">Productos actualizados</div>
+                  <div className="text-sm text-gray-500 mt-1">15 productos modificados hace 2 horas</div>
                 </div>
               </div>
               
-              <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-100">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                  <BarChart3 className="w-5 h-5 text-green-600" />
-                </div>
+              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="egdc-quick-action-icon text-green-600">📊</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Inventory synchronized</div>
-                  <div className="text-sm text-gray-500 mt-1">Last sync 1 hour ago</div>
+                  <div className="font-medium text-gray-900">Inventario sincronizado</div>
+                  <div className="text-sm text-gray-500 mt-1">Última sincronización hace 1 hora</div>
                 </div>
               </div>
 
-              <div className="flex items-center p-4 bg-orange-50 rounded-lg border border-orange-100">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
-                </div>
+              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="egdc-quick-action-icon text-orange-600">⚠️</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Low stock alerts</div>
-                  <div className="text-sm text-gray-500 mt-1">23 products need restocking</div>
-                </div>
-              </div>
-
-              <div className="flex items-center p-4 bg-purple-50 rounded-lg border border-purple-100">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <Building className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">New supplier available</div>
-                  <div className="text-sm text-gray-500 mt-1">"Premium Footwear Co." joined the platform</div>
+                  <div className="font-medium text-gray-900">Alertas de stock bajo</div>
+                  <div className="text-sm text-gray-500 mt-1">23 productos requieren reposición</div>
                 </div>
               </div>
             </div>
