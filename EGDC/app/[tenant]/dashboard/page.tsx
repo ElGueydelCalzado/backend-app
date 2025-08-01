@@ -242,7 +242,7 @@ export default function TenantDashboard() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
             <div className="space-y-4">
               <button
-                onClick={() => router.push(`/${tenant}/inventory`)}
+                onClick={() => router.push(`/${tenant}/r/inventory`)}
                 className="egdc-quick-action"
               >
                 <div className="egdc-quick-action-icon">📦</div>
@@ -253,7 +253,7 @@ export default function TenantDashboard() {
               </button>
               
               <button
-                onClick={() => router.push(`/${tenant}/inventory`)}
+                onClick={() => router.push(`/${tenant}/r/inventory`)}
                 className="egdc-quick-action"
               >
                 <div className="egdc-quick-action-icon">➕</div>

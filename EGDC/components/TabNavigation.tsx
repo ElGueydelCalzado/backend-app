@@ -7,11 +7,21 @@ import UserAccountDropdown from './UserAccountDropdown'
 import { useAccessibility } from './AccessibilityProvider'
 import { ThemeToggleCompact } from './ThemeToggle'
 
-// Helper function to extract tenant from pathname
-function getTenantFromPath(pathname: string): string | null {
+// Helper function to extract tenant and business type from pathname
+function getTenantAndBusinessTypeFromPath(pathname: string): { tenant: string | null, businessType: string | null } {
   const pathParts = pathname.split('/').filter(Boolean)
-  // For path-based architecture: /tenant/page
-  return pathParts.length > 0 ? pathParts[0] : null
+  // For business-type routing: /tenant/r/page or /tenant/s/page
+  if (pathParts.length >= 2 && (pathParts[1] === 'r' || pathParts[1] === 's')) {
+    return {
+      tenant: pathParts[0],
+      businessType: pathParts[1] === 'r' ? 'retailer' : 'supplier'
+    }
+  }
+  // For legacy routing: /tenant/page
+  return {
+    tenant: pathParts.length > 0 ? pathParts[0] : null,
+    businessType: null
+  }
 }
 
 interface TabNavigationProps {
@@ -20,36 +30,57 @@ interface TabNavigationProps {
 
 export default function TabNavigation({ currentTab }: TabNavigationProps) {
   const pathname = usePathname()
-  const tenant = getTenantFromPath(pathname)
+  const { tenant, businessType } = getTenantAndBusinessTypeFromPath(pathname)
   const { announceMessage, language } = useAccessibility()
   const [focusedTabIndex, setFocusedTabIndex] = useState(0)
   
-  // Create tenant-prefixed URLs for path-based architecture
-  const createTenantUrl = (path: string) => {
+  // Create business-type aware URLs for consistent routing
+  const createBusinessTypeUrl = (path: string) => {
     if (!tenant) return path // Fallback for root paths
-    return path === '/' ? `/${tenant}/dashboard` : `/${tenant}${path}`
+    
+    // Determine business route (default to retailer for EGDC)
+    const businessRoute = businessType === 'supplier' ? 's' : 'r'
+    
+    if (path === '/') {
+      // Root path should go to dashboard
+      return `/${tenant}/${businessRoute}/dashboard`
+    }
+    
+    // Remove leading slash from path if present
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path
+    return `/${tenant}/${businessRoute}/${cleanPath}`
   }
   
-  // Check if path matches current location (accounting for tenant prefix)
+  // Check if path matches current location (accounting for business-type routing)
   const isActivePath = (basePath: string) => {
     if (!tenant) return pathname === basePath
-    const tenantPath = basePath === '/' ? `/${tenant}/dashboard` : `/${tenant}${basePath}`
-    return pathname === tenantPath || pathname.startsWith(tenantPath + '/')
+    
+    const businessRoute = businessType === 'supplier' ? 's' : 'r'
+    let expectedPath: string
+    
+    if (basePath === '/') {
+      expectedPath = `/${tenant}/${businessRoute}/dashboard`
+    } else {
+      const cleanPath = basePath.startsWith('/') ? basePath.substring(1) : basePath
+      expectedPath = `/${tenant}/${businessRoute}/${cleanPath}`
+    }
+    
+    return pathname === expectedPath || pathname.startsWith(expectedPath + '/')
   }
   
   const tabs = [
     {
       id: 'resumen',
       label: language === 'es' ? 'Resumen' : 'Summary',
-      href: createTenantUrl('/'),
-      active: isActivePath('/'),
+      href: createBusinessTypeUrl('/'), // Goes to business-type dashboard
+      active: isActivePath('/dashboard'),
       disabled: false,
-      description: language === 'es' ? 'Vista general del negocio' : 'Business overview'
+      description: language === 'es' ? 'Vista general del negocio y resumen' : 'Business overview and summary'
     },
     {
       id: 'inventario',
       label: language === 'es' ? 'Inventario' : 'Inventory',
-      href: createTenantUrl('/inventory'), // Inventory management interface
+      href: createBusinessTypeUrl('/inventory'), // Goes to business-type inventory
       active: isActivePath('/inventory'),
       disabled: false,
       description: language === 'es' ? 'Gestión de productos e inventario' : 'Product and inventory management'
@@ -57,47 +88,47 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
     {
       id: 'ventas',
       label: language === 'es' ? 'Ventas' : 'Sales',
-      href: createTenantUrl('/ventas'),
-      active: isActivePath('/ventas'),
+      href: createBusinessTypeUrl('/sales'),
+      active: isActivePath('/sales'),
       disabled: true,
       description: language === 'es' ? 'Gestión de ventas y pedidos' : 'Sales and order management'
     },
     {
       id: 'compras',
       label: language === 'es' ? 'Compras' : 'Purchases',
-      href: createTenantUrl('/compras'),
-      active: isActivePath('/compras'),
+      href: createBusinessTypeUrl('/purchases'),
+      active: isActivePath('/purchases'),
       disabled: true,
       description: language === 'es' ? 'Gestión de compras y proveedores' : 'Purchase and supplier management'
     },
     {
       id: 'clientes',
       label: language === 'es' ? 'Clientes' : 'Customers',
-      href: createTenantUrl('/clientes'),
-      active: isActivePath('/clientes'),
+      href: createBusinessTypeUrl('/clients'),
+      active: isActivePath('/clients'),
       disabled: true,
       description: language === 'es' ? 'Gestión de clientes' : 'Customer management'
     },
     {
       id: 'analiticas',
-      label: language === 'es' ? 'Analiticas' : 'Analytics',
-      href: createTenantUrl('/analiticas'),
-      active: isActivePath('/analiticas'),
+      label: language === 'es' ? 'Analíticas' : 'Analytics',
+      href: createBusinessTypeUrl('/analytics'),
+      active: isActivePath('/analytics'),
       disabled: true,
       description: language === 'es' ? 'Reportes y análisis' : 'Reports and analytics'
     },
     {
       id: 'finanzas',
       label: language === 'es' ? 'Finanzas' : 'Finance',
-      href: createTenantUrl('/finanzas'),
-      active: isActivePath('/finanzas'),
+      href: createBusinessTypeUrl('/finance'),
+      active: isActivePath('/finance'),
       disabled: true,
       description: language === 'es' ? 'Gestión financiera' : 'Financial management'
     },
     {
       id: 'account',
       label: language === 'es' ? 'Cuenta' : 'Account',
-      href: createTenantUrl('/account'),
+      href: createBusinessTypeUrl('/account'),
       active: isActivePath('/account'),
       disabled: false,
       description: language === 'es' ? 'Configuración de cuenta' : 'Account settings'

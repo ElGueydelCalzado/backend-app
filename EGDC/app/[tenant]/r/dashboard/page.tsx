@@ -147,7 +147,7 @@ export default function RetailerDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <TabNavigation currentTab="retailer-dashboard" />
+        <TabNavigation currentTab="resumen" />
         <TenantSelector currentTenant={tenant} businessType="retailer" />
       </header>
 
@@ -155,10 +155,10 @@ export default function RetailerDashboard() {
       <main className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Dashboard - {session?.user?.tenant_name || 'EGDC'}
+            Resumen - {session?.user?.tenant_name || 'EGDC'}
           </h1>
           <p className="text-gray-600 mt-2">
-            Bienvenido a tu sistema de gestión de inventario
+            Vista general del negocio - estadísticas, acciones rápidas y actividad reciente
           </p>
         </div>
 
@@ -232,7 +232,7 @@ export default function RetailerDashboard() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
             <div className="space-y-4">
               <button
-                onClick={() => router.push(`/${tenant}/inventory`)}
+                onClick={() => router.push(`/${tenant}/r/inventory`)}
                 className="egdc-quick-action"
               >
                 <div className="egdc-quick-action-icon">📦</div>
@@ -243,7 +243,7 @@ export default function RetailerDashboard() {
               </button>
               
               <button
-                onClick={() => router.push(`/${tenant}/inventory`)}
+                onClick={() => router.push(`/${tenant}/r/inventory`)}
                 className="egdc-quick-action"
               >
                 <div className="egdc-quick-action-icon">➕</div>
