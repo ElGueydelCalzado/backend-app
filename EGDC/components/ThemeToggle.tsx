@@ -9,8 +9,21 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
-  const { theme, toggleTheme } = useTheme()
-  const { language } = useAccessibility()
+  // Safe theme hook usage with fallbacks for SSR
+  let theme = 'light'
+  let toggleTheme = () => {}
+  let language = 'es'
+  
+  try {
+    const themeContext = useTheme()
+    const accessibilityContext = useAccessibility()
+    theme = themeContext?.theme || 'light'
+    toggleTheme = themeContext?.toggleTheme || (() => {})
+    language = accessibilityContext?.language || 'es'
+  } catch (error) {
+    // Fallback during SSR or when context is not available
+    console.warn('ThemeToggle: Theme context not available, using defaults')
+  }
 
   const handleToggle = () => {
     toggleTheme()
@@ -101,8 +114,21 @@ export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
 
 // Alternative minimal variant for mobile or compact spaces
 export function ThemeToggleCompact({ className = '' }: ThemeToggleProps) {
-  const { theme, toggleTheme } = useTheme()
-  const { language } = useAccessibility()
+  // Safe theme hook usage with fallbacks for SSR
+  let theme = 'light'
+  let toggleTheme = () => {}
+  let language = 'es'
+  
+  try {
+    const themeContext = useTheme()
+    const accessibilityContext = useAccessibility()
+    theme = themeContext?.theme || 'light'
+    toggleTheme = themeContext?.toggleTheme || (() => {})
+    language = accessibilityContext?.language || 'es'
+  } catch (error) {
+    // Fallback during SSR or when context is not available
+    console.warn('ThemeToggleCompact: Theme context not available, using defaults')
+  }
 
   const isDark = theme === 'dark'
   
