@@ -68,11 +68,24 @@ export default function SupplierDashboard() {
       return
     }
 
-    // Check if user has supplier access
+    // EMERGENCY FIX: Check if user has supplier access with anti-loop protection
+    if (businessType === 'retailer') {
+      console.log('❌ Business type mismatch - redirecting retailer to retailer dashboard')
+      router.push(`/${tenant}/r/dashboard`)
+      return
+    }
+    
+    // CRITICAL: For EGDC users with null/undefined business type, redirect to retailer by default
+    if (!businessType) {
+      console.log('✅ ANTI-LOOP: Null business type detected - redirecting to retailer dashboard (EGDC default)')
+      router.push(`/${tenant}/r/dashboard`)
+      return
+    }
+    
+    // Only allow access if business type is explicitly 'supplier'
     if (businessType !== 'supplier') {
-      console.log('❌ Business type mismatch - redirecting to appropriate dashboard')
-      const businessRoute = businessType === 'retailer' ? 'r' : 'r' // Default to retailer
-      router.push(`/${tenant}/${businessRoute}/dashboard`)
+      console.log('✅ ANTI-LOOP: Non-supplier user redirected to retailer dashboard')
+      router.push(`/${tenant}/r/dashboard`)
       return
     }
 

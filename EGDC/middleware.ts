@@ -132,8 +132,9 @@ export default async function middleware(request: NextRequest) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
       
-      // Determine the business type route based on token or default to retailer
-      const businessType = token.business_type || 'retailer'
+      // EMERGENCY FIX: Determine the business type route with EGDC-specific defaults
+      // For EGDC tenant, always default to retailer to prevent redirect loops
+      const businessType = cleanTenant === 'egdc' ? 'retailer' : (token.business_type || 'retailer')
       const businessRoute = businessType === 'supplier' ? 's' : 'r'
       const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       
@@ -356,8 +357,9 @@ export default async function middleware(request: NextRequest) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
       
-      // Determine the business type route based on token or default to retailer
-      const businessType = token.business_type || 'retailer'
+      // EMERGENCY FIX: Determine the business type route with EGDC-specific defaults
+      // For EGDC tenant, always default to retailer to prevent redirect loops
+      const businessType = cleanTenant === 'egdc' ? 'retailer' : (token.business_type || 'retailer')
       const businessRoute = businessType === 'supplier' ? 's' : 'r'
       const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       

@@ -41,8 +41,9 @@ export default function DashboardRedirect() {
       // ANTI-LOOP PROTECTION: Check if we're already on the correct tenant path
       const tenantPath = cleanTenantSubdomain(session.user.tenant_subdomain)
       
-      // Determine the business type route based on session data or default to retailer
-      const businessType = session.user.business_type || 'retailer'
+      // EMERGENCY FIX: Determine the business type route with EGDC-specific defaults
+      // For EGDC tenant, always default to retailer to prevent redirect loops
+      const businessType = tenantPath === 'egdc' ? 'retailer' : (session.user.business_type || 'retailer')
       const businessRoute = businessType === 'supplier' ? 's' : 'r'
       const tenantUrl = `/${tenantPath}/${businessRoute}/dashboard`
       

@@ -44,11 +44,24 @@ export default function TenantDashboard() {
       return
     }
 
-    // IMMEDIATE REDIRECT: This route should redirect to business-type specific dashboard
-    // For EGDC (retailer), redirect to /egdc/r/dashboard
+    // EMERGENCY FIX: This route should redirect to business-type specific dashboard
+    // For EGDC (retailer), always redirect to /egdc/r/dashboard to prevent loops
     if (tenant === 'egdc') {
-      console.log('🔄 Redirecting EGDC to retailer dashboard')
+      console.log('🔄 ANTI-LOOP: Redirecting EGDC to retailer dashboard (force retailer for EGDC)')
       router.push(`/egdc/r/dashboard`)
+      return
+    }
+    
+    // For other tenants, redirect based on business type or default to retailer
+    if (session.user?.business_type) {
+      const businessRoute = session.user.business_type === 'supplier' ? 's' : 'r'
+      console.log('🔄 Redirecting to business-type specific dashboard:', businessRoute)
+      router.push(`/${tenant}/${businessRoute}/dashboard`)
+      return
+    } else {
+      // Default to retailer for users without explicit business type
+      console.log('🔄 ANTI-LOOP: No business type found - defaulting to retailer dashboard')
+      router.push(`/${tenant}/r/dashboard`)
       return
     }
 

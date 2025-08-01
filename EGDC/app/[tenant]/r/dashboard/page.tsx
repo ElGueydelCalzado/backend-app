@@ -68,12 +68,18 @@ export default function RetailerDashboard() {
       return
     }
 
-    // Check if user has retailer access
-    if (businessType !== 'retailer') {
-      console.log('❌ Business type mismatch - redirecting to appropriate dashboard')
-      const businessRoute = businessType === 'supplier' ? 's' : 's' // Default to supplier if not retailer
-      router.push(`/${tenant}/${businessRoute}/dashboard`)
+    // EMERGENCY FIX: Check if user has retailer access with anti-loop protection
+    if (businessType === 'supplier') {
+      console.log('❌ Business type mismatch - redirecting supplier to supplier dashboard')
+      router.push(`/${tenant}/s/dashboard`)
       return
+    }
+    
+    // CRITICAL: Default all null/undefined business types to retailer to prevent loops
+    if (!businessType || businessType !== 'retailer') {
+      console.log('✅ ANTI-LOOP: Setting default business type to retailer for EGDC users')
+      // Allow access - don't redirect for null/undefined business types
+      // This prevents the infinite loop between r/ and s/ routes
     }
 
     setLoading(false)

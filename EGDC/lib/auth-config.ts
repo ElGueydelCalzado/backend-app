@@ -241,7 +241,7 @@ async function getOrCreateUser(email: string, name: string, googleId: string) {
         counter++
       }
       
-      // Create new tenant
+      // Create new tenant - EGDC default is always retailer
       const newTenant = await client.query(`
         INSERT INTO tenants (name, subdomain, email, business_type, plan, status)
         VALUES ($1, $2, $3, 'retailer', 'starter', 'active')
@@ -494,7 +494,8 @@ export const authConfig: NextAuthOptions = {
             token.role = userData.role  
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
-            token.business_type = userData.business_type
+            // EMERGENCY FIX: For EGDC, always set business_type to retailer
+            token.business_type = userData.tenant_subdomain === 'egdc' ? 'retailer' : (userData.business_type || 'retailer')
             
             console.log('✅ TENANT MAPPED SUCCESSFULLY:', {
               email: user.email,
