@@ -132,10 +132,38 @@ export default async function middleware(request: NextRequest) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
       
-      // EMERGENCY FIX: Determine the business type route with EGDC-specific defaults
-      // For EGDC tenant, always default to retailer to prevent redirect loops
-      const businessType = cleanTenant === 'egdc' ? 'retailer' : (token.business_type || 'retailer')
-      const businessRoute = businessType === 'supplier' ? 's' : 'r'
+      // BULLETPROOF FIX: Determine the business type route with comprehensive fallbacks
+      // Priority order: 1) EGDC always retailer, 2) token.business_type, 3) 'retailer' default
+      let businessType = 'retailer' // Safe default
+      
+      console.log('🔍 BUSINESS TYPE DEBUG (LOGIN):', {
+        cleanTenant,
+        tokenBusinessType: token.business_type,
+        tokenBusinessTypeType: typeof token.business_type,
+        isEgdc: cleanTenant === 'egdc'
+      })
+      
+      if (cleanTenant === 'egdc') {
+        // EGDC is ALWAYS retailer - ABSOLUTE RULE to prevent any redirect loops
+        businessType = 'retailer'
+        console.log('🔒 EGDC tenant detected - HARDCODED to retailer (ANTI-LOOP PROTECTION)')
+      } else if (token.business_type && typeof token.business_type === 'string') {
+        // Use token business type if valid
+        const validBusinessTypes = ['retailer', 'wholesaler', 'supplier', 'hybrid']
+        if (validBusinessTypes.includes(token.business_type.toLowerCase())) {
+          businessType = token.business_type.toLowerCase()
+          console.log('📋 Using token business_type:', businessType)
+        } else {
+          console.warn('⚠️ Invalid business_type in token:', token.business_type, '- defaulting to retailer')
+          businessType = 'retailer'
+        }
+      } else {
+        console.log('🔄 No business_type in token - defaulting to retailer')
+        businessType = 'retailer'
+      }
+      
+      // Convert business type to route (supplier/wholesaler -> 's', everything else -> 'r')
+      const businessRoute = (businessType === 'supplier' || businessType === 'wholesaler') ? 's' : 'r'
       const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       
       console.log('✅ REDIRECTING AUTHENTICATED USER TO TENANT:', {
@@ -357,10 +385,38 @@ export default async function middleware(request: NextRequest) {
       const cleanTenant = cleanTenantSubdomain(token.tenant_subdomain.toString())
       const baseUrl = getBaseUrl(hostname)
       
-      // EMERGENCY FIX: Determine the business type route with EGDC-specific defaults
-      // For EGDC tenant, always default to retailer to prevent redirect loops
-      const businessType = cleanTenant === 'egdc' ? 'retailer' : (token.business_type || 'retailer')
-      const businessRoute = businessType === 'supplier' ? 's' : 'r'
+      // BULLETPROOF FIX: Determine the business type route with comprehensive fallbacks
+      // Priority order: 1) EGDC always retailer, 2) token.business_type, 3) 'retailer' default
+      let businessType = 'retailer' // Safe default
+      
+      console.log('🔍 BUSINESS TYPE DEBUG (GENERIC DASHBOARD):', {
+        cleanTenant,
+        tokenBusinessType: token.business_type,
+        tokenBusinessTypeType: typeof token.business_type,
+        isEgdc: cleanTenant === 'egdc'
+      })
+      
+      if (cleanTenant === 'egdc') {
+        // EGDC is ALWAYS retailer - ABSOLUTE RULE to prevent any redirect loops
+        businessType = 'retailer'
+        console.log('🔒 EGDC tenant detected in generic dashboard - HARDCODED to retailer (ANTI-LOOP PROTECTION)')
+      } else if (token.business_type && typeof token.business_type === 'string') {
+        // Use token business type if valid
+        const validBusinessTypes = ['retailer', 'wholesaler', 'supplier', 'hybrid']
+        if (validBusinessTypes.includes(token.business_type.toLowerCase())) {
+          businessType = token.business_type.toLowerCase()
+          console.log('📋 Using token business_type in generic dashboard:', businessType)
+        } else {
+          console.warn('⚠️ Invalid business_type in token (generic dashboard):', token.business_type, '- defaulting to retailer')
+          businessType = 'retailer'
+        }
+      } else {
+        console.log('🔄 No business_type in token (generic dashboard) - defaulting to retailer')
+        businessType = 'retailer'
+      }
+      
+      // Convert business type to route (supplier/wholesaler -> 's', everything else -> 'r')
+      const businessRoute = (businessType === 'supplier' || businessType === 'wholesaler') ? 's' : 'r'
       const tenantUrl = `${baseUrl}/${cleanTenant}/${businessRoute}/dashboard`
       
       // ANTI-LOOP: Ensure we're not redirecting to the same URL that referred us

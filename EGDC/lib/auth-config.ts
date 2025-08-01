@@ -404,10 +404,14 @@ export const authConfig: NextAuthOptions = {
     },
     
     async session({ session, token }) {
-      console.log('🔍 Session Callback:', {
+      console.log('🔍 Session Callback - ENHANCED DEBUG:', {
         email: session?.user?.email,
         environment: process.env.VERCEL_ENV,
-        registrationRequired: token?.registration_required
+        registrationRequired: token?.registration_required,
+        tokenBusinessType: token?.business_type,
+        tokenTenantSubdomain: token?.tenant_subdomain,
+        tokenId: token?.tenant_id,
+        timestamp: new Date().toISOString()
       })
       
       if (session?.user && token) {
@@ -416,15 +420,47 @@ export const authConfig: NextAuthOptions = {
         session.user.role = token.role as string || 'user'
         session.user.tenant_name = token.tenant_name as string || null
         session.user.tenant_subdomain = token.tenant_subdomain as string || null
-        session.user.business_type = token.business_type as string || null
+        
+        // BULLETPROOF business_type assignment with debugging
+        let sessionBusinessType = null
+        if (token.business_type && typeof token.business_type === 'string') {
+          const validBusinessTypes = ['retailer', 'wholesaler', 'supplier', 'hybrid']
+          if (validBusinessTypes.includes(token.business_type.toLowerCase())) {
+            sessionBusinessType = token.business_type.toLowerCase()
+            console.log('📋 Session business_type set from valid token:', sessionBusinessType)
+          } else {
+            console.warn('⚠️ Invalid business_type in token for session:', token.business_type)
+            sessionBusinessType = 'retailer'
+          }
+        } else {
+          console.log('🔄 No business_type in token for session - using null')
+          sessionBusinessType = null
+        }
+        
+        session.user.business_type = sessionBusinessType
         
         // Add registration status to session
         if (token.registration_required) {
           session.registration_required = true
           console.log('🚧 Session flagged for pending registration:', session.user.email)
         } else {
-          console.log('✅ Session ready for tenant path:', token.tenant_subdomain)
+          console.log('✅ Session ready for tenant path:', {
+            tenant_subdomain: token.tenant_subdomain,
+            business_type: sessionBusinessType,
+            tenant_id: token.tenant_id
+          })
         }
+        
+        // CRITICAL DEBUG: Log session creation details for troubleshooting
+        console.log('🎯 FINAL SESSION CREATED:', {
+          user_email: session.user.email,
+          tenant_id: session.user.tenant_id,
+          tenant_subdomain: session.user.tenant_subdomain,
+          business_type: session.user.business_type,
+          role: session.user.role,
+          registration_required: session.registration_required || false,
+          session_ready: !session.registration_required && !!session.user.tenant_subdomain
+        })
       }
       
       return session
@@ -494,15 +530,40 @@ export const authConfig: NextAuthOptions = {
             token.role = userData.role  
             token.tenant_name = userData.tenant_name
             token.tenant_subdomain = userData.tenant_subdomain
-            // EMERGENCY FIX: For EGDC, always set business_type to retailer
-            token.business_type = userData.tenant_subdomain === 'egdc' ? 'retailer' : (userData.business_type || 'retailer')
+            // BULLETPROOF FIX: Determine business_type with comprehensive validation and debugging
+            let finalBusinessType = 'retailer' // Safe default
+            
+            if (userData.tenant_subdomain === 'egdc') {
+              // EGDC is always retailer - hardcoded to prevent redirect loops
+              finalBusinessType = 'retailer'
+              console.log('🏢 EGDC tenant detected in JWT - forcing retailer business type')
+            } else if (userData.business_type && typeof userData.business_type === 'string') {
+              // Validate and use database business_type
+              const validBusinessTypes = ['retailer', 'wholesaler', 'supplier', 'hybrid']
+              if (validBusinessTypes.includes(userData.business_type.toLowerCase())) {
+                finalBusinessType = userData.business_type.toLowerCase()
+                console.log('📋 Using database business_type:', finalBusinessType)
+              } else {
+                console.warn('⚠️ Invalid business_type from database:', userData.business_type, '- defaulting to retailer')
+                finalBusinessType = 'retailer'
+              }
+            } else {
+              console.log('🔄 No business_type from database - defaulting to retailer')
+              finalBusinessType = 'retailer'
+            }
+            
+            token.business_type = finalBusinessType
             
             console.log('✅ TENANT MAPPED SUCCESSFULLY:', {
               email: user.email,
               tenant_id: userData.tenant_id,
               tenant_path: userData.tenant_subdomain, // Used as path in path-based architecture
               tenant_name: userData.tenant_name,
-              role: userData.role
+              role: userData.role,
+              business_type: finalBusinessType,
+              original_business_type: userData.business_type,
+              business_type_source: userData.tenant_subdomain === 'egdc' ? 'HARDCODED_EGDC' : 
+                                  userData.business_type ? 'DATABASE' : 'DEFAULT_FALLBACK'
             })
             
           } else if (account?.provider === 'test-account') {
